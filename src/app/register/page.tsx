@@ -132,20 +132,25 @@ export default function RegisterPage() {
             </div>
             
             <div className="flex justify-center w-full">
-              <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => {
-                    showNotification("Fallo al registrarse con Google", "error");
-                  }}
-                  useOneTap
-                  theme="outline"
-                  size="large"
-                  text="signup_with"
-                  shape="rectangular"
-                  width="100%"
-                />
-              </GoogleOAuthProvider>
+              {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+                <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      showNotification("Fallo al registrarse con Google", "error");
+                    }}
+                    useOneTap
+                    theme="outline"
+                    size="large"
+                    text="signup_with"
+                    shape="rectangular"
+                  />
+                </GoogleOAuthProvider>
+              ) : (
+                <div className="text-sm text-[var(--muted)] text-center p-3 border border-dashed border-[var(--border-color)] rounded-xl w-full">
+                  Registro con Google no configurado
+                </div>
+              )}
             </div>
             
             <p className="mt-8 text-sm text-[var(--muted)] text-center">

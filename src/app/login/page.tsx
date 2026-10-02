@@ -144,20 +144,25 @@ export default function LoginPage() {
             </div>
             
             <div className="flex justify-center w-full">
-              <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => {
-                    showNotification("Fallo al iniciar sesión con Google", "error");
-                  }}
-                  useOneTap
-                  theme="outline"
-                  size="large"
-                  text="signin_with"
-                  shape="rectangular"
-                  width="100%"
-                />
-              </GoogleOAuthProvider>
+              {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+                <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      showNotification("Fallo al iniciar sesión con Google", "error");
+                    }}
+                    useOneTap
+                    theme="outline"
+                    size="large"
+                    text="signin_with"
+                    shape="rectangular"
+                  />
+                </GoogleOAuthProvider>
+              ) : (
+                <div className="text-sm text-[var(--muted)] text-center p-3 border border-dashed border-[var(--border-color)] rounded-xl w-full">
+                  Inicio con Google no configurado
+                </div>
+              )}
             </div>
             
             <p className="mt-8 text-sm text-[var(--muted)] text-center">
