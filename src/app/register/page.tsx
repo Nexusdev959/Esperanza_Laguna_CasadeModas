@@ -8,7 +8,7 @@ import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 
 export default function RegisterPage() {
