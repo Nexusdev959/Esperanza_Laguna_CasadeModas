@@ -133,11 +133,10 @@ export function AdminSidebar() {
           )}
         </Link>
 
-        {/* Botón de Cerrar Sesión */}
         <button 
           onClick={() => {
             localStorage.removeItem('jwt_token');
-            window.location.href = '/login';
+            window.location.replace('/');
           }}
           className={`w-full flex items-center px-3 py-3 text-sm rounded-xl transition-colors relative group text-red-500 hover:bg-red-500/10 font-medium ${isCollapsed ? 'justify-center' : 'space-x-3'}`}
         >

@@ -2,7 +2,7 @@
 
 import { Search, Edit2, Trash2, Clock } from "lucide-react";
 
-export function ProductTable({ products }: { products: any[] }) {
+export function ProductTable({ products, onEdit, onDelete }: { products: any[], onEdit?: (p: any) => void, onDelete?: (id: string) => void }) {
   return (
     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden">
       <div className="p-4 border-b border-[var(--border-color)] flex items-center gap-4">
@@ -70,8 +70,8 @@ export function ProductTable({ products }: { products: any[] }) {
                   )}
                 </td>
                 <td className="px-6 py-4 text-right whitespace-nowrap">
-                  <button className="p-2 text-[var(--muted)] hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
-                  <button className="p-2 text-[var(--muted)] hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => onEdit?.(product)} className="p-2 text-[var(--muted)] hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
+                  <button onClick={() => onDelete?.(product.id)} className="p-2 text-[var(--muted)] hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>
             )})}

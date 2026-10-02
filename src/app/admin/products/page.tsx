@@ -5,10 +5,14 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductForm } from "@/components/admin/product-form";
 import { ProductTable } from "@/components/admin/product-table";
+import { useNotification } from "@/components/ui/notification-provider";
+import { api } from "@/lib/api";
 
 export default function AdminProducts() {
+  const { showNotification } = useNotification();
   const [products, setProducts] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -31,10 +35,18 @@ export default function AdminProducts() {
     }
   });
 
+  const loadProducts = async () => {
+    try {
+      const res = await api.get('/products');
+      setProducts(res.data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      showNotification("Error", "No se pudieron cargar los productos", "error");
+    }
+  };
+
   useEffect(() => {
-    // Aquí deberá ir el fetch a la BD real en producción
-    // fetch('/api/v1/products').then(res => res.json()).then(setProducts)
-    setProducts([]);
+    loadProducts();
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -64,13 +76,35 @@ export default function AdminProducts() {
       });
       
       // Aquí se enviaría a la API real
-      // await api.post('/products', data);
+      if (editingId) {
+        await api.put(`/products/${editingId}`, data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        showNotification("Éxito", "Producto actualizado correctamente", "success");
+      } else {
+        await api.post('/products', data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        showNotification("Éxito", "Producto publicado correctamente", "success");
+      }
       
       setIsAdding(false);
-      alert('Producto preparado para guardar.');
-    } catch (err) {
+      setEditingId(null);
+      
+      // Limpiar form
+      setFormData({
+        name: '', category: 'Conquistadores', audience: ['Unisex'], price: '', saleMode: 'unidad',
+        isPublished: true, productionType: 'stock', estimatedDays: '7', requiresPersonalization: false,
+        images: [],
+        sizes: { 
+          XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' }, 
+          L: { active: false, qty: '' }, XL: { active: false, qty: '' }, Única: { active: false, qty: '' } 
+        }
+      });
+      loadProducts();
+    } catch (err: any) {
       console.error(err);
-      alert('Error al guardar el producto');
+      showNotification("Error", err.response?.data?.error || "Error al subir el producto", "error");
     }
   };
 
@@ -102,13 +136,43 @@ export default function AdminProducts() {
               formData={formData} 
               setFormData={setFormData} 
               handleCreate={handleCreate} 
-              onCancel={() => setIsAdding(false)} 
+              onCancel={() => {
+                setIsAdding(false);
+                setEditingId(null);
+              }} 
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      <ProductTable products={products} />
+      <ProductTable 
+        products={products} 
+        onEdit={(product) => {
+          setEditingId(product.id);
+          setFormData({
+            ...formData,
+            name: product.name,
+            category: product.category,
+            audience: product.audience || ['Unisex'],
+            price: product.price.toString(),
+            isPublished: product.isPublished,
+            requiresPersonalization: product.requiresPersonalization,
+            productionType: product.stock > 0 ? 'stock' : 'encargo',
+          });
+          setIsAdding(true);
+        }}
+        onDelete={async (id) => {
+          if (confirm("¿Estás seguro de eliminar este producto?")) {
+            try {
+              await api.delete(`/products/${id}`);
+              showNotification("Éxito", "Producto eliminado", "success");
+              loadProducts();
+            } catch (err) {
+              showNotification("Error", "Error al eliminar producto", "error");
+            }
+          }
+        }}
+      />
     </div>
   );
 }
