@@ -49,15 +49,22 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
       <form className="space-y-8" onSubmit={handleCreate}>
         {/* Información General */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2 md:col-span-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Nombre del Producto</label>
-            <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required type="text" placeholder="Ej. Pantalón Oficial..." className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+          <div className="space-y-4 md:col-span-2">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Nombre del Producto</label>
+              <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required type="text" placeholder="Ej. Pantalón Oficial..." className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Descripción y Detalles</label>
+              <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={3} placeholder="Escribe los detalles del producto, materiales, composición..." className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" />
+            </div>
           </div>
-          <div className="space-y-2 md:col-span-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Precio (COP)</label>
-            <input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required type="number" step="0.01" placeholder="0.00" className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
-          </div>
-          <div className="space-y-2 md:col-span-1 relative">
+          <div className="space-y-4 md:col-span-1">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Precio (COP)</label>
+              <input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required type="number" step="0.01" placeholder="0.00" className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+            </div>
+            <div className="space-y-2 relative">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Público / Género</label>
             <div className="flex flex-wrap gap-2 mt-1">
               {['Damas', 'Caballeros', 'Niñas', 'Niños', 'Unisex'].map(a => (
@@ -72,6 +79,7 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
                   {a}
                 </label>
               ))}
+            </div>
             </div>
           </div>
         </div>

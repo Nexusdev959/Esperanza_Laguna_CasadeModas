@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, ShieldCheck, ChevronLeft, ChevronRight, LogOut, Clock, DollarSign, Briefcase, Camera, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, ShieldCheck, ChevronLeft, ChevronRight, LogOut, Clock, DollarSign, Briefcase, Camera, Sun, Moon, Mailbox } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useNotification } from "@/components/ui/notification-provider";
 import { motion } from "framer-motion";
@@ -34,6 +34,7 @@ export function AdminSidebar() {
     { href: "/admin/orders/preparation", icon: Clock, label: "En Preparación" },
     { href: "/admin/products", icon: Package, label: "Inventarios" },
     { href: "/admin/payments/pending", icon: DollarSign, label: "Pagos Pendientes" },
+    { href: "/admin/pqrs", icon: Mailbox, label: "Buzón PQRS" },
     { href: "/admin/workers", icon: Briefcase, label: "Trabajadores" },
     { href: "/admin/customers", icon: Users, label: "Clientes" },
   ];

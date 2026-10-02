@@ -16,6 +16,7 @@ export default function AdminProducts() {
   
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     category: 'Conquistadores',
     audience: ['Unisex'], 
     price: '',
@@ -55,6 +56,7 @@ export default function AdminProducts() {
     try {
       const data = new FormData();
       data.append('name', formData.name);
+      data.append('description', formData.description);
       data.append('category', formData.category);
       data.append('price', formData.price);
       data.append('saleMode', formData.saleMode);
@@ -93,7 +95,7 @@ export default function AdminProducts() {
       
       // Limpiar form
       setFormData({
-        name: '', category: 'Conquistadores', audience: ['Unisex'], price: '', saleMode: 'unidad',
+        name: '', description: '', category: 'Conquistadores', audience: ['Unisex'], price: '', saleMode: 'unidad',
         isPublished: true, productionType: 'stock', estimatedDays: '7', requiresPersonalization: false,
         images: [],
         sizes: { 
@@ -152,6 +154,7 @@ export default function AdminProducts() {
           setFormData({
             ...formData,
             name: product.name,
+            description: product.description || '',
             category: product.category,
             audience: product.audience || ['Unisex'],
             price: product.price.toString(),

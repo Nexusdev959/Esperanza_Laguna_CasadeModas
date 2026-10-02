@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LogOut, Package, MapPin, Heart, User, Camera, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogOut, Package, MapPin, Heart, User, Camera, ChevronLeft, ChevronRight, Mailbox, CheckCircle, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { api } from "@/lib/api";
@@ -13,6 +13,7 @@ export default function AccountPage() {
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [addresses, setAddresses] = useState<any[]>([]);
+  const [pqrsCases, setPqrsCases] = useState<any[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { showNotification } = useNotification();
@@ -35,14 +36,16 @@ export default function AccountPage() {
           setUser(payload);
         }
 
-        // Fetch real orders and addresses
+        // Fetch real orders, addresses, and pqrs
         try {
-          const [ordersRes, addrRes] = await Promise.all([
+          const [ordersRes, addrRes, pqrsRes] = await Promise.all([
             api.get('/orders/me'),
-            api.get('/auth/addresses')
+            api.get('/auth/addresses'),
+            api.get('/pqrs/my')
           ]);
           setOrders(ordersRes.data);
           setAddresses(addrRes.data);
+          setPqrsCases(pqrsRes.data);
         } catch (error) {
           console.error("Error fetching data:", error);
         }
@@ -65,8 +68,29 @@ export default function AccountPage() {
     );
   }
 
+  const getStatusBadge = (status: string) => {
+    const badges: any = {
+      'OPEN': <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded-full text-xs font-medium">Abierto</span>,
+      'IN_PROGRESS': <span className="px-2.5 py-1 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-full text-xs font-medium">En Progreso</span>,
+      'RESOLVED': <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-full text-xs font-medium">Resuelto</span>,
+      'CLOSED': <span className="px-2.5 py-1 bg-gray-500/10 text-gray-600 border border-gray-500/20 rounded-full text-xs font-medium">Cerrado</span>,
+    };
+    return badges[status] || badges['OPEN'];
+  };
+
+  const getTypeLabel = (type: string) => {
+    const types: any = {
+      'PETITION': 'Petición',
+      'COMPLAINT': 'Queja',
+      'CLAIM': 'Reclamo',
+      'SUGGESTION': 'Sugerencia'
+    };
+    return types[type] || type;
+  };
+
   const links = [
     { id: "historial", icon: Package, label: "Historial de Compras" },
+    { id: "pqrs", icon: Mailbox, label: "Mis Casos PQRS" },
     { id: "perfil", icon: User, label: "Perfil" },
     { id: "direcciones", icon: MapPin, label: "Mis Direcciones" }
   ];
@@ -281,6 +305,74 @@ export default function AccountPage() {
                            <button onClick={() => window.location.href = `/track-order?ref=${order.id}`} className="text-sm border border-[var(--border-color)] px-4 py-2 rounded-xl text-[var(--foreground)] hover:bg-[var(--background)] transition-colors font-medium">
                              Rastrear Pedido
                            </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "pqrs" && (
+              <div className="animate-fade-in-up">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-serif text-[var(--foreground)]">Mis Casos y Reclamos</h2>
+                  <button onClick={() => window.location.href = '/contact'} className="px-4 py-2 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--foreground)] rounded-xl text-sm font-medium hover:bg-[var(--background)] transition-colors">
+                    Crear Nuevo Caso
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  {pqrsCases.length === 0 ? (
+                    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center">
+                      <Mailbox className="w-10 h-10 mx-auto text-[var(--muted)] mb-3" />
+                      <p className="text-[var(--muted)] text-sm mb-4">No tienes casos reportados.</p>
+                    </div>
+                  ) : (
+                    pqrsCases.map(pqrs => (
+                      <div key={pqrs.id} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm">
+                        <div className="p-6 border-b border-[var(--border-color)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-medium text-[var(--foreground)]">Caso #{pqrs.caseNumber}</h3>
+                              {getStatusBadge(pqrs.status)}
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-[var(--muted)]">
+                              <span><strong>Tipo:</strong> {getTypeLabel(pqrs.type)}</span>
+                              <span><strong>Fecha:</strong> {new Date(pqrs.createdAt).toLocaleDateString()}</span>
+                              {pqrs.orderId && <span><strong>Pedido:</strong> #{pqrs.orderId.slice(0,8).toUpperCase()}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="p-6 space-y-4">
+                          <div className="bg-[var(--background)] p-4 rounded-xl text-sm text-[var(--foreground)] leading-relaxed">
+                            <span className="block text-xs font-bold uppercase tracking-wider text-[var(--muted)] mb-2">Tu Reporte:</span>
+                            {pqrs.description}
+                          </div>
+
+                          {(pqrs.status === 'RESOLVED' || pqrs.status === 'CLOSED') && pqrs.replyText && (
+                            <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl mt-4">
+                              <div className="flex items-center gap-2 text-emerald-600 mb-2">
+                                <CheckCircle className="w-4 h-4" />
+                                <span className="text-xs font-bold uppercase tracking-wider">Respuesta Oficial</span>
+                              </div>
+                              <p className="text-sm text-[var(--foreground)] leading-relaxed">{pqrs.replyText}</p>
+                              
+                              {pqrs.replyPdfUrl && (
+                                <div className="mt-4 pt-4 border-t border-emerald-500/10">
+                                  <a 
+                                    href={pqrs.replyPdfUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
+                                  >
+                                    <FileText className="w-4 h-4" /> Descargar PDF de Resolución
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))

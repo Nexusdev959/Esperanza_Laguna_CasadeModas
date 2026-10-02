@@ -1,11 +1,13 @@
 "use client";
 
-import { ChevronDown, ShoppingBag, Plus, Minus, Package, Tag, ArrowLeft, Star, ThumbsUp } from "lucide-react";
+import { ChevronDown, ShoppingBag, Plus, Minus, Package, Tag, ArrowLeft, Star, ThumbsUp, Loader2 } from "lucide-react";
 import { useState, use } from "react";
 import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import useSWR from "swr";
 
 export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -14,17 +16,52 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   const [selectedSize, setSelectedSize] = useState("M");
   const { showNotification } = useNotification();
 
-  const basePrice = 250;
+  // Fetch product data
+  const { data: product, error, isLoading } = useSWR(`/products/${id}`, async (url) => {
+    const res = await api.get(url);
+    return res.data;
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <h2 className="text-2xl font-bold">Ocurrió un Error</h2>
+        <p className="text-[var(--muted)]">No se pudo cargar el producto. Verifica que el enlace sea correcto.</p>
+        <Link href="/" className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">
+          Volver al Inicio
+        </Link>
+      </div>
+    );
+  }
+
+  const basePrice = product.price;
   const currentPrice = purchaseMode === "lote" ? basePrice * 0.8 : basePrice; // 20% discount for batches
   const lotSize = 12; // A batch contains 12 units
 
   const handleAddToCart = () => {
     const totalUnits = purchaseMode === "lote" ? quantity * lotSize : quantity;
-    showNotification(`Añadido al carrito: ${totalUnits} unidad(es) de Abrigo Oversize`, "success");
+    showNotification(`Añadido al carrito: ${totalUnits} unidad(es) de ${product.name}`, "success");
+    // TODO: Add actual cart logic here
   };
 
   const increment = () => setQuantity(q => q + 1);
   const decrement = () => setQuantity(q => Math.max(1, q - 1));
+
+  // Determine main image and additional images
+  const images = Array.isArray(product.images) && product.images.length > 0 
+    ? product.images 
+    : ['https://via.placeholder.com/800x1000?text=Sin+Imagen'];
+  
+  const mainImage = images[0];
+  const detailImages = images.slice(1, 3); // Get up to 2 extra images
 
   return (
     <>
@@ -39,36 +76,33 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           <AnimateIn delay={0.1} className="space-y-4">
             <div className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-2xl border border-[var(--border-color)]">
               <img 
-                src="https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=1200&q=80" 
-                alt="Abrigo de Lana Oversize" 
+                src={mainImage} 
+                alt={product.name} 
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-               <div className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-xl border border-[var(--border-color)]">
-                <img 
-                  src="https://images.unsplash.com/photo-1539533018408-ebcd5ee823f6?w=800&q=80" 
-                  alt="Detail 1" 
-                  className="w-full h-full object-cover"
-                />
+            {detailImages.length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                {detailImages.map((img: string, index: number) => (
+                  <div key={index} className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-xl border border-[var(--border-color)]">
+                    <img 
+                      src={img} 
+                      alt={`Detalle ${index + 1}`} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
               </div>
-               <div className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-xl border border-[var(--border-color)]">
-                <img 
-                  src="https://images.unsplash.com/photo-1542838686-37ed7a5efaf7?w=800&q=80" 
-                  alt="Detail 2" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
+            )}
           </AnimateIn>
 
           {/* Product Info */}
           <AnimateIn delay={0.2} className="flex flex-col">
             <div className="mb-6">
               <div className="inline-block px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-[10px] font-medium tracking-widest uppercase mb-3">
-                Colección Exclusiva
+                {product.category || 'Colección'}
               </div>
-              <h1 className="text-2xl md:text-3xl font-serif text-[var(--foreground)] mb-2">Abrigo de Lana Oversize</h1>
+              <h1 className="text-2xl md:text-3xl font-serif text-[var(--foreground)] mb-2">{product.name}</h1>
               <div className="flex items-end gap-3">
                 <p className="text-xl text-[var(--foreground)] font-medium">{currentPrice.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
                 {purchaseMode === "lote" && (
@@ -78,8 +112,8 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
             </div>
             
             <div className="mb-6">
-              <p className="text-sm text-[var(--muted)] leading-relaxed">
-                Abrigo largo de lana premium con corte oversize y hombros caídos. Diseño minimalista sin solapas con cierre frontal invisible.
+              <p className="text-sm text-[var(--muted)] leading-relaxed whitespace-pre-line">
+                {product.description}
               </p>
             </div>
 
@@ -99,7 +133,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
               </button>
             </div>
 
-            {/* Size Selector */}
+            {/* Size Selector (Static for now as size is usually an attribute of the cart, unless product has specific variants) */}
             <div className="mb-8">
                <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-medium text-[var(--foreground)]">Talla</span>
@@ -134,61 +168,28 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
                 <span>Añadir a la bolsa</span>
               </Button>
             </div>
-
-            {/* Accordion */}
-            <div className="border-t border-[var(--border-color)] divide-y divide-[var(--border-color)]">
-              <div className="py-4">
-                <button className="flex justify-between items-center w-full text-left text-[var(--foreground)] hover:text-primary transition-colors group">
-                  <span className="text-xs font-medium tracking-wide">Detalles y Composición</span>
-                  <ChevronDown className="w-4 h-4 text-[var(--muted)] group-hover:text-primary transition-colors" />
-                </button>
-              </div>
-              <div className="py-4">
-                <button className="flex justify-between items-center w-full text-left text-[var(--foreground)] hover:text-primary transition-colors group">
-                  <span className="text-xs font-medium tracking-wide">Envío y Devoluciones</span>
-                  <ChevronDown className="w-4 h-4 text-[var(--muted)] group-hover:text-primary transition-colors" />
-                </button>
-              </div>
-            </div>
           </AnimateIn>
         </div>
 
         {/* Ratings and Reviews Section */}
         <AnimateIn delay={0.3} className="mt-24 pt-12 border-t border-[var(--border-color)]">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            {/* Rating Summary (Like Google Apps) */}
+            {/* Rating Summary */}
             <div className="lg:col-span-1 space-y-6">
               <h2 className="text-xl font-serif text-[var(--foreground)]">Calificaciones y reseñas</h2>
               
               <div className="flex items-center gap-6">
                 <div className="text-center">
-                  <p className="text-5xl font-medium text-[var(--foreground)]">4.8</p>
+                  <p className="text-5xl font-medium text-[var(--foreground)]">{product.ratingAvg?.toFixed(1) || '0.0'}</p>
                   <div className="flex text-yellow-400 my-2">
                     {[1, 2, 3, 4, 5].map(star => (
-                      <Star key={star} className={`w-4 h-4 ${star === 5 ? 'fill-yellow-400/30 text-yellow-400/30' : 'fill-yellow-400'}`} />
+                      <Star key={star} className={`w-4 h-4 ${star <= (product.ratingAvg || 0) ? 'fill-yellow-400' : 'fill-transparent text-[var(--border-color)]'}`} />
                     ))}
                   </div>
-                  <p className="text-xs text-[var(--muted)]">128 reseñas</p>
-                </div>
-                
-                <div className="flex-1 space-y-2">
-                  {[
-                    { stars: 5, pct: 85 },
-                    { stars: 4, pct: 10 },
-                    { stars: 3, pct: 3 },
-                    { stars: 2, pct: 1 },
-                    { stars: 1, pct: 1 },
-                  ].map(bar => (
-                    <div key={bar.stars} className="flex items-center gap-2 text-xs">
-                      <span className="w-2 font-medium text-[var(--muted)]">{bar.stars}</span>
-                      <div className="flex-1 h-2 bg-[var(--background)] rounded-full overflow-hidden border border-[var(--border-color)]">
-                        <div className="h-full bg-primary rounded-full" style={{ width: `${bar.pct}%` }}></div>
-                      </div>
-                    </div>
-                  ))}
+                  <p className="text-xs text-[var(--muted)]">{product.reviewsCount || 0} reseñas</p>
                 </div>
               </div>
-
+              
               <div className="pt-4">
                 <Button variant="outline" className="w-full">Escribir una reseña</Button>
               </div>
@@ -196,40 +197,35 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
             {/* Comments List */}
             <div className="lg:col-span-2 space-y-8">
-              {[
-                { name: "Carlos Ruiz", date: "24 Septiembre 2026", rating: 5, text: "Excelente calidad, la tela es muy resistente. Compramos el lote para todo el club de Conquistadores y llegó en perfecto estado y muy rápido." },
-                { name: "Elena Gómez", date: "15 Agosto 2026", rating: 5, text: "Muy bonitos acabados. Las tallas corresponden exactamente a la guía. A mis Aventureros les encantó." },
-                { name: "David Torres", date: "02 Julio 2026", rating: 4, text: "Buen producto en general, aunque me gustaría que tuvieran más opciones de color para las pañoletas. El abrigo sin embargo, 10/10." }
-              ].map((review, i) => (
-                <div key={i} className="border-b border-[var(--border-color)] pb-6 last:border-0">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-[var(--surface)] border border-[var(--border-color)] overflow-hidden">
-                        <img src={`https://ui-avatars.com/api/?name=${review.name.replace(' ', '+')}&background=random`} alt={review.name} className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-[var(--foreground)]">{review.name}</p>
-                        <p className="text-xs text-[var(--muted)]">{review.date}</p>
+              {product.reviews && product.reviews.length > 0 ? (
+                product.reviews.map((review: any, i: number) => (
+                  <div key={i} className="border-b border-[var(--border-color)] pb-6 last:border-0">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[var(--surface)] border border-[var(--border-color)] overflow-hidden">
+                          <img src={`https://ui-avatars.com/api/?name=${review.user?.name?.replace(' ', '+') || 'Usuario'}&background=random`} alt={review.user?.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-[var(--foreground)]">{review.user?.name || 'Usuario Anónimo'}</p>
+                          <p className="text-xs text-[var(--muted)]">{new Date(review.createdAt).toLocaleDateString()}</p>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex text-yellow-400 mb-2">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Star key={star} className={`w-3 h-3 ${star <= review.rating ? 'fill-yellow-400' : 'fill-transparent text-[var(--border-color)]'}`} />
+                      ))}
+                    </div>
+                    <p className="text-sm text-[var(--muted)] mb-3 leading-relaxed">
+                      {review.comment}
+                    </p>
                   </div>
-                  <div className="flex text-yellow-400 mb-2">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <Star key={star} className={`w-3 h-3 ${star <= review.rating ? 'fill-yellow-400' : 'fill-transparent text-[var(--border-color)]'}`} />
-                    ))}
-                  </div>
-                  <p className="text-sm text-[var(--muted)] mb-3 leading-relaxed">
-                    {review.text}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-[var(--muted)]">
-                    <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                      <ThumbsUp className="w-3 h-3" /> ¿Te resultó útil?
-                    </button>
-                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-[var(--muted)]">
+                  Aún no hay reseñas para este producto. ¡Sé el primero en calificarlo!
                 </div>
-              ))}
-              
-              <button className="text-sm font-medium text-primary hover:underline">Ver todas las reseñas</button>
+              )}
             </div>
           </div>
         </AnimateIn>
