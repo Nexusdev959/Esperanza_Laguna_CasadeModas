@@ -4,19 +4,19 @@ import { TrendingUp, Package, AlertCircle, Users, DollarSign } from "lucide-reac
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 const salesData = [
-  { name: 'Lun', ventas: 400 },
-  { name: 'Mar', ventas: 300 },
-  { name: 'Mié', ventas: 550 },
-  { name: 'Jue', ventas: 450 },
-  { name: 'Vie', ventas: 700 },
-  { name: 'Sáb', ventas: 950 },
-  { name: 'Dom', ventas: 1250 },
+  { name: 'Lun', ventas: 0 },
+  { name: 'Mar', ventas: 0 },
+  { name: 'Mié', ventas: 0 },
+  { name: 'Jue', ventas: 0 },
+  { name: 'Vie', ventas: 0 },
+  { name: 'Sáb', ventas: 0 },
+  { name: 'Dom', ventas: 0 },
 ];
 
 const categoryData = [
-  { name: 'Damas', valor: 65 },
-  { name: 'Caballeros', valor: 25 },
-  { name: 'Insignias', valor: 10 },
+  { name: 'Damas', valor: 0 },
+  { name: 'Caballeros', valor: 0 },
+  { name: 'Insignias', valor: 0 },
 ];
 
 export default function AdminDashboard() {
@@ -37,10 +37,10 @@ export default function AdminDashboard() {
           <h3 className="text-sm font-medium text-[var(--muted)] mb-2 flex items-center gap-2">
             Ventas del Día
           </h3>
-          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">$1,250.00</p>
-          <div className="flex items-center gap-1 mt-2 text-xs text-green-600 dark:text-green-400 font-medium relative z-10">
+          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">$0.00</p>
+          <div className="flex items-center gap-1 mt-2 text-xs text-[var(--muted)] font-medium relative z-10">
             <TrendingUp className="w-3 h-3" />
-            <span>+12% vs ayer</span>
+            <span>0% vs ayer</span>
           </div>
         </div>
 
@@ -49,8 +49,8 @@ export default function AdminDashboard() {
             <Package className="w-16 h-16 text-secondary" />
           </div>
           <h3 className="text-sm font-medium text-[var(--muted)] mb-2">Pedidos Pendientes</h3>
-          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">14</p>
-          <span className="text-xs text-secondary mt-2 inline-block font-medium relative z-10">Requieren acción</span>
+          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">0</p>
+          <span className="text-xs text-[var(--muted)] mt-2 inline-block font-medium relative z-10">Todo al día</span>
         </div>
 
         <div className="bg-[var(--surface)] p-6 border border-[var(--border-color)] rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
@@ -58,17 +58,17 @@ export default function AdminDashboard() {
             <Users className="w-16 h-16 text-blue-500" />
           </div>
           <h3 className="text-sm font-medium text-[var(--muted)] mb-2">Nuevos Clientes</h3>
-          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">42</p>
+          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">0</p>
           <span className="text-xs text-[var(--muted)] mt-2 inline-block relative z-10">Esta semana</span>
         </div>
 
         <div className="bg-[var(--surface)] p-6 border border-[var(--border-color)] rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <AlertCircle className="w-16 h-16 text-red-500" />
+            <AlertCircle className="w-16 h-16 text-green-500" />
           </div>
           <h3 className="text-sm font-medium text-[var(--muted)] mb-2">Stock Bajo</h3>
-          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">3</p>
-          <span className="text-xs text-red-500 mt-2 inline-block font-medium relative z-10">Productos a reponer</span>
+          <p className="text-3xl font-serif text-[var(--foreground)] relative z-10">0</p>
+          <span className="text-xs text-green-500 mt-2 inline-block font-medium relative z-10">Inventario sano</span>
         </div>
       </div>
       
@@ -130,31 +130,9 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-color)] text-[var(--foreground)]">
-              <tr className="hover:bg-[var(--background)]/50 transition-colors">
-                <td className="px-6 py-4 font-medium">#ORD-0921</td>
-                <td className="px-6 py-4">María López</td>
-                <td className="px-6 py-4">Hoy, 10:42 AM</td>
-                <td className="px-6 py-4">$345.00</td>
-                <td className="px-6 py-4">
-                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 rounded-full text-xs font-medium border border-yellow-200 dark:border-yellow-900">Pendiente</span>
-                </td>
-              </tr>
-              <tr className="hover:bg-[var(--background)]/50 transition-colors">
-                <td className="px-6 py-4 font-medium">#ORD-0920</td>
-                <td className="px-6 py-4">Carlos Ruiz</td>
-                <td className="px-6 py-4">Ayer, 16:15 PM</td>
-                <td className="px-6 py-4">$120.00</td>
-                <td className="px-6 py-4">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500 rounded-full text-xs font-medium border border-blue-200 dark:border-blue-900">Enviado</span>
-                </td>
-              </tr>
-              <tr className="hover:bg-[var(--background)]/50 transition-colors">
-                <td className="px-6 py-4 font-medium">#ORD-0919</td>
-                <td className="px-6 py-4">Elena Gómez</td>
-                <td className="px-6 py-4">Ayer, 09:30 AM</td>
-                <td className="px-6 py-4">$550.00</td>
-                <td className="px-6 py-4">
-                  <span className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500 rounded-full text-xs font-medium border border-green-200 dark:border-green-900">Entregado</span>
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-[var(--muted)]">
+                  No hay pedidos recientes para mostrar.
                 </td>
               </tr>
             </tbody>

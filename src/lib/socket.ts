@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export const getSocket = () => {
   if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000', {
+    socket = io(process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'https://api.esperanzalaguna.com', {
       transports: ['websocket'],
       autoConnect: true,
     });

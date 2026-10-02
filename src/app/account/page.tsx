@@ -4,24 +4,51 @@ import { useState, useEffect } from "react";
 import { LogOut, Package, MapPin, Heart, User, Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
+import { api } from "@/lib/api";
+
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("historial");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState<{name: string, email: string, role: string, id: string} | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('jwt_token');
-    if (token) {
+    const fetchUser = async () => {
       try {
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+          window.location.href = '/login';
+          return;
+        }
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUser(payload);
+
+        // Fetch real orders
+        try {
+          const res = await api.get('/orders/me');
+          setOrders(res.data);
+        } catch (error) {
+          console.error("Error fetching orders:", error);
+        }
+
       } catch (e) {
+        console.error("Error validando token:", e);
         window.location.href = '/login';
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      window.location.href = '/login';
-    }
+    };
+    fetchUser();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[var(--background)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const links = [
     { id: "historial", icon: Package, label: "Historial de Compras" },
@@ -166,36 +193,51 @@ export default function AccountPage() {
               <div className="animate-fade-in-up">
                 <h2 className="text-xl font-serif mb-6 text-[var(--foreground)]">Historial de Compras</h2>
                 <div className="space-y-6">
-                  {/* Order Item */}
-                  <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm space-y-4">
-                    <div className="flex justify-between items-start border-b border-[var(--border-color)] pb-4">
-                      <div>
-                        <p className="text-sm text-[var(--muted)] mb-1">Pedido #ORD-0921</p>
-                        <p className="font-medium text-[var(--foreground)]">28 Septiembre 2026</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-[var(--foreground)] mb-1">{(345).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
-                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 text-xs rounded-full border border-yellow-200 dark:border-yellow-900 font-medium">En Preparación</span>
-                      </div>
+                  {orders.length === 0 ? (
+                    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center">
+                      <p className="text-[var(--muted)] text-sm mb-4">No tienes compras registradas aún.</p>
+                      <button 
+                        onClick={() => window.location.href = '/collections/all'}
+                        className="px-6 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                      >
+                        Explorar Productos
+                      </button>
                     </div>
-                    
-                    <div className="flex items-center space-x-4 pt-2">
-                      <div className="w-16 h-20 bg-[var(--background)] rounded-lg overflow-hidden border border-[var(--border-color)]">
-                         <img src="https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=200&q=80" alt="Abrigo" className="w-full h-full object-cover" />
+                  ) : (
+                    orders.map(order => (
+                      <div key={order.id} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm space-y-4">
+                        <div className="flex justify-between items-start border-b border-[var(--border-color)] pb-4">
+                          <div>
+                            <p className="text-sm text-[var(--muted)] mb-1">Pedido #{order.id.slice(0, 8).toUpperCase()}</p>
+                            <p className="font-medium text-[var(--foreground)]">{new Date(order.createdAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-[var(--foreground)] mb-1">{(order.total).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
+                            <span className="px-3 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 text-xs rounded-full border border-yellow-200 dark:border-yellow-900 font-medium">{order.status === 'PENDING' ? 'En Preparación' : order.status}</span>
+                          </div>
+                        </div>
+                        
+                        {order.items?.map((item: any) => (
+                          <div key={item.id} className="flex items-center space-x-4 pt-2">
+                            <div className="w-16 h-20 bg-[var(--background)] rounded-lg overflow-hidden border border-[var(--border-color)]">
+                               <img src={item.product?.images?.[0] || "https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=200&q=80"} alt={item.product?.name || 'Producto'} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-medium text-[var(--foreground)]">{item.product?.name || 'Producto Desconocido'}</h4>
+                              <p className="text-sm text-[var(--muted)]">Precio: {(item.price).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
+                              <p className="text-sm text-[var(--muted)]">Cant: {item.quantity}</p>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        <div className="pt-4 border-t border-[var(--border-color)] flex justify-end">
+                           <button onClick={() => window.location.href = `/track-order?ref=${order.id}`} className="text-sm border border-[var(--border-color)] px-4 py-2 rounded-xl text-[var(--foreground)] hover:bg-[var(--background)] transition-colors font-medium">
+                             Rastrear Pedido
+                           </button>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-[var(--foreground)]">Camisa Oficial Conquistador</h4>
-                        <p className="text-sm text-[var(--muted)]">Talla: M | Color: Khaki</p>
-                        <p className="text-sm text-[var(--muted)]">Cant: 1</p>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-4 border-t border-[var(--border-color)] flex justify-end">
-                       <button className="text-sm border border-[var(--border-color)] px-4 py-2 rounded-xl text-[var(--foreground)] hover:bg-[var(--background)] transition-colors font-medium">
-                         Rastrear Pedido
-                       </button>
-                    </div>
-                  </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

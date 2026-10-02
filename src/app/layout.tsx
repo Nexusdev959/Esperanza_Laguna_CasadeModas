@@ -17,6 +17,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if (typeof window !== "undefined" && typeof window.__name === "undefined") { window.__name = function(target, value) { return target; }; }`,
+          }}
+        />
+      </head>
       <body className="antialiased min-h-screen flex flex-col selection:bg-primary/20 overflow-y-scroll">
         <ThemeProvider
           attribute="class"
