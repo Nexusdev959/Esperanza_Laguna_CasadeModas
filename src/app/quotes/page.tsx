@@ -5,17 +5,37 @@ import { QuoteEditor } from "@/components/quotes/quote-editor";
 import { QuotePreview } from "@/components/quotes/quote-preview";
 
 export default function QuoteGenerator() {
-  // SIMULACIÓN DE USUARIO LOGUEADO
-  const [isAuthenticated] = useState(true); // En el futuro vendrá de useSession() de NextAuth
-
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [clientInfo, setClientInfo] = useState({
-    name: isAuthenticated ? "Carlos Miranda (Usuario Verificado)" : "",
-    club: isAuthenticated ? "Club Orión" : "",
-    church: isAuthenticated ? "Iglesia Central Norte" : "",
-    email: isAuthenticated ? "carlos.miranda@example.com" : "",
-    phone: isAuthenticated ? "300 123 4567" : "",
-    address: isAuthenticated ? "Calle 123 # 45-67, Bogotá" : "",
+    name: "",
+    club: "",
+    church: "",
+    email: "",
+    phone: "",
+    address: "",
   });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const userDataStr = localStorage.getItem('user_data');
+      if (userDataStr) {
+        try {
+          const user = JSON.parse(userDataStr);
+          setIsAuthenticated(true);
+          setClientInfo({
+            name: user.name || "",
+            club: user.club || "",
+            church: user.church || "",
+            email: user.email || "",
+            phone: user.phone || "",
+            address: user.address || "",
+          });
+        } catch(e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
 
   const [quoteDetails, setQuoteDetails] = useState({
     validUntil: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +15 days

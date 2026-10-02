@@ -51,7 +51,7 @@ export function PaymentActions({
     setIsWompiLoading(true);
     // Simulación de llamada al backend para obtener la firma (hash)
     try {
-      // const res = await fetch('http://localhost:4000/api/v1/payments/wompi/hash', { ... })
+      // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/payments/wompi/hash`, { ... })
       // const { reference, signature } = await res.json();
       
       setTimeout(() => {

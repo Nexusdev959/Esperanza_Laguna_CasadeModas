@@ -14,7 +14,7 @@ const HERO_SLIDES = [
     subtitle:
       "Fibras puras y texturas nobles nacidas en tierras colombianas. Vestir la frescura de nuestra propia naturaleza.",
     cta: "Explorar Colección",
-    link: "/coleccion"
+    link: "/collections/all"
   },
   {
     id: 2,
@@ -23,7 +23,7 @@ const HERO_SLIDES = [
     subtitle:
       "Siluetas etéreas y confección orgánica que respiran con cada paso. Diseño contemporáneo sin artificios.",
     cta: "Ver Novedades",
-    link: "/novedades"
+    link: "/collections/all"
   },
   {
     id: 3,
@@ -60,13 +60,8 @@ export function HeroCinematic() {
           muted
           playsInline
           poster="https://images.pexels.com/photos/1072179/pexels-photo-1072179.jpeg?auto=compress&cs=tinysrgb&w=1920"
-          className="h-full w-full object-cover opacity-60 scale-105 transition-transform duration-1000 ease-out"
         >
-          {/* Video de naturaleza botánica, brisa, rocío y frescura tropical */}
-          <source
-            src="https://videos.pexels.com/video-files/855938/855938-hd_1920_1080_30fps.mp4"
-            type="video/mp4"
-          />
+          {/* El video de Pexels ha sido removido temporalmente porque bloquea hotlinking (Error 403). Muestra solo el poster. */}
         </video>
 
         {/* Gradiente cinematográfico tipo viñeta: enfoca el centro y oscurece sutilmente los bordes */}

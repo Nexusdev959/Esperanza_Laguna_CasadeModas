@@ -73,7 +73,7 @@ export default function WorkerPanel() {
     
     try {
       if (newStatus === "IN_PROGRESS") {
-        await fetch(`http://localhost:4000/api/v1/tasks/${id}/assign`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/tasks/${id}/assign`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ workerId })
@@ -81,7 +81,7 @@ export default function WorkerPanel() {
       } else if (newStatus === "COMPLETED" || newStatus === "REVIEW") {
         // En este caso "REVIEW" es un proxy en UI, el backend lo toma como COMPLETED 
         // o podemos mantenerlo en REVIEW, depende del flujo. Mapeo a complete.
-        await fetch(`http://localhost:4000/api/v1/tasks/${id}/complete`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/tasks/${id}/complete`, {
           method: 'PATCH',
         });
       }
