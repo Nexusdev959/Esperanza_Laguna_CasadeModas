@@ -16,6 +16,7 @@ export default function AccountPage() {
   const [pqrsCases, setPqrsCases] = useState<any[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploadingOrder, setUploadingOrder] = useState<string | null>(null);
   const { showNotification } = useNotification();
 
   useEffect(() => {
@@ -301,10 +302,35 @@ export default function AccountPage() {
                           </div>
                         ))}
                         
-                        <div className="pt-4 border-t border-[var(--border-color)] flex justify-end">
+                        <div className="pt-4 border-t border-[var(--border-color)] flex flex-wrap gap-2 justify-end">
                            <button onClick={() => window.location.href = `/track-order?ref=${order.id}`} className="text-sm border border-[var(--border-color)] px-4 py-2 rounded-xl text-[var(--foreground)] hover:bg-[var(--background)] transition-colors font-medium">
                              Rastrear Pedido
                            </button>
+                           
+                           {order.status === 'PENDING_ADVANCE' || order.status === 'PENDING_FINAL_PAY' ? (
+                             <label className={`text-sm px-4 py-2 bg-primary text-white rounded-xl font-medium cursor-pointer transition-colors ${uploadingOrder === order.id ? 'opacity-70 pointer-events-none' : 'hover:bg-primary/90'}`}>
+                               {uploadingOrder === order.id ? 'Subiendo...' : 'Subir Comprobante'}
+                               <input type="file" className="hidden" accept="image/*,.pdf" onChange={async (e) => {
+                                 if (e.target.files && e.target.files[0]) {
+                                   setUploadingOrder(order.id);
+                                   const formData = new FormData();
+                                   formData.append('proof', e.target.files[0]);
+                                   formData.append('orderId', order.id);
+                                   try {
+                                     await api.post('/payments/proof', formData, {
+                                       headers: { 'Content-Type': 'multipart/form-data' }
+                                     });
+                                     showNotification('Comprobante enviado. La validación tomará de 24 a 72 horas.', 'success');
+                                   } catch (error) {
+                                     console.error(error);
+                                     showNotification('Error al enviar el comprobante.', 'error');
+                                   } finally {
+                                     setUploadingOrder(null);
+                                   }
+                                 }
+                               }} />
+                             </label>
+                           ) : null}
                         </div>
                       </div>
                     ))
