@@ -5,6 +5,7 @@ import { LogOut, Package, MapPin, Heart, User, Camera, ChevronLeft, ChevronRight
 import { motion } from "framer-motion";
 
 import { api } from "@/lib/api";
+import { useNotification } from "@/components/ui/notification-provider";
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("historial");
@@ -14,6 +15,7 @@ export default function AccountPage() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -101,10 +103,10 @@ export default function AccountPage() {
                         headers: { 'Content-Type': 'multipart/form-data' }
                       });
                       setUser(res.data);
-                      alert('Foto de perfil actualizada correctamente');
+                      showNotification('Foto de perfil actualizada correctamente', 'success');
                     } catch (error) {
                       console.error('Error al actualizar foto:', error);
-                      alert('Error al actualizar la foto de perfil');
+                      showNotification('Error al actualizar la foto de perfil', 'error');
                     }
                   }
                 }} />
@@ -194,10 +196,10 @@ export default function AccountPage() {
                         club: formData.get('club')
                       });
                       setUser(res.data);
-                      alert('Perfil actualizado correctamente');
+                      showNotification('Perfil actualizado correctamente', 'success');
                     } catch (error) {
                       console.error(error);
-                      alert('Error al actualizar el perfil');
+                      showNotification('Error al actualizar el perfil', 'error');
                     }
                   }}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -311,10 +313,10 @@ export default function AccountPage() {
                       });
                       setAddresses([res.data, ...addresses]);
                       setShowAddressForm(false);
-                      alert('Dirección agregada correctamente');
+                      showNotification('Dirección agregada correctamente', 'success');
                     } catch (error) {
                       console.error(error);
-                      alert('Error al agregar dirección');
+                      showNotification('Error al agregar dirección', 'error');
                     }
                   }}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -367,8 +369,9 @@ export default function AccountPage() {
                             try {
                               await api.delete(`/auth/addresses/${addr.id}`);
                               setAddresses(addresses.filter(a => a.id !== addr.id));
+                              showNotification('Dirección eliminada correctamente', 'success');
                             } catch (e) {
-                              alert('Error al eliminar');
+                              showNotification('Error al eliminar la dirección', 'error');
                             }
                           }
                         }} className="mt-4 text-xs text-red-500 hover:underline">Eliminar</button>
