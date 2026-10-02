@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import { CustomerList } from "@/components/admin/customer-list";
 import { CustomerDetails } from "@/components/admin/customer-details";
 
-const MOCK_CUSTOMERS = [];
+const MOCK_CUSTOMERS: any[] = [];
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState(MOCK_CUSTOMERS);

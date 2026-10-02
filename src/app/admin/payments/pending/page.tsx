@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PaymentList } from "@/components/admin/payment-list";
 import { PaymentDetails } from "@/components/admin/payment-details";
 
-const MOCK_PAYMENTS = [];
+const MOCK_PAYMENTS: any[] = [];
 
 export default function PendingPaymentsPage() {
   const [payments, setPayments] = useState(MOCK_PAYMENTS);

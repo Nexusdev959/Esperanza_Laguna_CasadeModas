@@ -14,7 +14,7 @@ const CATEGORIES = [
   { id: "Insignias", label: "Insignias y Accesorios" },
 ];
 
-const FALLBACK_PRODUCTS = [];
+const FALLBACK_PRODUCTS: any[] = [];
 
 export function ProductGallery() {
   const [activeCategory, setActiveCategory] = useState("Todos");

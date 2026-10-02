@@ -9,7 +9,7 @@ import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
 import { useRouter } from "next/navigation";
 
-const MOCK_CART_ITEMS = [];
+const MOCK_CART_ITEMS: any[] = [];
 
 export function Cart() {
   const [isOpen, setIsOpen] = useState(false);

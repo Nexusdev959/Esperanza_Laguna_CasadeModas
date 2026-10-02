@@ -3,7 +3,7 @@
 import { Shield, Plus, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const MOCK_ADMINS = [];
+const MOCK_ADMINS: any[] = [];
 
 export default function AdminStaff() {
   return (

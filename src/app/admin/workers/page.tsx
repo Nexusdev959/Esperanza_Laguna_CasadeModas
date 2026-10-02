@@ -6,7 +6,7 @@ import { WorkerList } from "@/components/admin/worker-list";
 import { WorkerDetails } from "@/components/admin/worker-details";
 import { WorkerRegistrationModal } from "@/components/admin/worker-registration-modal";
 
-const MOCK_WORKERS = [];
+const MOCK_WORKERS: any[] = [];
 
 export default function WorkersPage() {
   const [workers, setWorkers] = useState(MOCK_WORKERS);

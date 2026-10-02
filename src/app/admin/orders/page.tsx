@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Search, Eye, Filter } from "lucide-react";
 import { OrderDetailsModal } from "@/components/admin/order-details-modal";
 
-const MOCK_ORDERS = [];
+const MOCK_ORDERS: any[] = [];
 
 export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);

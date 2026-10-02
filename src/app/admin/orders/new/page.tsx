@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 import { OrderList } from "@/components/admin/order-list";
 import { OrderDetails } from "@/components/admin/order-details";
 
-const MOCK_NEW_ORDERS = [];
+const MOCK_NEW_ORDERS: any[] = [];
 
 export default function NewOrdersPage() {
   const [orders, setOrders] = useState(MOCK_NEW_ORDERS);

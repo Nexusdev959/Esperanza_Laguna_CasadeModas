@@ -8,7 +8,7 @@ import { BellRing } from "lucide-react";
 
 type OrderStage = "Corte/Recolección" | "Empaquetado" | "Listo para Envío";
 
-const INITIAL_ORDERS = [];
+const INITIAL_ORDERS: any[] = [];
 
 export default function PreparationBoard() {
   const [orders, setOrders] = useState(INITIAL_ORDERS);

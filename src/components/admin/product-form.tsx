@@ -105,12 +105,12 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
             <div className="grid grid-cols-3 gap-3">
               {(Object.keys(formData.sizes) as Array<keyof typeof formData.sizes>).map(size => (
                 <button
-                  key={size}
+                  key={String(size)}
                   type="button"
                   onClick={() => handleSizeToggle(size)}
                   className={`py-2 px-3 border rounded-lg text-sm font-medium transition-colors ${formData.sizes[size].active ? 'bg-primary text-white border-primary shadow-sm' : 'bg-[var(--background)] border-[var(--border-color)] text-[var(--muted)] hover:border-primary/50'}`}
                 >
-                  {size}
+                  {String(size)}
                 </button>
               ))}
             </div>
@@ -121,13 +121,13 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
                   .filter(size => formData.sizes[size].active)
                   .map(size => (
                     <motion.div 
-                      key={`qty-${size}`}
+                      key={`qty-${String(size)}`}
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       className="flex items-center gap-3 bg-[var(--background)] p-2 rounded-xl border border-[var(--border-color)]"
                     >
-                      <div className="w-12 text-center font-bold text-xs text-[var(--foreground)]">{size}</div>
+                      <div className="w-12 text-center font-bold text-xs text-[var(--foreground)]">{String(size)}</div>
                       <input 
                         type="number" 
                         placeholder="Cant. disponible" 
