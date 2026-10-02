@@ -35,7 +35,7 @@ export function ProductTable({ products, onEdit, onDelete }: { products: any[], 
               <tr key={product.id} className="hover:bg-[var(--background)]/50 transition-colors">
                 <td className="px-6 py-4">
                   <span className="font-medium block">{product.name}</span>
-                  <span className="text-[10px] uppercase font-bold text-primary tracking-wider">{product.audience}</span>
+                  <span className="text-[10px] uppercase font-bold text-primary tracking-wider">{product.audience?.join(', ')}</span>
                 </td>
                 <td className="px-6 py-4 text-[var(--muted)]">{product.category}</td>
                 <td className="px-6 py-4">
@@ -47,7 +47,7 @@ export function ProductTable({ products, onEdit, onDelete }: { products: any[], 
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-1 flex-wrap">
-                    {product.sizes.map((s: string) => <span key={s} className="px-1.5 py-0.5 border border-[var(--border-color)] rounded text-[10px] font-bold bg-[var(--surface)] text-[var(--muted)]">{s}</span>)}
+                    {product.sizes ? product.sizes.map((s: any) => <span key={typeof s === 'string' ? s : s[0] || 'T'} className="px-1.5 py-0.5 border border-[var(--border-color)] rounded text-[10px] font-bold bg-[var(--surface)] text-[var(--muted)]">{typeof s === 'string' ? s : s[0]}</span>) : <span className="text-xs text-[var(--muted)]">N/A</span>}
                   </div>
                 </td>
                 <td className="px-6 py-4">
