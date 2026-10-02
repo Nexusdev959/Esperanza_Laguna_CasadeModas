@@ -3,6 +3,7 @@
 import { Save, Building, Bell, CreditCard, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { useNotification } from "@/components/ui/notification-provider";
 
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState('general');
@@ -21,6 +22,7 @@ export default function AdminSettings() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     api.get('/settings').then(res => {
@@ -52,10 +54,10 @@ export default function AdminSettings() {
     setSaving(true);
     try {
       await api.put('/settings', settings);
-      alert('Configuración guardada correctamente');
+      showNotification('Configuración guardada correctamente', 'success');
     } catch (err) {
       console.error(err);
-      alert('Error al guardar la configuración');
+      showNotification('Error al guardar la configuración', 'error');
     }
     setSaving(false);
   };
