@@ -8,6 +8,7 @@ import { useNotification } from "@/components/ui/notification-provider";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import useSWR from "swr";
+import { useCartStore } from "@/store/cart";
 
 export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -46,10 +47,23 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   const currentPrice = purchaseMode === "lote" ? basePrice * 0.8 : basePrice; // 20% discount for batches
   const lotSize = 12; // A batch contains 12 units
 
+  const { addItem } = useCartStore();
+
   const handleAddToCart = () => {
     const totalUnits = purchaseMode === "lote" ? quantity * lotSize : quantity;
+    const cartId = `${product.id}-${selectedSize}-${purchaseMode}`;
+    
+    addItem({
+      id: cartId,
+      productId: product.id,
+      name: product.name,
+      price: currentPrice,
+      quantity: totalUnits,
+      image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/800x1000?text=Sin+Imagen',
+      size: selectedSize
+    });
+
     showNotification(`Añadido al carrito: ${totalUnits} unidad(es) de ${product.name}`, "success");
-    // TODO: Add actual cart logic here
   };
 
   const increment = () => setQuantity(q => q + 1);

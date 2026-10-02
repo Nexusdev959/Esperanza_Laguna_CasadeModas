@@ -9,11 +9,11 @@ import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
 import { useRouter } from "next/navigation";
 
-const MOCK_CART_ITEMS: any[] = [];
+import { useCartStore } from "@/store/cart";
 
 export function Cart() {
   const [isOpen, setIsOpen] = useState(false);
-  const [items, setItems] = useState(MOCK_CART_ITEMS);
+  const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore();
   const [mounted, setMounted] = useState(false);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>("");
@@ -45,18 +45,8 @@ export function Cart() {
     };
   }, [isOpen]);
 
-  const updateQuantity = (id: number, delta: number) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        return { ...item, quantity: Math.max(1, item.quantity + delta) };
-      }
-      return item;
-    }));
-  };
-
-  const removeItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
-  };
+  const subtotal = getTotal();
+  const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
 
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
@@ -65,12 +55,12 @@ export function Cart() {
     try {
       setLoading(true);
       const payload = {
-        items: items.map(i => ({ productId: i.id.toString(), quantity: i.quantity })),
+        items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
         shippingAddress: selectedAddress
       };
       const res = await api.post('/orders/quote', payload);
-      showNotification(`Cotización #${res.data.id} generada con éxito`, 'success');
-      setItems([]);
+      showNotification(`Pedido generado con éxito. Revisa tu correo electrónico para el abono.`, 'success');
+      clearCart();
       setIsOpen(false);
     } catch (err: any) {
       showNotification(err.response?.data?.error || "Error al procesar. Intentando de nuevo pronto...", "error");
@@ -85,9 +75,6 @@ export function Cart() {
     setIsOpen(false);
     router.push('/quotes');
   };
-
-  const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
 
   if (!mounted) return null;
 
@@ -169,7 +156,7 @@ export function Cart() {
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <p className="text-xs text-[var(--muted)] mt-1">Talla: {item.size} | {item.type}</p>
+                            <p className="text-xs text-[var(--muted)] mt-1">Talla: {item.size}</p>
                           </div>
                           
                           <div className="flex items-end justify-between mt-3">
@@ -177,11 +164,11 @@ export function Cart() {
                             
                             {/* Quantity Selector */}
                             <div className="flex items-center bg-[var(--surface)] border border-[var(--border-color)] rounded-lg">
-                              <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
+                              <button onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))} className="p-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
                                 <Minus className="w-3 h-3" />
                               </button>
                               <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
-                              <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
+                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
                                 <Plus className="w-3 h-3" />
                               </button>
                             </div>
