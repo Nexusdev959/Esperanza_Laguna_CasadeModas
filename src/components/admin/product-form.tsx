@@ -57,15 +57,22 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Precio (COP)</label>
             <input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} required type="number" step="0.01" placeholder="0.00" className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
           </div>
-          <div className="space-y-2 md:col-span-1">
+          <div className="space-y-2 md:col-span-1 relative">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Público / Género</label>
-            <select value={formData.audience} onChange={e => setFormData({...formData, audience: e.target.value})} className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
-              <option>Damas</option>
-              <option>Caballeros</option>
-              <option>Niños</option>
-              <option>Niñas</option>
-              <option>Unisex</option>
-            </select>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {['Damas', 'Caballeros', 'Niñas', 'Niños', 'Unisex'].map(a => (
+                <label key={a} className={`cursor-pointer px-3 py-1.5 border rounded-full text-xs font-medium transition-colors ${formData.audience.includes(a) ? 'bg-primary text-white border-primary' : 'bg-transparent border-[var(--border-color)] text-[var(--foreground)] hover:border-primary/50'}`}>
+                  <input type="checkbox" className="hidden" checked={formData.audience.includes(a)} onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData({...formData, audience: [...formData.audience, a]});
+                    } else {
+                      setFormData({...formData, audience: formData.audience.filter((item: string) => item !== a)});
+                    }
+                  }} />
+                  {a}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -143,6 +150,39 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
           </div>
 
           <div className="space-y-6">
+            <div className="space-y-4">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] flex items-center gap-2"><Box className="w-4 h-4" /> Configuración de Producto</label>
+              
+              <label className="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--background)] transition-colors">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 text-primary rounded border-[var(--border-color)] focus:ring-primary"
+                  checked={formData.requiresPersonalization}
+                  onChange={(e) => setFormData({...formData, requiresPersonalization: e.target.checked})}
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-[var(--foreground)]">Permitir Personalización (Insignias)</span>
+                  <span className="text-xs text-[var(--muted)]">El cliente podrá escribir un texto para mediaslunas, nombres, etc.</span>
+                </div>
+              </label>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Imágenes del Producto</label>
+                <div className="border-2 border-dashed border-[var(--border-color)] rounded-xl p-6 text-center hover:bg-[var(--background)] transition-colors">
+                  <input type="file" multiple accept="image/*" className="hidden" id="product-images" onChange={(e) => {
+                    if (e.target.files) {
+                      setFormData({...formData, images: [...formData.images, ...Array.from(e.target.files)]});
+                    }
+                  }} />
+                  <label htmlFor="product-images" className="cursor-pointer flex flex-col items-center gap-2">
+                    <Box className="w-6 h-6 text-[var(--muted)]" />
+                    <span className="text-sm text-[var(--foreground)] font-medium">Sube fotos o arrástralas aquí</span>
+                    <span className="text-xs text-[var(--muted)]">Seleccionadas: {formData.images?.length || 0}</span>
+                  </label>
+                </div>
+              </div>
+
+            </div>
             <div className="space-y-4">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] flex items-center gap-2"><Box className="w-4 h-4" /> Modelo de Producción</label>
               <div className="flex bg-[var(--background)] border border-[var(--border-color)] rounded-xl p-1">

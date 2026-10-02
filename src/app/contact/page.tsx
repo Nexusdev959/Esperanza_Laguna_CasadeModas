@@ -16,6 +16,11 @@ export default function Contact() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [successData, setSuccessData] = useState<{caseNumber: string, estimatedResponseTime: string} | null>(null);
+  const [settings, setSettings] = useState<{phone?: string, supportEmail?: string, address?: string} | null>(null);
+
+  useEffect(() => {
+    api.get('/settings').then(res => setSettings(res.data)).catch(console.error);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +82,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-medium text-[var(--foreground)]">WhatsApp (Respuestas rápidas)</h3>
-                    <p className="text-sm text-[var(--muted)] mt-1">+1 (555) 123-4567</p>
+                    <p className="text-sm text-[var(--muted)] mt-1">{settings?.phone || 'Cargando...'}</p>
                     <p className="text-xs text-[var(--muted)] mt-1">Lunes a Viernes, 9am - 6pm</p>
                   </div>
                 </div>
@@ -88,7 +93,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-medium text-[var(--foreground)]">Correo Electrónico</h3>
-                    <p className="text-sm text-[var(--muted)] mt-1">soporte@pilypage.com</p>
+                    <p className="text-sm text-[var(--muted)] mt-1">{settings?.supportEmail || 'Cargando...'}</p>
                   </div>
                 </div>
 
@@ -98,7 +103,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-medium text-[var(--foreground)]">Dirección Principal</h3>
-                    <p className="text-sm text-[var(--muted)] mt-1">Centro Administrativo Adventista<br />Calle Principal 123, Ciudad</p>
+                    <p className="text-sm text-[var(--muted)] mt-1 whitespace-pre-line">{settings?.address || 'Cargando...'}</p>
                   </div>
                 </div>
               </div>

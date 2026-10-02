@@ -13,12 +13,14 @@ export default function AdminProducts() {
   const [formData, setFormData] = useState({
     name: '',
     category: 'Conquistadores',
-    audience: 'Unisex', 
+    audience: ['Unisex'], 
     price: '',
     saleMode: 'unidad',
     isPublished: true,
     productionType: 'stock',
     estimatedDays: '7',
+    requiresPersonalization: false,
+    images: [] as File[],
     sizes: { 
       XS: { active: false, qty: '' }, 
       S: { active: false, qty: '' }, 
@@ -37,8 +39,39 @@ export default function AdminProducts() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsAdding(false);
-    // Submit logic
+    
+    try {
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('category', formData.category);
+      data.append('price', formData.price);
+      data.append('saleMode', formData.saleMode);
+      data.append('isPublished', String(formData.isPublished));
+      data.append('productionType', formData.productionType);
+      data.append('estimatedDays', formData.estimatedDays);
+      data.append('requiresPersonalization', String(formData.requiresPersonalization));
+      
+      // Enviar audience como array JSON
+      data.append('audience', JSON.stringify(formData.audience));
+      
+      // Enviar sizes activos
+      const activeSizes = Object.entries(formData.sizes).filter(([_, s]) => s.active);
+      data.append('sizes', JSON.stringify(activeSizes));
+      
+      // Adjuntar imagenes
+      formData.images.forEach(img => {
+        data.append('images', img);
+      });
+      
+      // Aquí se enviaría a la API real
+      // await api.post('/products', data);
+      
+      setIsAdding(false);
+      alert('Producto preparado para guardar.');
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar el producto');
+    }
   };
 
   return (

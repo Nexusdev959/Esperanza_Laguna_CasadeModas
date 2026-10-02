@@ -1,14 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, ShieldCheck, ChevronLeft, ChevronRight, LogOut, Clock, DollarSign, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
+import { api } from "@/lib/api";
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [user, setUser] = useState<{name: string, role: string, avatar?: string} | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      api.get('/auth/profile').then(res => {
+        setUser(res.data);
+      }).catch(err => console.error(err));
+    }
+  }, []);
 
   const links = [
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
@@ -44,12 +55,12 @@ export function AdminSidebar() {
       {/* Perfil de Usuario */}
       <div className={`pt-10 pb-6 flex flex-col items-center border-b border-[var(--border-color)] transition-all ${isCollapsed ? 'px-2' : 'px-6'}`}>
         <div className={`relative rounded-full overflow-hidden border-2 border-secondary shadow-[0_0_15px_rgba(var(--secondary),0.3)] transition-all ${isCollapsed ? 'w-10 h-10' : 'w-24 h-24 mb-4'}`}>
-          <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Admin Profile" className="w-full h-full object-cover" />
+          <img src={user?.avatar || "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400"} alt="Admin Profile" className="w-full h-full object-cover" />
         </div>
         {!isCollapsed && (
           <div className="flex flex-col items-center text-center">
-            <h3 className="text-[var(--foreground)] font-serif font-bold text-lg tracking-wide">Juan Pérez</h3>
-            <span className="text-secondary text-xs tracking-widest uppercase font-medium mt-1">Administrador</span>
+            <h3 className="text-[var(--foreground)] font-serif font-bold text-lg tracking-wide">{user ? user.name : "Cargando..."}</h3>
+            <span className="text-secondary text-xs tracking-widest uppercase font-medium mt-1">{user ? user.role : "ADMINISTRADOR"}</span>
           </div>
         )}
       </div>

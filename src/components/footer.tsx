@@ -4,8 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Globe, Mail, MessageSquare } from "lucide-react";
 
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+
 export function Footer() {
   const pathname = usePathname();
+  const [storeName, setStoreName] = useState("Esperanza Laguna Casa de Modas");
+
+  useEffect(() => {
+    api.get('/settings').then(res => {
+      if (res.data.storeName) setStoreName(res.data.storeName);
+    }).catch(console.error);
+  }, []);
 
   if (pathname?.startsWith("/admin")) {
     return null;
@@ -73,7 +83,7 @@ export function Footer() {
         </div>
       </div>
       <div className="container mx-auto px-4 mt-12 pt-8 border-t border-border flex flex-col items-center gap-4 text-center text-xs text-[var(--muted)]">
-        <p>&copy; 2026 Esperanza Laguna Casa de Modas. Diseñado para servir. Todos los derechos reservados.</p>
+        <p>&copy; {new Date().getFullYear()} {storeName}. Diseñado para servir. Todos los derechos reservados.</p>
         <div className="flex items-center justify-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
           <span>Designed by</span>
           <img src="/logos/log4.png" alt="Designer Logo" className="h-6 w-auto object-contain" />
