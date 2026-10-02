@@ -16,8 +16,10 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const token = localStorage.getItem('jwt_token');
     if (token) {
       try {
@@ -143,25 +145,27 @@ export default function LoginPage() {
               <div className="flex-1 h-px bg-[var(--border-color)]"></div>
             </div>
             
-            <div className="flex justify-center w-full">
-              {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
-                <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => {
-                      showNotification("Fallo al iniciar sesión con Google", "error");
-                    }}
-                    useOneTap
-                    theme="outline"
-                    size="large"
-                    text="signin_with"
-                    shape="rectangular"
-                  />
-                </GoogleOAuthProvider>
-              ) : (
-                <div className="text-sm text-[var(--muted)] text-center p-3 border border-dashed border-[var(--border-color)] rounded-xl w-full">
-                  Inicio con Google no configurado
-                </div>
+            <div className="flex justify-center w-full min-h-[44px]">
+              {mounted && (
+                process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+                  <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => {
+                        showNotification("Fallo al iniciar sesión con Google", "error");
+                      }}
+                      useOneTap
+                      theme="outline"
+                      size="large"
+                      text="signin_with"
+                      shape="rectangular"
+                    />
+                  </GoogleOAuthProvider>
+                ) : (
+                  <div className="text-sm text-[var(--muted)] text-center p-3 border border-dashed border-[var(--border-color)] rounded-xl w-full">
+                    Inicio con Google no configurado
+                  </div>
+                )
               )}
             </div>
             
