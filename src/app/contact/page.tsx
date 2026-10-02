@@ -4,7 +4,7 @@ import { ArrowLeft, Headphones, Mail, MessageCircle, MapPin, Paperclip } from "l
 import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
 

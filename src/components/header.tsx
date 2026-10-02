@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Cart } from "./cart";
 import { motion } from "framer-motion";
+import { api } from "@/lib/api";
 
 const NAV_LINKS = [
   { path: "/", label: "Inicio" },
@@ -38,7 +39,7 @@ export function Header() {
         setUserRoute('/login');
       }
     }
-    api.get('/settings').then(res => {
+    api.get('/settings').then((res: any) => {
       if (res.data.bannerMessage) {
         setBannerMessage(res.data.bannerMessage);
       }
