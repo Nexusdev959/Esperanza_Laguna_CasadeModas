@@ -15,10 +15,22 @@ export function Cart() {
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState(MOCK_CART_ITEMS);
   const [mounted, setMounted] = useState(false);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<string>("");
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
+    // Fetch addresses if logged in
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      api.get('/auth/addresses').then(res => {
+        setAddresses(res.data);
+        const def = res.data.find((a: any) => a.isDefault);
+        if (def) setSelectedAddress(`${def.street}, ${def.city}, ${def.state}`);
+        else if (res.data.length > 0) setSelectedAddress(`${res.data[0].street}, ${res.data[0].city}, ${res.data[0].state}`);
+      }).catch(err => console.error(err));
+    }
   }, []);
 
   // Lock body scroll when cart is open
@@ -53,7 +65,8 @@ export function Cart() {
     try {
       setLoading(true);
       const payload = {
-        items: items.map(i => ({ productId: i.id.toString(), quantity: i.quantity }))
+        items: items.map(i => ({ productId: i.id.toString(), quantity: i.quantity })),
+        shippingAddress: selectedAddress
       };
       const res = await api.post('/orders/quote', payload);
       showNotification(`Cotización #${res.data.id} generada con éxito`, 'success');
@@ -183,6 +196,31 @@ export function Cart() {
                 {items.length > 0 && (
                   <div className="p-6 border-t border-[var(--border-color)] bg-[var(--background)]/80 backdrop-blur-md shrink-0">
                     <div className="space-y-3 mb-6">
+                      <div className="mb-4 space-y-2 border-b border-[var(--border-color)] pb-4">
+                        <label className="text-sm font-medium text-[var(--foreground)]">Dirección de Envío</label>
+                        {addresses.length > 0 ? (
+                          <select 
+                            value={selectedAddress}
+                            onChange={(e) => setSelectedAddress(e.target.value)}
+                            className="w-full p-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none text-[var(--foreground)]"
+                          >
+                            <option value="">Selecciona una dirección o escríbela</option>
+                            {addresses.map(a => (
+                              <option key={a.id} value={`${a.street}, ${a.city}, ${a.state}`}>
+                                {a.name} - {a.street}, {a.city}
+                              </option>
+                            ))}
+                          </select>
+                        ) : null}
+                        <input 
+                          type="text" 
+                          placeholder="Ingresa tu dirección de envío completa"
+                          value={selectedAddress}
+                          onChange={(e) => setSelectedAddress(e.target.value)}
+                          className="w-full p-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none text-[var(--foreground)]"
+                        />
+                      </div>
+
                       <div className="flex justify-between text-sm text-[var(--muted)]">
                         <span>Subtotal</span>
                         <span>{subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>

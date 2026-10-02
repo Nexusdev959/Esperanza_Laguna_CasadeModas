@@ -9,8 +9,10 @@ import { api } from "@/lib/api";
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("historial");
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [user, setUser] = useState<{name: string, email: string, role: string, id: string} | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -22,14 +24,25 @@ export default function AccountPage() {
           return;
         }
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser(payload);
-
-        // Fetch real orders
+        
         try {
-          const res = await api.get('/orders/me');
-          setOrders(res.data);
+          const profileRes = await api.get('/auth/profile');
+          setUser(profileRes.data);
         } catch (error) {
-          console.error("Error fetching orders:", error);
+          console.error("Error fetching profile, using payload:", error);
+          setUser(payload);
+        }
+
+        // Fetch real orders and addresses
+        try {
+          const [ordersRes, addrRes] = await Promise.all([
+            api.get('/orders/me'),
+            api.get('/auth/addresses')
+          ]);
+          setOrders(ordersRes.data);
+          setAddresses(addrRes.data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
         }
 
       } catch (e) {
@@ -154,11 +167,26 @@ export default function AccountPage() {
               <div className="animate-fade-in-up">
                 <h2 className="text-xl font-serif mb-6 text-[var(--foreground)]">Personalización del Perfil</h2>
                 <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm">
-                  <form className="space-y-6">
+                  <form className="space-y-6" onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    try {
+                      const res = await api.put('/auth/profile', {
+                        name: formData.get('name'),
+                        phone: formData.get('phone'),
+                        club: formData.get('club')
+                      });
+                      setUser(res.data);
+                      alert('Perfil actualizado correctamente');
+                    } catch (error) {
+                      console.error(error);
+                      alert('Error al actualizar el perfil');
+                    }
+                  }}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-xs font-medium text-[var(--foreground)]">Nombre Completo</label>
-                        <input type="text" defaultValue={user?.name || ''} className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+                        <input name="name" type="text" defaultValue={user?.name || ''} className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-medium text-[var(--foreground)]">Correo Electrónico</label>
@@ -166,21 +194,21 @@ export default function AccountPage() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-medium text-[var(--foreground)]">Teléfono Móvil</label>
-                        <input type="tel" defaultValue="+1 234 567 890" className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+                        <input name="phone" type="tel" defaultValue={user?.phone || ''} placeholder="+57 300 000 0000" className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-medium text-[var(--foreground)]">Club Asociado</label>
-                        <select className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
-                          <option>Club Conquistadores Orion</option>
-                          <option>Aventureros Kids</option>
-                          <option>Guías Mayores Alpha</option>
-                          <option>Ninguno</option>
+                        <select name="club" defaultValue={user?.club || ''} className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                          <option value="">Ninguno</option>
+                          <option value="Club Conquistadores Orion">Club Conquistadores Orion</option>
+                          <option value="Aventureros Kids">Aventureros Kids</option>
+                          <option value="Guías Mayores Alpha">Guías Mayores Alpha</option>
                         </select>
                       </div>
                     </div>
 
                     <div className="pt-6 border-t border-[var(--border-color)] flex justify-end">
-                      <button type="button" className="px-6 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+                      <button type="submit" className="px-6 py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
                         Guardar Cambios
                       </button>
                     </div>
@@ -244,14 +272,93 @@ export default function AccountPage() {
 
             {activeTab === "direcciones" && (
               <div className="animate-fade-in-up">
-                <h2 className="text-xl font-serif mb-6 text-[var(--foreground)]">Mis Direcciones</h2>
-                <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center">
-                  <MapPin className="w-10 h-10 mx-auto text-[var(--muted)] mb-3" />
-                  <p className="text-[var(--muted)] text-sm mb-4">Aún no tienes direcciones guardadas.</p>
-                  <button className="px-6 py-2 border border-[var(--border-color)] rounded-xl text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)]">
-                    Agregar Dirección
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-serif text-[var(--foreground)]">Mis Direcciones</h2>
+                  <button onClick={() => setShowAddressForm(!showAddressForm)} className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+                    {showAddressForm ? 'Cancelar' : 'Agregar Dirección'}
                   </button>
                 </div>
+
+                {showAddressForm && (
+                  <form className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm mb-6 space-y-4" onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    try {
+                      const res = await api.post('/auth/addresses', {
+                        name: formData.get('name'),
+                        street: formData.get('street'),
+                        city: formData.get('city'),
+                        state: formData.get('state'),
+                        zip: formData.get('zip'),
+                        isDefault: formData.get('isDefault') === 'on'
+                      });
+                      setAddresses([res.data, ...addresses]);
+                      setShowAddressForm(false);
+                      alert('Dirección agregada correctamente');
+                    } catch (error) {
+                      console.error(error);
+                      alert('Error al agregar dirección');
+                    }
+                  }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-[var(--foreground)]">Nombre (Ej: Casa)</label>
+                        <input name="name" required className="w-full mt-1 px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-[var(--foreground)]">Dirección (Calle, Carrera)</label>
+                        <input name="street" required className="w-full mt-1 px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-[var(--foreground)]">Ciudad</label>
+                        <input name="city" required className="w-full mt-1 px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-[var(--foreground)]">Departamento / Estado</label>
+                        <input name="state" required className="w-full mt-1 px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-[var(--foreground)]">Código Postal (Opcional)</label>
+                        <input name="zip" className="w-full mt-1 px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none" />
+                      </div>
+                      <div className="flex items-center space-x-2 pt-6">
+                        <input type="checkbox" name="isDefault" id="isDefault" className="rounded" />
+                        <label htmlFor="isDefault" className="text-sm text-[var(--foreground)]">Establecer como principal</label>
+                      </div>
+                    </div>
+                    <div className="flex justify-end mt-4">
+                      <button type="submit" className="px-6 py-2 bg-primary text-white rounded-xl text-sm font-medium">Guardar Dirección</button>
+                    </div>
+                  </form>
+                )}
+
+                {addresses.length === 0 && !showAddressForm ? (
+                  <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center">
+                    <MapPin className="w-10 h-10 mx-auto text-[var(--muted)] mb-3" />
+                    <p className="text-[var(--muted)] text-sm mb-4">Aún no tienes direcciones guardadas.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {addresses.map(addr => (
+                      <div key={addr.id} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-5 shadow-sm relative">
+                        {addr.isDefault && <span className="absolute top-4 right-4 bg-primary/10 text-primary text-xs px-2 py-1 rounded">Principal</span>}
+                        <h3 className="font-medium text-[var(--foreground)] mb-1">{addr.name}</h3>
+                        <p className="text-sm text-[var(--muted)]">{addr.street}</p>
+                        <p className="text-sm text-[var(--muted)]">{addr.city}, {addr.state} {addr.zip}</p>
+                        <button onClick={async () => {
+                          if (confirm('¿Eliminar esta dirección?')) {
+                            try {
+                              await api.delete(`/auth/addresses/${addr.id}`);
+                              setAddresses(addresses.filter(a => a.id !== addr.id));
+                            } catch (e) {
+                              alert('Error al eliminar');
+                            }
+                          }
+                        }} className="mt-4 text-xs text-red-500 hover:underline">Eliminar</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

@@ -17,22 +17,22 @@ export default function QuoteGenerator() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const userDataStr = localStorage.getItem('user_data');
-      if (userDataStr) {
-        try {
-          const user = JSON.parse(userDataStr);
-          setIsAuthenticated(true);
-          setClientInfo({
-            name: user.name || "",
-            club: user.club || "",
-            church: user.church || "",
-            email: user.email || "",
-            phone: user.phone || "",
-            address: user.address || "",
-          });
-        } catch(e) {
-          console.error(e);
-        }
+      const token = localStorage.getItem('jwt_token');
+      if (token) {
+        setIsAuthenticated(true);
+        import('@/lib/api').then(({ api }) => {
+          api.get('/auth/profile').then(res => {
+            const user = res.data;
+            setClientInfo({
+              name: user.name || "",
+              club: user.club || "",
+              church: user.church || "", // Assuming church is added or just empty
+              email: user.email || "",
+              phone: user.phone || "",
+              address: user.address || "",
+            });
+          }).catch(e => console.error(e));
+        });
       }
     }
   }, []);
@@ -65,8 +65,23 @@ export default function QuoteGenerator() {
     }
   }, []);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    try {
+      const { api } = await import('@/lib/api');
+      await api.post('/orders/save-quote', {
+        clientInfo,
+        items,
+        subtotal,
+        quoteDetails
+      });
+    } catch (e) {
+      console.error("Error saving quote", e);
+    }
+    
+    // Pequeño timeout para asegurar renderizado final antes de imprimir
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
