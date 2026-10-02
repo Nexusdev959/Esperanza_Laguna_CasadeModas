@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings, ShieldCheck, ChevronLeft, ChevronRight, LogOut, Clock, DollarSign, Briefcase, Camera } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, ShieldCheck, ChevronLeft, ChevronRight, LogOut, Clock, DollarSign, Briefcase, Camera, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useNotification } from "@/components/ui/notification-provider";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
 
@@ -11,8 +13,13 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState<{name: string, role: string, avatar?: string} | null>(null);
+  const { showNotification } = useNotification();
+
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const token = localStorage.getItem('jwt_token');
     if (token) {
       api.get('/auth/profile').then(res => {
@@ -68,8 +75,10 @@ export function AdminSidebar() {
                     headers: { 'Content-Type': 'multipart/form-data' }
                   });
                   setUser(res.data);
+                  showNotification('Foto de perfil actualizada correctamente', 'success');
                 } catch (error) {
                   console.error('Error al actualizar foto:', error);
+                  showNotification('Error al actualizar la foto de perfil', 'error');
                 }
               }
             }} />
@@ -125,46 +134,44 @@ export function AdminSidebar() {
         })}
       </nav>
       
-      <div className="p-4 border-t border-[var(--border-color)] space-y-2">
+      <div className={`p-4 border-t border-[var(--border-color)] flex items-center ${isCollapsed ? 'flex-col space-y-4' : 'justify-around'}`}>
         <Link 
           href="/admin/settings" 
-          className={`flex items-center px-3 py-3 text-sm rounded-xl transition-colors relative group ${
+          className={`p-2.5 rounded-xl transition-colors relative group ${
             pathname.startsWith("/admin/settings")
-              ? "text-primary font-medium" 
-              : "text-[var(--muted)] hover:text-primary font-medium"
-          } ${isCollapsed ? 'justify-center' : 'space-x-3'}`}
+              ? "text-primary bg-primary/10" 
+              : "text-[var(--muted)] hover:text-primary hover:bg-[var(--surface)]"
+          }`}
         >
-          {pathname.startsWith("/admin/settings") && (
-            <motion.div 
-              layoutId="activeAdminTab"
-              className="absolute inset-0 bg-primary/10 border border-primary/20 rounded-xl"
-              initial={false}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            />
-          )}
-          <Settings className="w-5 h-5 z-10 shrink-0" />
-          {!isCollapsed && <span className="z-10">Configuración</span>}
-          {isCollapsed && (
-            <div className="absolute left-full ml-4 px-2 py-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--foreground)] text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
-              Configuración
-            </div>
-          )}
+          <Settings className="w-5 h-5 shrink-0" />
+          <div className="absolute left-1/2 -translate-x-1/2 -top-10 px-2 py-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--foreground)] text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
+            Configuración
+          </div>
         </Link>
+
+        {mounted && (
+          <button 
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="p-2.5 text-[var(--muted)] hover:text-primary hover:bg-[var(--surface)] rounded-xl transition-colors relative group"
+          >
+            {theme === "dark" ? <Sun className="w-5 h-5 shrink-0" /> : <Moon className="w-5 h-5 shrink-0" />}
+            <div className="absolute left-1/2 -translate-x-1/2 -top-10 px-2 py-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--foreground)] text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
+              {theme === "dark" ? 'Modo Claro' : 'Modo Oscuro'}
+            </div>
+          </button>
+        )}
 
         <button 
           onClick={() => {
             localStorage.removeItem('jwt_token');
             window.location.replace('/');
           }}
-          className={`w-full flex items-center px-3 py-3 text-sm rounded-xl transition-colors relative group text-red-500 hover:bg-red-500/10 font-medium ${isCollapsed ? 'justify-center' : 'space-x-3'}`}
+          className="p-2.5 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors relative group"
         >
-          <LogOut className="w-5 h-5 z-10 shrink-0" />
-          {!isCollapsed && <span className="z-10">Cerrar Sesión</span>}
-          {isCollapsed && (
-            <div className="absolute left-full ml-4 px-2 py-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--foreground)] text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
-              Cerrar Sesión
-            </div>
-          )}
+          <LogOut className="w-5 h-5 shrink-0" />
+          <div className="absolute left-1/2 -translate-x-1/2 -top-10 px-2 py-1 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--foreground)] text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md">
+            Cerrar Sesión
+          </div>
         </button>
       </div>
     </aside>
