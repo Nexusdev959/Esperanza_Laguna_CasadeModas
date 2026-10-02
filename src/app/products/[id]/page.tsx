@@ -1,21 +1,28 @@
 "use client";
 
 import { ChevronDown, ShoppingBag, Plus, Minus, Package, Tag, ArrowLeft, Star, ThumbsUp, Loader2 } from "lucide-react";
-import { useState, use } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { useCartStore } from "@/store/cart";
 
-export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ProductDetail() {
+  const params = useParams();
+  const id = params.id as string;
   const [purchaseMode, setPurchaseMode] = useState<"unidad" | "lote">("unidad");
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("M");
   const { showNotification } = useNotification();
+
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Fetch product data
   const { data: product, error, isLoading } = useSWR(`/products/${id}`, async (url) => {
@@ -68,6 +75,38 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
   const increment = () => setQuantity(q => q + 1);
   const decrement = () => setQuantity(q => Math.max(1, q - 1));
+
+  const { mutate } = useSWRConfig();
+
+  const handleSubmitReview = async () => {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        showNotification("Debes iniciar sesión para calificar", "error");
+        return;
+      }
+      if (!comment.trim()) {
+        showNotification("Escribe un comentario", "error");
+        return;
+      }
+      setIsSubmittingReview(true);
+      await api.post('/reviews', {
+        productId: product.id,
+        rating,
+        comment,
+        title: "Reseña de Producto"
+      });
+      showNotification("¡Reseña publicada con éxito!", "success");
+      setIsReviewing(false);
+      setComment("");
+      setRating(5);
+      mutate(`/products/${id}`);
+    } catch (e: any) {
+      showNotification(e?.response?.data?.error || "Error al enviar la reseña", "error");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   // Determine main image and additional images
   const images = Array.isArray(product.images) && product.images.length > 0 
@@ -205,7 +244,36 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
               </div>
               
               <div className="pt-4">
-                <Button variant="outline" className="w-full">Escribir una reseña</Button>
+                {!isReviewing ? (
+                  <Button variant="outline" className="w-full" onClick={() => setIsReviewing(true)}>Escribir una reseña</Button>
+                ) : (
+                  <div className="bg-[var(--surface)] border border-[var(--border-color)] p-4 rounded-xl space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium">Tu Calificación</h3>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star} 
+                            onClick={() => setRating(star)}
+                            className={`w-5 h-5 cursor-pointer transition-colors ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-transparent text-[var(--border-color)]'}`} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <textarea 
+                      value={comment}
+                      onChange={e => setComment(e.target.value)}
+                      placeholder="¿Qué te pareció el producto?"
+                      className="w-full p-3 bg-[var(--background)] border border-[var(--border-color)] rounded-lg text-sm resize-none h-24 outline-none focus:border-primary"
+                    />
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1" onClick={() => setIsReviewing(false)}>Cancelar</Button>
+                      <Button variant="primary" className="flex-1" disabled={isSubmittingReview} onClick={handleSubmitReview}>
+                        {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publicar"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

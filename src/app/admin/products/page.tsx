@@ -68,9 +68,8 @@ export default function AdminProducts() {
       // Enviar audience como array JSON
       data.append('audience', JSON.stringify(formData.audience));
       
-      // Enviar sizes activos
-      const activeSizes = Object.entries(formData.sizes).filter(([_, s]) => s.active);
-      data.append('sizes', JSON.stringify(activeSizes));
+      // Enviar sizes completos
+      data.append('sizes', JSON.stringify(formData.sizes));
       
       // Adjuntar imagenes
       formData.images.forEach(img => {
@@ -161,6 +160,10 @@ export default function AdminProducts() {
             isPublished: product.isPublished,
             requiresPersonalization: product.requiresPersonalization,
             productionType: product.stock > 0 ? 'stock' : 'encargo',
+            sizes: product.sizes || { 
+              XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' }, 
+              L: { active: false, qty: '' }, XL: { active: false, qty: '' }, Única: { active: false, qty: '' } 
+            },
           });
           setIsAdding(true);
         }}
