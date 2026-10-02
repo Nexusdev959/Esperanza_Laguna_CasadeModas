@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 
 const NAV_LINKS = [
   { path: "/", label: "Inicio" },
-  { path: "/track-order", label: "Rastrear Pedido" },
+  { path: "/track-order", label: "Rastrear" },
   { path: "/quotes", label: "Cotizaciones" },
   { path: "/contact", label: "Soporte" },
 ];
@@ -57,7 +57,7 @@ export function Header() {
           {bannerMessage}
         </div>
       )}
-      <header className={`fixed ${bannerMessage ? 'top-10' : 'top-4'} inset-x-0 mx-auto z-50 w-[95%] max-w-7xl rounded-full border border-white/40 dark:border-white/10 bg-white/50 dark:bg-black/40 backdrop-blur-2xl text-[var(--foreground)] shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-500`}>
+      <header className={`fixed ${bannerMessage ? 'top-10' : 'top-4'} inset-x-0 mx-auto z-50 w-[95%] max-w-7xl rounded-full border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-[var(--foreground)] shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-500`}>
         <div className="px-6 h-[76px] flex items-center justify-between">
           {/* Mobile Menu */}
           <div className="md:hidden flex items-center">
@@ -85,14 +85,14 @@ export function Header() {
                   href={link.path} 
                   className={`relative px-5 py-2 rounded-full text-sm font-medium tracking-wide transition-colors duration-300 ${
                     isActive 
-                      ? "text-white dark:text-stone-900" 
-                      : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
+                      ? "text-white" 
+                      : "text-stone-600 dark:text-stone-300 hover:text-primary dark:hover:text-primary hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="navIndicatorHeader"
-                      className="absolute inset-0 bg-primary dark:bg-white rounded-full shadow-md"
+                      className="absolute inset-0 bg-[#0c2e22] dark:bg-[#0c2e22] rounded-full shadow-md"
                       transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     />
                   )}

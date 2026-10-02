@@ -41,7 +41,7 @@ export default function AdminProducts() {
       setProducts(res.data);
     } catch (error) {
       console.error('Error fetching products:', error);
-      showNotification("Error", "No se pudieron cargar los productos", "error");
+      showNotification("No se pudieron cargar los productos", "error");
     }
   };
 
@@ -80,12 +80,12 @@ export default function AdminProducts() {
         await api.put(`/products/${editingId}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        showNotification("Éxito", "Producto actualizado correctamente", "success");
+        showNotification("Producto actualizado correctamente", "success");
       } else {
         await api.post('/products', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        showNotification("Éxito", "Producto publicado correctamente", "success");
+        showNotification("Producto publicado correctamente", "success");
       }
       
       setIsAdding(false);
@@ -104,7 +104,7 @@ export default function AdminProducts() {
       loadProducts();
     } catch (err: any) {
       console.error(err);
-      showNotification("Error", err.response?.data?.error || "Error al subir el producto", "error");
+      showNotification(err.response?.data?.error || "Error al procesar el producto", "error");
     }
   };
 
@@ -165,10 +165,10 @@ export default function AdminProducts() {
           if (confirm("¿Estás seguro de eliminar este producto?")) {
             try {
               await api.delete(`/products/${id}`);
-              showNotification("Éxito", "Producto eliminado", "success");
+              showNotification("Producto eliminado", "success");
               loadProducts();
             } catch (err) {
-              showNotification("Error", "Error al eliminar producto", "error");
+              showNotification("Error al eliminar producto", "error");
             }
           }
         }}
