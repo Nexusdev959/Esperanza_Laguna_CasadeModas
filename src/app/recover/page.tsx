@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 import { useState } from "react";
+import { api } from "@/lib/api";
 
 export default function RecoverPage() {
   const { showNotification } = useNotification();
@@ -16,13 +17,15 @@ export default function RecoverPage() {
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simular el tiempo de red
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await api.post('/auth/recover', { email });
       setSent(true);
       showNotification("Si el correo existe, hemos enviado un enlace de recuperación.", "success");
-    }, 1500);
+    } catch (err: any) {
+      showNotification(err.response?.data?.error || "Error al solicitar la recuperación", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
