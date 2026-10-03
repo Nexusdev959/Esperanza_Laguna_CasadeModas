@@ -27,10 +27,18 @@ export function TrackOrderForm({ onTrackSuccess, initialOrderId }: { onTrackSucc
       
       const order = res.data;
       
-      // Adapt backend order data to frontend tracking UI format
+      let mappedStatus = 'CONFIRMADO';
+      if (order.status === 'IN_CONFECTION') mappedStatus = 'CONFECCION';
+      else if (['QUALITY_CONTROL', 'PENDING_FINAL_PAY', 'READY_TO_SHIP'].includes(order.status)) mappedStatus = 'CALIDAD';
+      else if (order.status === 'SHIPPED') mappedStatus = 'TRANSITO';
+      else if (order.status === 'DELIVERED') mappedStatus = 'ENTREGADO';
+
       const mockData = {
-        id: order.id.slice(0,8).toUpperCase(),
-        status: order.status === 'SHIPPED' ? 'TRANSITO' : (order.status === 'DELIVERED' ? 'ENTREGADO' : 'TRANSITO'),
+        id: order.id, // Keep full ID for payment links
+        displayId: order.id.slice(0,8).toUpperCase(),
+        status: mappedStatus,
+        rawStatus: order.status,
+        totalAmount: order.totalAmount,
         isLocal: true, 
         courier: order.shippingCarrier || 'Mensajería Express Pilypage',
         trackingNumber: order.trackingNumber || 'En preparación',

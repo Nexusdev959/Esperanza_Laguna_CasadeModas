@@ -13,7 +13,10 @@ export type OrderStatus = 'CONFIRMADO' | 'CONFECCION' | 'CALIDAD' | 'TRANSITO' |
 
 export interface OrderTrackData {
   id: string;
+  displayId: string;
   status: OrderStatus;
+  rawStatus: string;
+  totalAmount: string;
   isLocal: boolean;
   courier: string;
   trackingNumber: string;
@@ -141,9 +144,29 @@ export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBac
         {/* PANEL IZQUIERDO: Timeline y Detalles */}
         <div className="lg:col-span-1 bg-[var(--surface)] border border-[var(--border-color)] rounded-3xl p-6 shadow-sm flex flex-col h-[600px] overflow-y-auto custom-scrollbar">
           <div className="mb-6">
-            <h2 className="text-2xl font-serif text-[var(--foreground)] mb-1">Pedido {data.id}</h2>
+            <h2 className="text-2xl font-serif text-[var(--foreground)] mb-1">Pedido {data.displayId}</h2>
             <p className="text-sm text-[var(--muted)]">Entrega estimada: {data.estimatedDate}</p>
           </div>
+
+          {/* Pagos Pendientes */}
+          {(data.rawStatus === 'PENDING_ADVANCE' || data.rawStatus === 'PENDING_FINAL_PAY') && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 mb-8">
+              <h3 className="text-amber-600 dark:text-amber-400 font-bold mb-2">
+                {data.rawStatus === 'PENDING_ADVANCE' ? 'Abono Inicial Pendiente (50%)' : 'Pago Final Pendiente (50%)'}
+              </h3>
+              <p className="text-sm text-[var(--muted)] mb-4">
+                Tu pedido ha sido registrado. Para continuar con {data.rawStatus === 'PENDING_ADVANCE' ? 'la confección' : 'el envío'}, debes realizar el pago correspondiente de <strong className="text-[var(--foreground)]">${(parseFloat(data.totalAmount) / 2).toLocaleString('es-CO')} COP</strong>.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button onClick={() => window.open(`https://pilypage.com/checkout/${data.id}`, '_blank')} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium">
+                  Pagar por Wompi
+                </Button>
+                <Button variant="outline" onClick={() => window.open(`https://wa.me/573215028653?text=Hola, quiero reportar el pago de mi pedido ${data.displayId}`, '_blank')} className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-500/10">
+                  Reportar Transferencia
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Guía y Logística */}
           <div className="bg-black/5 dark:bg-white/5 rounded-2xl p-5 mb-8 border border-[var(--border-color)]">
