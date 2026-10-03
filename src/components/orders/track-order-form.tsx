@@ -1,36 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PackageSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
-export function TrackOrderForm({ onTrackSuccess }: { onTrackSuccess?: (data: any) => void }) {
-  const [orderId, setOrderId] = useState("");
+export function TrackOrderForm({ onTrackSuccess, initialOrderId }: { onTrackSuccess?: (data: any) => void, initialOrderId?: string }) {
+  const [orderId, setOrderId] = useState(initialOrderId || "");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (initialOrderId) {
+      setOrderId(initialOrderId);
+      // Auto-fetch if reference is present
+      handleFetch(initialOrderId);
+    }
+  }, [initialOrderId]);
+
+  const handleFetch = async (idToFetch: string) => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await api.get(`/orders/track/${idToFetch}`);
+      
+      const order = res.data;
+      
+      // Adapt backend order data to frontend tracking UI format
+      const mockData = {
+        id: order.id.slice(0,8).toUpperCase(),
+        status: order.status === 'SHIPPED' ? 'TRANSITO' : (order.status === 'DELIVERED' ? 'ENTREGADO' : 'TRANSITO'),
+        isLocal: true, 
+        courier: order.shippingCarrier || 'Mensajería Express Pilypage',
+        trackingNumber: order.trackingNumber || 'En preparación',
+        deliveryInstructions: order.shippingAddress || 'Pendiente',
+        originCoords: [-74.0817, 4.6097], // Bogotá
+        destinationCoords: [-75.5652, 6.2518], // Medellín (si es transito)
+        currentCoords: [-74.5, 5.0], // Mitad de camino
+        estimatedDate: "Próximamente"
+      };
+
+      if (onTrackSuccess) {
+        onTrackSuccess(mockData);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Pedido no encontrado");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement backend tracking logic
-    // Simulando respuesta del backend según el ID ingresado
-    const statusObj = orderId.includes('1') ? 'ENTREGADO' : 'TRANSITO';
-    
-    const mockData = {
-      id: orderId,
-      status: statusObj,
-      isLocal: !orderId.includes('NAT'), // Si tiene NAT es nacional
-      courier: orderId.includes('NAT') ? 'Servientrega' : 'Mensajería Express Pilypage',
-      trackingNumber: orderId.includes('NAT') ? 'SRV-9988776655' : 'INT-102938',
-      deliveryInstructions: "Entregar directamente a portería o residente. Requiere firma y verificación de la cinta de seguridad oficial. Horario de entrega: 8:00 AM - 6:00 PM.",
-      originCoords: [-74.0817, 4.6097], // Bogotá
-      destinationCoords: [-75.5652, 6.2518], // Medellín (si es transito)
-      currentCoords: statusObj === 'ENTREGADO' ? [-75.5652, 6.2518] : [-74.5, 5.0], // Mitad de camino
-      estimatedDate: "15 de Octubre, 2026"
-    };
-
-    if (onTrackSuccess) {
-      onTrackSuccess(mockData);
-    }
+    if (!orderId) return;
+    handleFetch(orderId);
   };
+
 
   return (
     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-3xl p-8 md:p-12 shadow-sm w-full max-w-xl mx-auto">
@@ -59,7 +85,7 @@ export function TrackOrderForm({ onTrackSuccess }: { onTrackSuccess?: (data: any
         </div>
         
         <div className="space-y-2 text-left">
-          <label htmlFor="email" className="text-sm font-medium text-[var(--foreground)]">Correo Electrónico</label>
+          <label htmlFor="email" className="text-sm font-medium text-[var(--foreground)]">Correo Electrónico (Opcional)</label>
           <input 
             type="email" 
             id="email"
@@ -67,12 +93,13 @@ export function TrackOrderForm({ onTrackSuccess }: { onTrackSuccess?: (data: any
             onChange={(e) => setEmail(e.target.value)}
             placeholder="tu@correo.com" 
             className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-            required
           />
         </div>
 
-        <Button type="submit" variant="primary" className="w-full py-4 text-sm font-medium rounded-xl mt-4 shadow-lg shadow-primary/20 hover:shadow-primary/30">
-          Rastrear Pedido
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        <Button disabled={loading} type="submit" variant="primary" className="w-full py-4 text-sm font-medium rounded-xl mt-4 shadow-lg shadow-primary/20 hover:shadow-primary/30">
+          {loading ? "Buscando..." : "Rastrear Pedido"}
         </Button>
       </form>
     </div>
