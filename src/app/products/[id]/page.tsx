@@ -23,6 +23,8 @@ export default function ProductDetail() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const { addItem } = useCartStore();
+  const { mutate } = useSWRConfig();
 
   // Fetch product data
   const { data: product, error, isLoading } = useSWR(`/products/${id}`, async (url) => {
@@ -54,8 +56,6 @@ export default function ProductDetail() {
   const currentPrice = purchaseMode === "lote" ? basePrice * 0.8 : basePrice; // 20% discount for batches
   const lotSize = 12; // A batch contains 12 units
 
-  const { addItem } = useCartStore();
-
   const handleAddToCart = () => {
     const totalUnits = purchaseMode === "lote" ? quantity * lotSize : quantity;
     const cartId = `${product.id}-${selectedSize}-${purchaseMode}`;
@@ -75,8 +75,6 @@ export default function ProductDetail() {
 
   const increment = () => setQuantity(q => q + 1);
   const decrement = () => setQuantity(q => Math.max(1, q - 1));
-
-  const { mutate } = useSWRConfig();
 
   const handleSubmitReview = async () => {
     try {
