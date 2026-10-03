@@ -1,13 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Eye, Filter } from "lucide-react";
 import { OrderDetailsModal } from "@/components/admin/order-details-modal";
-
-const MOCK_ORDERS: any[] = [];
+import { api } from "@/lib/api";
 
 export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/orders');
+      setOrders(res.data);
+    } catch (error) {
+      console.error("Error al cargar pedidos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -46,15 +63,23 @@ export default function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-color)] text-[var(--foreground)]">
-              {MOCK_ORDERS.map(order => (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-[var(--muted)]">Cargando pedidos...</td>
+                </tr>
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-[var(--muted)]">No hay pedidos en la bandeja de entrada.</td>
+                </tr>
+              ) : orders.map(order => (
                 <tr key={order.id} className="hover:bg-[var(--background)]/50 transition-colors">
-                  <td className="px-6 py-4 font-medium">{order.id}</td>
+                  <td className="px-6 py-4 font-medium">{order.id.slice(0, 8).toUpperCase()}</td>
                   <td className="px-6 py-4">
-                    <p className="font-medium">{order.customer}</p>
-                    <p className="text-xs text-[var(--muted)]">{order.club}</p>
+                    <p className="font-medium">{order.user?.name || 'Cliente Anónimo'}</p>
+                    <p className="text-xs text-[var(--muted)]">{order.user?.club || 'Sin club'}</p>
                   </td>
-                  <td className="px-6 py-4 text-[var(--muted)]">{order.date}</td>
-                  <td className="px-6 py-4 font-medium">${order.total.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-[var(--muted)]">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 font-medium">${parseFloat(order.totalAmount).toFixed(2)}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
                       order.status === 'Nuevo' ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-500 dark:border-purple-900' :

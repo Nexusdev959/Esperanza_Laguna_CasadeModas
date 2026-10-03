@@ -59,9 +59,14 @@ export function Cart() {
         shippingAddress: selectedAddress
       };
       const res = await api.post('/orders/quote', payload);
-      showNotification(`Pedido generado con éxito. Revisa tu correo electrónico para el abono.`, 'success');
+      showNotification(`Pedido generado con éxito. Redirigiendo a los detalles...`, 'success');
       clearCart();
       setIsOpen(false);
+      
+      // Redirigir al cliente para que vea su pedido y pueda pagar o ver el estado
+      if (res.data && res.data.id) {
+        router.push(`/track-order?reference=${res.data.id}`);
+      }
     } catch (err: any) {
       showNotification(err.response?.data?.error || "Error al procesar. Intentando de nuevo pronto...", "error");
     } finally {
