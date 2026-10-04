@@ -30,10 +30,9 @@ export function AdminSidebar() {
 
   const links = [
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
-    { href: "/admin/orders/new", icon: ShoppingCart, label: "Nuevos Pedidos" },
-    { href: "/admin/orders/preparation", icon: Clock, label: "En Preparación" },
+    { href: "/admin/orders", icon: ShoppingCart, label: "Recepción de Pedidos" },
     { href: "/admin/products", icon: Package, label: "Inventarios" },
-    { href: "/admin/payments/pending", icon: DollarSign, label: "Pagos Pendientes" },
+    { href: "/admin/payments", icon: DollarSign, label: "Pagos y Transacciones" },
     { href: "/admin/pqrs", icon: Mailbox, label: "Buzón PQRS" },
     { href: "/admin/workers", icon: Briefcase, label: "Trabajadores" },
     { href: "/admin/customers", icon: Users, label: "Clientes" },

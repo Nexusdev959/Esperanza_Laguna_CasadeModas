@@ -43,9 +43,9 @@ export function OrderDetailsModal({
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Datos del Cliente</h3>
                   <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
-                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Nombre:</span> {order.customer}</p>
-                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Club:</span> {order.club}</p>
-                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Fecha:</span> {order.date}</p>
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Nombre:</span> {order.user?.name || 'Cliente Anónimo'}</p>
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Club:</span> {order.user?.club || 'Sin club'}</p>
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Fecha:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Estado:</span> {order.status}</p>
                   </div>
                 </div>
@@ -55,29 +55,49 @@ export function OrderDetailsModal({
                   <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
                     <div className="flex justify-between">
                       <p className="text-sm text-[var(--muted)]">Total de la Orden</p>
-                      <p className="text-sm font-bold text-[var(--foreground)]">${order.total.toFixed(2)}</p>
+                      <p className="text-sm font-bold text-[var(--foreground)]">${Number(order.totalAmount).toFixed(2)}</p>
                     </div>
                     <div className="flex justify-between">
                       <p className="text-sm text-[var(--muted)]">Abonado hasta ahora</p>
-                      <p className="text-sm font-bold text-green-500">$0.00</p>
+                      <p className="text-sm font-bold text-green-500">${Number(order.paidAmount).toFixed(2)}</p>
                     </div>
                     <div className="pt-2 mt-2 border-t border-[var(--border-color)] flex justify-between">
                       <p className="text-sm font-semibold text-[var(--foreground)]">Saldo Pendiente</p>
-                      <p className="text-sm font-bold text-primary">${order.total.toFixed(2)}</p>
+                      <p className="text-sm font-bold text-primary">${(Number(order.totalAmount) - Number(order.paidAmount)).toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
+
+                {order.payments && order.payments.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Historial de Pagos</h3>
+                    <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                      {order.payments.map((p: any) => (
+                        <div key={p.id} className="flex justify-between items-center text-sm border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
+                          <div>
+                            <span className="font-medium text-[var(--foreground)]">{((p.amountInCents || 0) / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                            <div className="text-[var(--muted)] text-xs mt-0.5">{new Date(p.createdAt).toLocaleString('es-CO')} - {p.paymentMethod || 'Wompi'}</div>
+                            <div className="text-[var(--muted)] text-[10px] uppercase">{p.reference}</div>
+                          </div>
+                          <span className={`px-2 py-1 rounded text-[10px] font-bold ${p.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : p.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
+                            {p.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Columna Derecha: Componente de Pagos */}
               <div>
                 <PaymentActions 
                   orderId={order.id}
-                  clientName={order.customer}
-                  clientEmail="cliente@ejemplo.com"
-                  clientPhone="3000000000"
-                  totalAmount={order.total}
-                  paidAmount={0}
+                  clientName={order.user?.name || 'Cliente Anónimo'}
+                  clientEmail={order.user?.email || "cliente@ejemplo.com"}
+                  clientPhone={order.user?.phone || "3000000000"}
+                  totalAmount={Number(order.totalAmount)}
+                  paidAmount={Number(order.paidAmount)}
                 />
               </div>
             </div>

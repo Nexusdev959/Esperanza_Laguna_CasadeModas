@@ -307,6 +307,25 @@ export default function AccountPage() {
                              Rastrear Pedido
                            </button>
                            
+                           {order.payments && order.payments.length > 0 && (
+                             <div className="w-full mt-4 mb-2 bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)]">
+                               <h5 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] mb-3">Historial de Pagos de este Pedido:</h5>
+                               <div className="space-y-2">
+                                 {order.payments.map((p: any) => (
+                                   <div key={p.id} className="flex justify-between items-center text-sm">
+                                     <div>
+                                       <span className="font-medium text-[var(--foreground)]">{((p.amountInCents || 0) / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                                       <span className="text-[var(--muted)] ml-2 text-xs">{new Date(p.createdAt).toLocaleDateString()} - {p.paymentMethod || 'Wompi'}</span>
+                                     </div>
+                                     <span className={`px-2 py-1 rounded text-xs font-medium ${p.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : p.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
+                                       {p.status}
+                                     </span>
+                                   </div>
+                                 ))}
+                               </div>
+                             </div>
+                           )}
+
                            {order.status === 'PENDING_ADVANCE' || order.status === 'PENDING_FINAL_PAY' ? (
                              <>
                                <button onClick={() => window.location.href = `/checkout/${order.id}`} className="text-sm px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-xl transition-colors font-medium shadow-sm">
