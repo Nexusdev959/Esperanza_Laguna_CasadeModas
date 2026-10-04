@@ -74,7 +74,7 @@ export default function CheckoutPage() {
       const amountInCents = Math.round(amountToPay * 100);
 
       // Call our robust backend to generate the signature
-      const hashRes = await api.post('/payments/hash', {
+      const hashRes = await api.post('/payments/wompi/hash', {
         orderId: order.id,
         amountInCents,
         currency: 'COP',

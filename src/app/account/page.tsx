@@ -321,7 +321,7 @@ export default function AccountPage() {
                                    formData.append('proof', e.target.files[0]);
                                    formData.append('orderId', order.id);
                                    try {
-                                     await api.post('/payments/proof', formData, {
+                                     await api.post('/payments/wompi/proof', formData, {
                                        headers: { 'Content-Type': 'multipart/form-data' }
                                      });
                                      showNotification('Comprobante enviado. La validación tomará de 24 a 72 horas.', 'success');
