@@ -129,7 +129,7 @@ export default function CheckoutPage() {
       formData.append('orderId', order.id);
       formData.append('proof', proofFile);
 
-      await api.post('/payments/proof', formData, {
+      await api.post('/payments/wompi/proof', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       

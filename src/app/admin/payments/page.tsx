@@ -26,7 +26,7 @@ export default function AdminPaymentsPage() {
   const handleApprove = async (id: string) => {
     if (!confirm('¿Estás seguro de aprobar este comprobante manual? Esto actualizará el pedido y le enviará un correo al cliente.')) return;
     try {
-      await api.put(`/payments/proof/${id}/approve`);
+      await api.put(`/payments/wompi/proof/${id}/approve`);
       fetchPayments();
     } catch (err) {
       console.error(err);
@@ -38,7 +38,7 @@ export default function AdminPaymentsPage() {
     const reason = prompt('Razón del rechazo:');
     if (!reason) return;
     try {
-      await api.put(`/payments/proof/${id}/reject`, { reason });
+      await api.put(`/payments/wompi/proof/${id}/reject`, { reason });
       fetchPayments();
     } catch (err) {
       console.error(err);
