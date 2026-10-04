@@ -99,8 +99,8 @@ export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
   const currentLogo = mounted && resolvedTheme === 'light' ? lightLogoSrc : darkLogoSrc;
 
   // Curvas de animación cinemáticas estilo Apple
-  const easeInOutApple = [0.76, 0, 0.24, 1];
-  const easeOutQuart = [0.25, 1, 0.5, 1];
+  const easeInOutApple: [number, number, number, number] = [0.76, 0, 0.24, 1];
+  const easeOutQuart: [number, number, number, number] = [0.25, 1, 0.5, 1];
 
   return (
     <AnimatePresence>
