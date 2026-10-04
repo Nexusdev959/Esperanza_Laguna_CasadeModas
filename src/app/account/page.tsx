@@ -308,8 +308,12 @@ export default function AccountPage() {
                            </button>
                            
                            {order.status === 'PENDING_ADVANCE' || order.status === 'PENDING_FINAL_PAY' ? (
-                             <label className={`text-sm px-4 py-2 bg-primary text-white rounded-xl font-medium cursor-pointer transition-colors ${uploadingOrder === order.id ? 'opacity-70 pointer-events-none' : 'hover:bg-primary/90'}`}>
-                               {uploadingOrder === order.id ? 'Subiendo...' : 'Subir Comprobante'}
+                             <>
+                               <button onClick={() => window.location.href = `/checkout/${order.id}`} className="text-sm px-4 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-xl transition-colors font-medium shadow-sm">
+                                 Pagar con Wompi
+                               </button>
+                               <label className={`text-sm px-4 py-2 border border-primary/30 text-primary rounded-xl font-medium cursor-pointer transition-colors ${uploadingOrder === order.id ? 'opacity-70 pointer-events-none' : 'hover:bg-primary/10'}`}>
+                                 {uploadingOrder === order.id ? 'Subiendo...' : 'Subir Comprobante'}
                                <input type="file" className="hidden" accept="image/*,.pdf" onChange={async (e) => {
                                  if (e.target.files && e.target.files[0]) {
                                    setUploadingOrder(order.id);
