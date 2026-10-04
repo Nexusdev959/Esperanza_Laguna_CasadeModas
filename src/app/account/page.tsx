@@ -334,6 +334,7 @@ export default function AccountPage() {
                                  }
                                }} />
                              </label>
+                           </>
                            ) : null}
                         </div>
                       </div>
