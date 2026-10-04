@@ -277,7 +277,6 @@ export default function CheckoutPage() {
                     <span className="font-bold text-primary">{totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
                   </label>
                 )}
-                )}
               </div>
 
               {/* Selector de Método de Pago */}
