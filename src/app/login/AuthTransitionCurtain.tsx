@@ -14,6 +14,8 @@ interface AuthTransitionCurtainProps {
     /** Callback al finalizar el zoom de apertura */
     onTransitionComplete: () => void;
     logoSrc?: string;
+    lightLogoSrc?: string;
+    darkLogoSrc?: string;
 }
 
 export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
@@ -21,6 +23,8 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
     steps,
     onTransitionComplete,
     logoSrc = '/images/recurso-25-logo.png', // Ruta a tu logo dorado
+    lightLogoSrc,
+    darkLogoSrc,
 }) => {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isDataReady, setIsDataReady] = useState(false);
@@ -119,9 +123,14 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                 >
                     <div className="relative w-32 h-40 sm:w-40 sm:h-48 flex items-center justify-center">
                         <img
-                            src={logoSrc}
-                            alt="Logo Esperanza Laguna"
-                            className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)]"
+                            src={lightLogoSrc || logoSrc}
+                            alt="Logo Esperanza Laguna Claro"
+                            className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)] dark:hidden"
+                        />
+                        <img
+                            src={darkLogoSrc || logoSrc}
+                            alt="Logo Esperanza Laguna Oscuro"
+                            className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)] hidden dark:block"
                         />
 
                         {/* Brillo reflectivo metálico que recorre el isotipo */}

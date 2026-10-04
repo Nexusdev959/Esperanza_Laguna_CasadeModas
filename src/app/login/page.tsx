@@ -9,7 +9,7 @@ import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 import { AuthTransitionCurtain } from "./AuthTransitionCurtain";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 
 export default function LoginPage() {
@@ -37,6 +37,10 @@ export default function LoginPage() {
       }
     }
   }, []);
+
+  const handleTransitionComplete = useCallback(() => {
+    if (targetRoute) window.location.href = targetRoute;
+  }, [targetRoute]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,10 +168,9 @@ export default function LoginPage() {
 
         <AuthTransitionCurtain 
           isAuthenticated={isAuthenticated} 
-          onTransitionComplete={() => {
-            if (targetRoute) window.location.href = targetRoute;
-          }}
-          logoSrc="/logos/log1.png"
+          onTransitionComplete={handleTransitionComplete}
+          lightLogoSrc="/logos/log2.png"
+          darkLogoSrc="/logos/log3.png"
         />
       </main>
     </>
