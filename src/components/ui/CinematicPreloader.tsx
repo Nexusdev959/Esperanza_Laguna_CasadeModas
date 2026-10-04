@@ -13,7 +13,7 @@ export interface CinematicPreloaderProps {
 }
 
 export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
-  monogramSrc = '/logos/log2.png',
+  monogramSrc = '/logos/log1.png',
   textLogoSrc = '/logos/log3.png',
   minDurationMs = 1000,
   onComplete,

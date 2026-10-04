@@ -21,7 +21,7 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
     isAuthenticated,
     steps,
     onTransitionComplete,
-    monogramSrc = '/logos/log2.png',
+    monogramSrc = '/logos/log1.png',
     textLogoSrc = '/logos/log3.png',
 }) => {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -91,103 +91,103 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                     className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#090A0D] select-none overflow-hidden px-4"
                 >
                     {/* Halo resplandeciente dorado de fondo */}
-                <motion.div
-                    initial={{ scale: 0.8, opacity: 0.15 }}
-                    animate={{
-                        scale: [0.85, 1.25, 0.95],
-                        opacity: [0.2, 0.45, 0.25],
-                    }}
-                    transition={{ duration: 2.4, repeat: Infinity, repeatType: 'reverse' }}
-                    className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] rounded-full bg-[radial-gradient(circle,_rgba(212,175,55,0.25)_0%,_rgba(0,0,0,0)_70%)] blur-3xl pointer-events-none"
-                />
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0.15 }}
+                        animate={{
+                            scale: [0.85, 1.25, 0.95],
+                            opacity: [0.2, 0.45, 0.25],
+                        }}
+                        transition={{ duration: 2.4, repeat: Infinity, repeatType: 'reverse' }}
+                        className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] rounded-full bg-[radial-gradient(circle,_rgba(212,175,55,0.25)_0%,_rgba(0,0,0,0)_70%)] blur-3xl pointer-events-none"
+                    />
 
-                {/* Contenedor del Logo con Zoom de Entrada y Apertura */}
-                <motion.div
-                    initial={{ scale: 0.9, opacity: 0, y: 10 }}
-                    animate={
-                        isZooming
-                            ? {
-                                scale: 12,
-                                opacity: 0,
-                                transition: { duration: 0.6, ease: [0.76, 0, 0.24, 1] },
-                            }
-                            : {
-                                scale: 1,
-                                opacity: 1,
-                                y: 0,
-                                transition: { duration: 0.5, ease: 'easeOut' },
-                            }
-                    }
-                    className="relative flex items-center justify-center"
-                >
-                    <div className="relative flex flex-col items-center justify-center">
-                        <img
-                            src={monogramSrc}
-                            alt="Monograma EL"
-                            className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)]"
-                        />
-                        <img
-                            src={textLogoSrc}
-                            alt="Esperanza Laguna"
-                            className="w-48 sm:w-56 h-auto mt-4 object-contain filter drop-shadow-[0_4px_10px_rgba(212,175,55,0.2)]"
-                        />
+                    {/* Contenedor del Logo con Zoom de Entrada y Apertura */}
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                        animate={
+                            isZooming
+                                ? {
+                                    scale: 12,
+                                    opacity: 0,
+                                    transition: { duration: 0.6, ease: [0.76, 0, 0.24, 1] },
+                                }
+                                : {
+                                    scale: 1,
+                                    opacity: 1,
+                                    y: 0,
+                                    transition: { duration: 0.5, ease: 'easeOut' },
+                                }
+                        }
+                        className="relative flex items-center justify-center"
+                    >
+                        <div className="relative flex flex-col items-center justify-center">
+                            <img
+                                src={monogramSrc}
+                                alt="Monograma EL"
+                                className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)]"
+                            />
+                            <img
+                                src={textLogoSrc}
+                                alt="Esperanza Laguna"
+                                className="w-48 sm:w-56 h-auto mt-4 object-contain filter drop-shadow-[0_4px_10px_rgba(212,175,55,0.2)]"
+                            />
 
-                        {/* Brillo reflectivo metálico que recorre el isotipo */}
-                        <motion.div
-                            initial={{ x: '-150%', opacity: 0 }}
-                            animate={{
-                                x: '150%',
-                                opacity: [0, 0.6, 0],
-                            }}
-                            transition={{
-                                repeat: Infinity,
-                                duration: 1.5,
-                                ease: 'easeInOut',
-                                repeatDelay: 0.3,
-                            }}
-                            className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-100/30 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay"
-                        />
-                    </div>
+                            {/* Brillo reflectivo metálico que recorre el isotipo */}
+                            <motion.div
+                                initial={{ x: '-150%', opacity: 0 }}
+                                animate={{
+                                    x: '150%',
+                                    opacity: [0, 0.6, 0],
+                                }}
+                                transition={{
+                                    repeat: Infinity,
+                                    duration: 1.5,
+                                    ease: 'easeInOut',
+                                    repeatDelay: 0.3,
+                                }}
+                                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-100/30 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay"
+                            />
+                        </div>
+                    </motion.div>
+
+                    {/* Sección de Estado y Carga de Datos */}
+                    <motion.div
+                        animate={
+                            isZooming
+                                ? { opacity: 0, y: 15, transition: { duration: 0.3 } }
+                                : { opacity: 1, y: 0 }
+                        }
+                        className="mt-8 flex flex-col items-center max-w-xs text-center"
+                    >
+                        {/* Barra de progreso interactiva */}
+                        <div className="w-56 h-1 bg-neutral-800/80 rounded-full mt-2 overflow-hidden relative">
+                            <motion.div
+                                className="h-full bg-gradient-to-r from-amber-600 via-amber-300 to-amber-500 rounded-full"
+                                initial={{ width: '15%' }}
+                                animate={{
+                                    width: `${((currentStepIndex + 1) / activeSteps.length) * 100}%`,
+                                }}
+                                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                            />
+                        </div>
+
+                        {/* Texto dinámico del proceso */}
+                        <div className="h-6 mt-3 flex items-center justify-center">
+                            <AnimatePresence mode="wait">
+                                <motion.p
+                                    key={currentStepIndex}
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -5 }}
+                                    transition={{ duration: 0.25 }}
+                                    className="text-xs text-neutral-400 font-light tracking-wide"
+                                >
+                                    {activeSteps[currentStepIndex]}
+                                </motion.p>
+                            </AnimatePresence>
+                        </div>
+                    </motion.div>
                 </motion.div>
-
-                {/* Sección de Estado y Carga de Datos */}
-                <motion.div
-                    animate={
-                        isZooming
-                            ? { opacity: 0, y: 15, transition: { duration: 0.3 } }
-                            : { opacity: 1, y: 0 }
-                    }
-                    className="mt-8 flex flex-col items-center max-w-xs text-center"
-                >
-                    {/* Barra de progreso interactiva */}
-                    <div className="w-56 h-1 bg-neutral-800/80 rounded-full mt-2 overflow-hidden relative">
-                        <motion.div
-                            className="h-full bg-gradient-to-r from-amber-600 via-amber-300 to-amber-500 rounded-full"
-                            initial={{ width: '15%' }}
-                            animate={{
-                                width: `${((currentStepIndex + 1) / activeSteps.length) * 100}%`,
-                            }}
-                            transition={{ duration: 0.5, ease: 'easeInOut' }}
-                        />
-                    </div>
-
-                    {/* Texto dinámico del proceso */}
-                    <div className="h-6 mt-3 flex items-center justify-center">
-                        <AnimatePresence mode="wait">
-                            <motion.p
-                                key={currentStepIndex}
-                                initial={{ opacity: 0, y: 5 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -5 }}
-                                transition={{ duration: 0.25 }}
-                                className="text-xs text-neutral-400 font-light tracking-wide"
-                            >
-                                {activeSteps[currentStepIndex]}
-                            </motion.p>
-                        </AnimatePresence>
-                    </div>
-                </motion.div>
-            </motion.div>
             )}
         </AnimatePresence>
     );
