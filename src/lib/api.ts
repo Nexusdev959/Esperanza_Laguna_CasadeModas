@@ -1,8 +1,11 @@
 import axios from 'axios';
 
 // Instancia global pre-configurada
+const isDevelopment = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (isDevelopment ? 'http://localhost:4000/api/v1' : 'https://api.esperanzalaguna.com/api/v1');
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://api.esperanzalaguna.com/api/v1',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },

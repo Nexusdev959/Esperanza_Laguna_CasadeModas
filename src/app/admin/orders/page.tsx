@@ -1,9 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Eye, Filter } from "lucide-react";
+import { Search, Filter, Settings2 } from "lucide-react";
 import { OrderDetailsModal } from "@/components/admin/order-details-modal";
 import { api } from "@/lib/api";
+
+const STATUS_MAP: Record<string, { label: string, color: string }> = {
+  PENDING_UPLOAD: { label: "Esperando Comprobante", color: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-500 dark:border-gray-900" },
+  PENDING_APPROVAL: { label: "Revisando Pago", color: "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-500 dark:border-yellow-900" },
+  PENDING_ADVANCE: { label: "Esperando Abono", color: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-500 dark:border-orange-900" },
+  IN_CONFECTION: { label: "En Confección", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-500 dark:border-blue-900" },
+  DISPATCH_READY: { label: "Listo para Despacho", color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-500 dark:border-purple-900" },
+  SHIPPED: { label: "Enviado", color: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-500 dark:border-indigo-900" },
+  COMPLETED: { label: "Completado", color: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-500 dark:border-green-900" },
+  CANCELLED: { label: "Cancelado", color: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-500 dark:border-red-900" },
+};
 
 export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -81,21 +92,18 @@ export default function AdminOrders() {
                   <td className="px-6 py-4 text-[var(--muted)]">{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="px-6 py-4 font-medium">${parseFloat(order.totalAmount).toFixed(2)}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                      order.status === 'Nuevo' ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-500 dark:border-purple-900' :
-                      order.status === 'Preparando' ? 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-500 dark:border-yellow-900' :
-                      order.status === 'Enviado' ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-500 dark:border-blue-900' :
-                      'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-500 dark:border-green-900'
+                    <span className={`px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase border ${
+                      STATUS_MAP[order.status]?.color || 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-500 dark:border-gray-900'
                     }`}>
-                      {order.status}
+                      {STATUS_MAP[order.status]?.label || order.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={() => setSelectedOrder(order)}
-                      className="flex items-center gap-1 ml-auto text-primary hover:text-primary/80 font-medium transition-colors"
+                      className="inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400 border border-amber-500/20 rounded-lg font-medium transition-colors"
                     >
-                      <Eye className="w-4 h-4" /> Ver Detalles
+                      <Settings2 className="w-4 h-4" /> Gestionar
                     </button>
                   </td>
                 </tr>

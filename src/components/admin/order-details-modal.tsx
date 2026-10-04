@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, PackageOpen, Truck, Wallet, Scissors, ClipboardCheck, CreditCard, PackageCheck, CheckCircle2, XCircle } from "lucide-react";
+import { X, PackageOpen, Truck, Wallet, Scissors, ClipboardCheck, CreditCard, PackageCheck, CheckCircle2, XCircle, MessageCircle } from "lucide-react";
 import { PaymentActions } from "../payments/payment-actions";
 import { useState } from "react";
 import { api } from "@/lib/api";
@@ -46,6 +46,16 @@ export function OrderDetailsModal({
     }
   };
 
+  const handleSendShippingWhatsApp = () => {
+    const phone = order.user?.phone?.replace(/\D/g, '') || "";
+    if (!phone) {
+      showNotification('El cliente no tiene teléfono registrado', 'error');
+      return;
+    }
+    const msg = `Hola ${order.user?.name || ''}, te informamos que tu pedido de Esperanza Laguna ha sido despachado 🚚.\n\n*Medio de envío:* ${shippingCarrier}\n*Guía o Datos del conductor:* ${trackingNumber}\n\n¡Muchas gracias por tu compra!`;
+    window.open(`https://wa.me/57${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -69,67 +79,18 @@ export function OrderDetailsModal({
 
           <div className="overflow-y-auto p-6 custom-scrollbar flex-1">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Columna Izquierda: Detalles del Pedido */}
+              {/* Columna Izquierda: Detalles del Pedido y Logística */}
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Datos del Cliente</h3>
                   <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Nombre:</span> {order.user?.name || 'Cliente Anónimo'}</p>
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Teléfono:</span> {order.user?.phone || 'No registrado'}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Club:</span> {order.user?.club || 'Sin club'}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Fecha:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
-                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Estado:</span> {order.status}</p>
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Estado Actual:</span> {order.status}</p>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Resumen Financiero</h3>
-                  <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
-                    <div className="flex justify-between">
-                      <p className="text-sm text-[var(--muted)]">Total de la Orden</p>
-                      <p className="text-sm font-bold text-[var(--foreground)]">${Number(order.totalAmount).toFixed(2)}</p>
-                    </div>
-                    <div className="flex justify-between">
-                      <p className="text-sm text-[var(--muted)]">Abonado hasta ahora</p>
-                      <p className="text-sm font-bold text-green-500">${Number(order.paidAmount).toFixed(2)}</p>
-                    </div>
-                    <div className="pt-2 mt-2 border-t border-[var(--border-color)] flex justify-between">
-                      <p className="text-sm font-semibold text-[var(--foreground)]">Saldo Pendiente</p>
-                      <p className="text-sm font-bold text-primary">${(Number(order.totalAmount) - Number(order.paidAmount)).toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {order.payments && order.payments.length > 0 && (
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Historial de Pagos</h3>
-                    <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
-                      {order.payments.map((p: any) => (
-                        <div key={p.id} className="flex justify-between items-center text-sm border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                          <div>
-                            <span className="font-medium text-[var(--foreground)]">{((p.amountInCents || 0) / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
-                            <div className="text-[var(--muted)] text-xs mt-0.5">{new Date(p.createdAt).toLocaleString('es-CO')} - {p.paymentMethod || 'Wompi'}</div>
-                            <div className="text-[var(--muted)] text-[10px] uppercase">{p.reference}</div>
-                          </div>
-                          <span className={`px-2 py-1 rounded text-[10px] font-bold ${p.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : p.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
-                            {p.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Columna Derecha: Componente de Pagos y Estado */}
-              <div className="space-y-6">
-                <PaymentActions 
-                  orderId={order.id}
-                  clientName={order.user?.name || 'Cliente Anónimo'}
-                  clientEmail={order.user?.email || "cliente@ejemplo.com"}
-                  clientPhone={order.user?.phone || "3000000000"}
-                  totalAmount={Number(order.totalAmount)}
-                  paidAmount={Number(order.paidAmount)}
-                />
 
                 <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)]">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-4 flex items-center gap-2">
@@ -173,40 +134,105 @@ export function OrderDetailsModal({
                       </div>
                     </div>
 
-                    {selectedStatus === 'SHIPPED' && (
-                      <div className="space-y-3 animate-fade-in-up">
-                        <div>
-                          <label className="block text-xs text-[var(--muted)] mb-1">Transportadora o Agencia de Buses</label>
-                          <input 
-                            type="text" 
-                            value={shippingCarrier}
-                            onChange={(e) => setShippingCarrier(e.target.value)}
-                            placeholder="Ej: Inter Rapidísimo, Flota Macarena"
-                            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg text-sm focus:border-primary outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-[var(--muted)] mb-1">Número de Guía o Indicaciones</label>
-                          <input 
-                            type="text" 
-                            value={trackingNumber}
-                            onChange={(e) => setTrackingNumber(e.target.value)}
-                            placeholder="Ej: GUIA123456789"
-                            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg text-sm focus:border-primary outline-none"
-                          />
-                        </div>
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {selectedStatus === 'SHIPPED' && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-3 overflow-hidden"
+                        >
+                          <div>
+                            <label className="block text-xs text-[var(--muted)] mb-1">Agencia de Transportes o Buses</label>
+                            <input 
+                              type="text" 
+                              value={shippingCarrier}
+                              onChange={(e) => setShippingCarrier(e.target.value)}
+                              placeholder="Ej: Inter Rapidísimo, Flota Macarena"
+                              className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg text-sm focus:border-primary outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-[var(--muted)] mb-1">Número de Guía o Datos del Conductor (Nombre, Celular, Placa)</label>
+                            <textarea 
+                              value={trackingNumber}
+                              onChange={(e) => setTrackingNumber(e.target.value)}
+                              placeholder="Ej: Guía 12345 o Conductor Juan Perez, Cel: 3001234567, Placa XYZ-123"
+                              rows={2}
+                              className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg text-sm focus:border-primary outline-none resize-none"
+                            />
+                          </div>
+                          
+                          <button 
+                            onClick={handleSendShippingWhatsApp}
+                            disabled={!shippingCarrier || !trackingNumber}
+                            className="w-full mt-2 flex items-center justify-center gap-2 py-2 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 text-sm font-medium rounded-lg hover:bg-green-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <MessageCircle className="w-4 h-4" /> Notificar Envío por WhatsApp
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
                     <button 
                       onClick={handleUpdateStatus}
-                      disabled={updating || selectedStatus === order.status && trackingNumber === (order.trackingNumber || '') && shippingCarrier === (order.shippingCarrier || '')}
-                      className="w-full py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={updating || (selectedStatus === order.status && trackingNumber === (order.trackingNumber || '') && shippingCarrier === (order.shippingCarrier || ''))}
+                      className="w-full py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                     >
-                      {updating ? 'Guardando...' : 'Actualizar Estado'}
+                      {updating ? 'Guardando...' : 'Guardar y Actualizar Estado'}
                     </button>
                   </div>
                 </div>
+              </div>
+
+              {/* Columna Derecha: Finanzas y Cobros */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Resumen Financiero</h3>
+                  <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
+                    <div className="flex justify-between">
+                      <p className="text-sm text-[var(--muted)]">Total de la Orden</p>
+                      <p className="text-sm font-bold text-[var(--foreground)]">${Number(order.totalAmount).toFixed(2)}</p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p className="text-sm text-[var(--muted)]">Abonado hasta ahora</p>
+                      <p className="text-sm font-bold text-green-500">${Number(order.paidAmount).toFixed(2)}</p>
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-[var(--border-color)] flex justify-between">
+                      <p className="text-sm font-semibold text-[var(--foreground)]">Saldo Pendiente</p>
+                      <p className="text-sm font-bold text-primary">${(Number(order.totalAmount) - Number(order.paidAmount)).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <PaymentActions 
+                  orderId={order.id}
+                  clientName={order.user?.name || 'Cliente Anónimo'}
+                  clientEmail={order.user?.email || "cliente@ejemplo.com"}
+                  clientPhone={order.user?.phone || "3000000000"}
+                  totalAmount={Number(order.totalAmount)}
+                  paidAmount={Number(order.paidAmount)}
+                />
+
+                {order.payments && order.payments.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Historial de Pagos</h3>
+                    <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                      {order.payments.map((p: any) => (
+                        <div key={p.id} className="flex justify-between items-center text-sm border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
+                          <div>
+                            <span className="font-medium text-[var(--foreground)]">{((p.amountInCents || 0) / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                            <div className="text-[var(--muted)] text-xs mt-0.5">{new Date(p.createdAt).toLocaleString('es-CO')} - {p.paymentMethod || 'Wompi'}</div>
+                            <div className="text-[var(--muted)] text-[10px] uppercase">{p.reference}</div>
+                          </div>
+                          <span className={`px-2 py-1 rounded text-[10px] font-bold ${p.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : p.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
+                            {p.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
