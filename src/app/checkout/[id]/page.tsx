@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { CheckCircle2, ChevronLeft, CreditCard, Loader2, Package, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { useNotification } from "@/components/ui/notification-provider";
 
 declare global {
   interface Window {
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [wompiLoading, setWompiLoading] = useState(false);
   const [paymentType, setPaymentType] = useState<"ADVANCE" | "BALANCE" | "FULL">("ADVANCE");
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     // Load Wompi script dynamically
@@ -59,7 +61,7 @@ export default function CheckoutPage() {
 
   const handlePay = async () => {
     if (!window.WidgetCheckout) {
-      alert("El widget de Wompi aún no ha cargado. Por favor, espera un momento.");
+      showNotification("El widget de Wompi aún no ha cargado. Por favor, espera un momento.", "error");
       return;
     }
     
@@ -88,7 +90,7 @@ export default function CheckoutPage() {
         currency: 'COP',
         amountInCents,
         reference,
-        publicKey: process.env.NEXT_PUBLIC_WOMPI_PUB_KEY || 'pub_test_X0zDA9xoKdePzhd8a0x9HAez7HgGO2fH', // Usar public key real en prod
+        publicKey: process.env.NEXT_PUBLIC_WOMPI_PUB_KEY || 'pub_test_eqVy6s9mTWM0DqwquHj4r3M7z4vw83mt', // Usar public key real en prod
         signature: { integrity: signature },
         redirectUrl: `https://esperanzalaguna.com/track-order?ref=${order.id}` // Regresa al track después del pago
       });
@@ -96,18 +98,18 @@ export default function CheckoutPage() {
       checkout.open((result: any) => {
         const transaction = result.transaction;
         if (transaction.status === 'APPROVED') {
-          alert('¡Pago aprobado exitosamente! Tu pedido comenzará a procesarse.');
+          showNotification('¡Pago aprobado exitosamente! Tu pedido comenzará a procesarse.', 'success');
           window.location.href = `/track-order?ref=${order.id}`;
         } else if (transaction.status === 'DECLINED') {
-          alert('El pago fue rechazado. Por favor, intenta de nuevo o con otro método.');
+          showNotification('El pago fue rechazado. Por favor, intenta de nuevo o con otro método.', 'error');
         } else if (transaction.status === 'ERROR') {
-          alert('Hubo un error al procesar el pago.');
+          showNotification('Hubo un error al procesar el pago.', 'error');
         }
       });
 
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.error || "Error al conectar con Wompi");
+      showNotification(err.response?.data?.error || "Error al conectar con Wompi", "error");
     } finally {
       setWompiLoading(false);
     }
