@@ -79,6 +79,21 @@ export default function AccountPage() {
     return badges[status] || badges['OPEN'];
   };
 
+  const getOrderStatusLabel = (status: string) => {
+    const map: any = {
+      'PENDING_ADVANCE': 'Pago Inicial Pendiente',
+      'IN_PREPARATION': 'En Preparación',
+      'IN_CONFECTION': 'En Confección',
+      'QUALITY_CONTROL': 'Control de Calidad',
+      'PENDING_FINAL_PAY': 'Pago Final Pendiente',
+      'READY_TO_SHIP': 'Listo para Envío',
+      'SHIPPED': 'Enviado',
+      'DELIVERED': 'Entregado',
+      'CANCELLED': 'Cancelado'
+    };
+    return map[status] || status;
+  };
+
   const getTypeLabel = (type: string) => {
     const types: any = {
       'PETITION': 'Petición',
@@ -286,7 +301,7 @@ export default function AccountPage() {
                           </div>
                           <div className="text-right">
                             <p className="font-medium text-[var(--foreground)] mb-1">{(parseFloat(order.totalAmount || '0')).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
-                            <span className="px-3 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 text-xs rounded-full border border-yellow-200 dark:border-yellow-900 font-medium">{order.status === 'PENDING' ? 'En Preparación' : order.status}</span>
+                            <span className="px-3 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 text-xs rounded-full border border-yellow-200 dark:border-yellow-900 font-medium uppercase tracking-wide">{getOrderStatusLabel(order.status)}</span>
                           </div>
                         </div>
 
@@ -405,7 +420,7 @@ export default function AccountPage() {
                             <p className="text-xs font-bold text-[var(--muted)] uppercase mb-1">Relacionado a:</p>
                             <p className="font-medium text-[var(--foreground)]">Pedido #{payment.order.id.slice(0, 8).toUpperCase()}</p>
                             <p className="text-xs text-primary mt-0.5">
-                              Estado actual: {payment.order.status === 'PENDING' ? 'En Preparación' : payment.order.status === 'PENDING_ADVANCE' ? 'Pago Inicial Pendiente' : payment.order.status === 'IN_CONFECTION' ? 'En Confección' : payment.order.status === 'READY_TO_SHIP' ? 'Listo para Envío' : payment.order.status}
+                              Estado actual: {getOrderStatusLabel(payment.order.status)}
                             </p>
                           </div>
                         </div>
