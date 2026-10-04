@@ -78,20 +78,21 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
 
     return (
         <AnimatePresence>
-            <motion.div
-                key="auth-curtain"
-                initial={{ opacity: 0 }}
-                animate={
-                    isZooming
-                        ? {
-                            opacity: 0,
-                            transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] },
-                        }
-                        : { opacity: 1, transition: { duration: 0.3 } }
-                }
-                className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#090A0D] select-none overflow-hidden px-4"
-            >
-                {/* Halo resplandeciente dorado de fondo */}
+            {isAuthenticated && (
+                <motion.div
+                    key="auth-curtain"
+                    initial={{ opacity: 0 }}
+                    animate={
+                        isZooming
+                            ? {
+                                opacity: 0,
+                                transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] },
+                            }
+                            : { opacity: 1, transition: { duration: 0.3 } }
+                    }
+                    className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#090A0D] select-none overflow-hidden px-4"
+                >
+                    {/* Halo resplandeciente dorado de fondo */}
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0.15 }}
                     animate={{
@@ -160,15 +161,8 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                     }
                     className="mt-8 flex flex-col items-center max-w-xs text-center"
                 >
-                    <span className="text-[11px] font-medium tracking-[0.3em] uppercase text-amber-300/80">
-                        CASA DE MODAS
-                    </span>
-                    <span className="font-serif text-lg tracking-widest text-neutral-200 mt-0.5">
-                        ESPERANZA LAGUNA
-                    </span>
-
                     {/* Barra de progreso interactiva */}
-                    <div className="w-56 h-1 bg-neutral-800/80 rounded-full mt-6 overflow-hidden relative">
+                    <div className="w-56 h-1 bg-neutral-800/80 rounded-full mt-2 overflow-hidden relative">
                         <motion.div
                             className="h-full bg-gradient-to-r from-amber-600 via-amber-300 to-amber-500 rounded-full"
                             initial={{ width: '15%' }}
@@ -196,6 +190,7 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                     </div>
                 </motion.div>
             </motion.div>
+            )}
         </AnimatePresence>
     );
 };

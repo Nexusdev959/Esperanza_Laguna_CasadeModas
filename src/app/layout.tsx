@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Footer } from "@/components/footer";
 import { NotificationProvider } from "@/components/ui/notification-provider";
 import { Header } from "@/components/header";
+import { CinematicPreloader } from "@/components/ui/CinematicPreloader";
+import { GoogleProvider } from "@/components/ui/google-provider";
 
 export const metadata: Metadata = {
   title: "Esperanza Laguna",
@@ -32,9 +34,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <NotificationProvider>
-            <Header />
-            {children}
-            <Footer />
+            <GoogleProvider>
+              <CinematicPreloader />
+              <Header />
+              {children}
+              <Footer />
+            </GoogleProvider>
           </NotificationProvider>
         </ThemeProvider>
       </body>

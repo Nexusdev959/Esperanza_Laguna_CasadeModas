@@ -1,6 +1,6 @@
 "use client";
 
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
@@ -144,19 +144,16 @@ export default function LoginPage() {
             
             <div className="flex justify-center w-full min-h-[44px]">
               {mounted && (
-                <GoogleOAuthProvider clientId="886916002371-9a1rl4kal3f70ddhdq5117s23b4bdejf.apps.googleusercontent.com">
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => {
-                      showNotification("Fallo al iniciar sesión con Google", "error");
-                    }}
-                    useOneTap
-                    theme="outline"
-                    size="large"
-                    text="signin_with"
-                    shape="rectangular"
-                  />
-                </GoogleOAuthProvider>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => {
+                    showNotification("Fallo al iniciar sesión con Google", "error");
+                  }}
+                  theme="outline"
+                  size="large"
+                  text="signin_with"
+                  shape="rectangular"
+                />
               )}
             </div>
             
@@ -169,7 +166,7 @@ export default function LoginPage() {
         <AuthTransitionCurtain 
           isAuthenticated={isAuthenticated} 
           onTransitionComplete={handleTransitionComplete}
-          lightLogoSrc="/logos/log2.png"
+          lightLogoSrc="/logos/log1.png"
           darkLogoSrc="/logos/log3.png"
         />
       </main>
