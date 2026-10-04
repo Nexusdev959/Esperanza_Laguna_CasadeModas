@@ -7,6 +7,7 @@ import { Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
+import { AuthTransitionCurtain } from "./AuthTransitionCurtain";
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
@@ -17,6 +18,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [targetRoute, setTargetRoute] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -41,15 +44,10 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', { email, password });
       localStorage.setItem('jwt_token', res.data.token);
-      showNotification("Inicio de sesión exitoso. Redirigiendo...", "success");
+      
       const role = res.data.user.role;
-      setTimeout(() => {
-        if (role === 'ADMIN' || role === 'SUPERADMIN') {
-          window.location.href = "/admin";
-        } else {
-          window.location.href = "/account";
-        }
-      }, 1000);
+      setTargetRoute(role === 'ADMIN' || role === 'SUPERADMIN' ? "/admin" : "/account");
+      setIsAuthenticated(true);
     } catch (err: any) {
       showNotification(err.response?.data?.error || "Error al iniciar sesión", "error");
       setLoading(false);
@@ -61,15 +59,10 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/google', { token: credentialResponse.credential });
       localStorage.setItem('jwt_token', res.data.token);
-      showNotification("Inicio de sesión exitoso. Redirigiendo...", "success");
+      
       const role = res.data.user.role;
-      setTimeout(() => {
-        if (role === 'ADMIN' || role === 'SUPERADMIN') {
-          window.location.href = "/admin";
-        } else {
-          window.location.href = "/account";
-        }
-      }, 1000);
+      setTargetRoute(role === 'ADMIN' || role === 'SUPERADMIN' ? "/admin" : "/account");
+      setIsAuthenticated(true);
     } catch (err: any) {
       showNotification(err.response?.data?.error || "Error al iniciar sesión con Google", "error");
       setLoading(false);
@@ -168,6 +161,14 @@ export default function LoginPage() {
             </p>
           </div>
         </AnimateIn>
+
+        <AuthTransitionCurtain 
+          isAuthenticated={isAuthenticated} 
+          onTransitionComplete={() => {
+            if (targetRoute) window.location.href = targetRoute;
+          }}
+          logoSrc="/logos/log1.png"
+        />
       </main>
     </>
   );
