@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LogOut, Package, MapPin, Heart, User, Camera, ChevronLeft, ChevronRight, Mailbox, CheckCircle, FileText } from "lucide-react";
+import { LogOut, Package, MapPin, Heart, User, Camera, ChevronLeft, ChevronRight, Mailbox, CheckCircle, FileText, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { api } from "@/lib/api";
@@ -91,6 +91,7 @@ export default function AccountPage() {
 
   const links = [
     { id: "historial", icon: Package, label: "Historial de Compras" },
+    { id: "pagos", icon: CreditCard, label: "Mis Pagos" },
     { id: "pqrs", icon: Mailbox, label: "Mis Casos PQRS" },
     { id: "perfil", icon: User, label: "Perfil" },
     { id: "direcciones", icon: MapPin, label: "Mis Direcciones" }
@@ -358,6 +359,46 @@ export default function AccountPage() {
                         </div>
                       </div>
                     ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "pagos" && (
+              <div className="animate-fade-in-up">
+                <h2 className="text-xl font-serif mb-6 text-[var(--foreground)]">Mis Pagos</h2>
+                <div className="space-y-6">
+                  {orders.flatMap(o => (o.payments || []).map((p: any) => ({ ...p, order: o }))).length === 0 ? (
+                    <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center">
+                      <CreditCard className="w-10 h-10 mx-auto text-[var(--muted)] mb-3" />
+                      <p className="text-[var(--muted)] text-sm mb-4">No tienes pagos registrados aún.</p>
+                    </div>
+                  ) : (
+                    orders
+                      .flatMap(o => (o.payments || []).map((p: any) => ({ ...p, order: o })))
+                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map((payment: any) => (
+                        <div key={payment.id} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium text-[var(--foreground)]">{(payment.amountInCents / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</h3>
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium border ${payment.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : payment.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}`}>
+                                {payment.status === 'APPROVED' ? 'Aprobado' : payment.status === 'PENDING' ? 'En Revisión' : 'Rechazado'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-[var(--muted)]">Ref: {payment.reference} • {payment.paymentMethod || 'Wompi'}</p>
+                            <p className="text-xs text-[var(--muted)] mt-1">{new Date(payment.createdAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                          </div>
+                          
+                          <div className="bg-[var(--background)] p-3 rounded-xl border border-[var(--border-color)] text-sm min-w-[200px]">
+                            <p className="text-xs font-bold text-[var(--muted)] uppercase mb-1">Relacionado a:</p>
+                            <p className="font-medium text-[var(--foreground)]">Pedido #{payment.order.id.slice(0, 8).toUpperCase()}</p>
+                            <p className="text-xs text-primary mt-0.5">
+                              Estado actual: {payment.order.status === 'PENDING' ? 'En Preparación' : payment.order.status === 'PENDING_ADVANCE' ? 'Pago Inicial Pendiente' : payment.order.status === 'IN_CONFECTION' ? 'En Confección' : payment.order.status === 'READY_TO_SHIP' ? 'Listo para Envío' : payment.order.status}
+                            </p>
+                          </div>
+                        </div>
+                      ))
                   )}
                 </div>
               </div>

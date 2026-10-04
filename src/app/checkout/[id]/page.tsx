@@ -22,6 +22,9 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [wompiLoading, setWompiLoading] = useState(false);
   const [paymentType, setPaymentType] = useState<"ADVANCE" | "BALANCE" | "FULL">("ADVANCE");
+  const [paymentMethod, setPaymentMethod] = useState<"WOMPI" | "TRANSFER">("WOMPI");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
   const { showNotification } = useNotification();
 
   useEffect(() => {
@@ -112,6 +115,31 @@ export default function CheckoutPage() {
       showNotification(err.response?.data?.error || "Error al conectar con Wompi", "error");
     } finally {
       setWompiLoading(false);
+    }
+  };
+
+  const handleUploadProof = async () => {
+    if (!proofFile) {
+      showNotification("Por favor, selecciona el archivo o foto de tu comprobante.", "error");
+      return;
+    }
+    try {
+      setUploadingProof(true);
+      const formData = new FormData();
+      formData.append('orderId', order.id);
+      formData.append('proof', proofFile);
+
+      await api.post('/payments/proof', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      showNotification('Comprobante enviado exitosamente. Quedará en estado PENDIENTE de aprobación manual (24 a 72 horas). Serás notificado.', 'success');
+      window.location.href = `/track-order?ref=${order.id}`;
+    } catch (err: any) {
+      console.error(err);
+      showNotification(err.response?.data?.error || "Error al subir el comprobante", "error");
+    } finally {
+      setUploadingProof(false);
     }
   };
 
@@ -249,25 +277,76 @@ export default function CheckoutPage() {
                     <span className="font-bold text-primary">{totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
                   </label>
                 )}
+                )}
               </div>
 
-              <Button 
-                onClick={handlePay} 
-                disabled={wompiLoading}
-                className="w-full bg-[#0047FF] hover:bg-[#003BCC] text-white flex items-center justify-center gap-2 h-14 rounded-xl shadow-[0_4px_20px_rgba(0,71,255,0.3)] hover:shadow-[0_4px_25px_rgba(0,71,255,0.4)] text-lg font-bold transition-all"
-              >
-                {wompiLoading ? (
-                  <span className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Conectando...</span>
-                ) : (
-                  <>Pagar {amountToPay.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</>
-                )}
-              </Button>
-              
-              <div className="mt-6 flex items-center justify-center gap-4 grayscale opacity-60">
-                <img src="https://wompi.com/wp-content/uploads/2021/08/logo-wompi.svg" alt="Wompi" className="h-6" />
-                <span className="text-xl text-[var(--muted)]">|</span>
-                <span className="text-xs text-[var(--muted)] font-medium">Respaldado por Bancolombia</span>
+              {/* Selector de Método de Pago */}
+              <div className="flex gap-2 mb-6">
+                <button 
+                  onClick={() => setPaymentMethod("WOMPI")}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === "WOMPI" ? 'border-primary bg-primary/10 text-primary' : 'border-[var(--border-color)] text-[var(--muted)] hover:border-primary/50'}`}
+                >
+                  Pago Automático (Wompi)
+                </button>
+                <button 
+                  onClick={() => setPaymentMethod("TRANSFER")}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === "TRANSFER" ? 'border-primary bg-primary/10 text-primary' : 'border-[var(--border-color)] text-[var(--muted)] hover:border-primary/50'}`}
+                >
+                  Transferencia Manual
+                </button>
               </div>
+
+              {paymentMethod === "WOMPI" ? (
+                <>
+                  <Button 
+                    onClick={handlePay} 
+                    disabled={wompiLoading}
+                    className="w-full bg-[#0047FF] hover:bg-[#003BCC] text-white flex items-center justify-center gap-2 h-14 rounded-xl shadow-[0_4px_20px_rgba(0,71,255,0.3)] hover:shadow-[0_4px_25px_rgba(0,71,255,0.4)] text-lg font-bold transition-all"
+                  >
+                    {wompiLoading ? (
+                      <span className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Conectando...</span>
+                    ) : (
+                      <>Pagar {amountToPay.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</>
+                    )}
+                  </Button>
+                  
+                  <div className="mt-6 flex items-center justify-center gap-4 grayscale opacity-60">
+                    <img src="https://wompi.com/wp-content/uploads/2021/08/logo-wompi.svg" alt="Wompi" className="h-6" />
+                    <span className="text-xl text-[var(--muted)]">|</span>
+                    <span className="text-xs text-[var(--muted)] font-medium">Respaldado por Bancolombia</span>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="p-4 bg-[var(--background)] border border-[var(--border-color)] rounded-xl">
+                    <p className="text-sm text-[var(--foreground)] font-medium mb-1">Datos para Transferencia:</p>
+                    <p className="text-xs text-[var(--muted)] mb-4">Bancolombia Ahorros: <strong>123-456789-00</strong><br/>Nequi/Daviplata: <strong>3215028653</strong></p>
+                    
+                    <label className="block mb-2 text-sm font-medium text-[var(--foreground)]">Adjuntar Comprobante (Imagen o PDF)</label>
+                    <input 
+                      type="file" 
+                      accept="image/*,.pdf"
+                      onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                      className="w-full text-sm text-[var(--muted)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer"
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={handleUploadProof} 
+                    disabled={uploadingProof || !proofFile}
+                    className="w-full h-14 rounded-xl text-lg font-bold transition-all"
+                  >
+                    {uploadingProof ? (
+                      <span className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Subiendo...</span>
+                    ) : (
+                      "Enviar Comprobante"
+                    )}
+                  </Button>
+                  <p className="text-xs text-center text-amber-600 dark:text-amber-400">
+                    Al enviar, tu pedido quedará PENDIENTE y tomará de 24 a 72 horas para su aprobación manual. Se te notificará por correo.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

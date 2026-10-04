@@ -8,19 +8,43 @@ export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchPayments = async () => {
+    try {
+      const res = await api.get('/payments/wompi');
+      setPayments(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        const res = await api.get('/payments/wompi');
-        setPayments(res.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchPayments();
   }, []);
+
+  const handleApprove = async (id: string) => {
+    if (!confirm('¿Estás seguro de aprobar este comprobante manual? Esto actualizará el pedido y le enviará un correo al cliente.')) return;
+    try {
+      await api.put(`/payments/proof/${id}/approve`);
+      fetchPayments();
+    } catch (err) {
+      console.error(err);
+      alert('Error al aprobar el comprobante');
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    const reason = prompt('Razón del rechazo:');
+    if (!reason) return;
+    try {
+      await api.put(`/payments/proof/${id}/reject`, { reason });
+      fetchPayments();
+    } catch (err) {
+      console.error(err);
+      alert('Error al rechazar el comprobante');
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -57,6 +81,7 @@ export default function AdminPaymentsPage() {
                 <th className="px-6 py-4 font-medium">Método</th>
                 <th className="px-6 py-4 font-medium">Estado</th>
                 <th className="px-6 py-4 font-medium">Fecha</th>
+                <th className="px-6 py-4 font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-color)] text-[var(--foreground)]">
@@ -67,8 +92,8 @@ export default function AdminPaymentsPage() {
                     <div className="text-xs text-[var(--muted)] mt-0.5">{payment.transactionId || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium">{payment.order?.user?.name || 'Cliente'}</div>
-                    <a href={`/admin/orders/${payment.orderId}`} className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5">
+                    <div className="font-medium">{payment.order?.user?.name || 'Cliente Anónimo'}</div>
+                    <a href={`/admin/orders`} className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5" title="Ir a la bandeja de pedidos">
                       Pedido #{payment.order?.id?.slice(0,8).toUpperCase()} <ExternalLink className="w-3 h-3" />
                     </a>
                   </td>
@@ -86,6 +111,14 @@ export default function AdminPaymentsPage() {
                   </td>
                   <td className="px-6 py-4 text-[var(--muted)] text-xs">
                     {new Date(payment.createdAt).toLocaleString('es-CO')}
+                  </td>
+                  <td className="px-6 py-4">
+                    {payment.status === 'PENDING' && payment.paymentMethod === 'MANUAL' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => handleApprove(payment.id)} className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded">Aprobar</button>
+                        <button onClick={() => handleReject(payment.id)} className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Rechazar</button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
