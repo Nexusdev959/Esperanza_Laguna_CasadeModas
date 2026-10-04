@@ -285,7 +285,7 @@ export default function AccountPage() {
                             <p className="font-medium text-[var(--foreground)]">{new Date(order.createdAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-[var(--foreground)] mb-1">{(order.total).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
+                            <p className="font-medium text-[var(--foreground)] mb-1">{(parseFloat(order.totalAmount || '0')).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
                             <span className="px-3 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 text-xs rounded-full border border-yellow-200 dark:border-yellow-900 font-medium">{order.status === 'PENDING' ? 'En Preparación' : order.status}</span>
                           </div>
                         </div>
@@ -297,7 +297,7 @@ export default function AccountPage() {
                             </div>
                             <div>
                               <h4 className="text-sm font-medium text-[var(--foreground)]">{item.product?.name || 'Producto Desconocido'}</h4>
-                              <p className="text-sm text-[var(--muted)]">Precio: {(item.price).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
+                              <p className="text-sm text-[var(--muted)]">Precio: {(parseFloat(item.price || '0')).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
                               <p className="text-sm text-[var(--muted)]">Cant: {item.quantity}</p>
                             </div>
                           </div>
@@ -315,7 +315,7 @@ export default function AccountPage() {
                                  {order.payments.map((p: any) => (
                                    <div key={p.id} className="flex justify-between items-center text-sm">
                                      <div>
-                                       <span className="font-medium text-[var(--foreground)]">{((p.amountInCents || 0) / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                                       <span className="font-medium text-[var(--foreground)]">{((Number(p.amountInCents) || 0) / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
                                        <span className="text-[var(--muted)] ml-2 text-xs">{new Date(p.createdAt).toLocaleDateString()} - {p.paymentMethod || 'Wompi'}</span>
                                      </div>
                                      <span className={`px-2 py-1 rounded text-xs font-medium ${p.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600' : p.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
@@ -381,7 +381,7 @@ export default function AccountPage() {
                         <div key={payment.id} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium text-[var(--foreground)]">{(payment.amountInCents / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</h3>
+                              <h3 className="font-medium text-[var(--foreground)]">{((Number(payment.amountInCents) || 0) / 100).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</h3>
                               <span className={`px-2 py-0.5 rounded text-xs font-medium border ${payment.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : payment.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}`}>
                                 {payment.status === 'APPROVED' ? 'Aprobado' : payment.status === 'PENDING' ? 'En Revisión' : 'Rechazado'}
                               </span>
