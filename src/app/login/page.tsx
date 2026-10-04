@@ -166,8 +166,8 @@ export default function LoginPage() {
         <AuthTransitionCurtain 
           isAuthenticated={isAuthenticated} 
           onTransitionComplete={handleTransitionComplete}
-          lightLogoSrc="/logos/log1.png"
-          darkLogoSrc="/logos/log3.png"
+          monogramSrc="/logos/log2.png"
+          textLogoSrc="/logos/log3.png"
         />
       </main>
     </>

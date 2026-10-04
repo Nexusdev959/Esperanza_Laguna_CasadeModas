@@ -2,13 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from 'next-themes';
 
 export interface CinematicPreloaderProps {
-  /** Logo claro por defecto (light mode) */
-  lightLogoSrc?: string;
-  /** Logo oscuro por defecto (dark mode) */
-  darkLogoSrc?: string;
+  monogramSrc?: string;
+  textLogoSrc?: string;
   /** Duración mínima de la cortina para asegurar el efecto cinemático */
   minDurationMs?: number;
   /** Callback al desmontar la cortina */
@@ -16,15 +13,14 @@ export interface CinematicPreloaderProps {
 }
 
 export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
-  lightLogoSrc = '/logos/log2.png',
-  darkLogoSrc = '/logos/log3.png',
-  minDurationMs = 1800,
+  monogramSrc = '/logos/log2.png',
+  textLogoSrc = '/logos/log3.png',
+  minDurationMs = 1000,
   onComplete,
 }) => {
   const [isReady, setIsReady] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -78,13 +74,13 @@ export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
     if (isReady && !isFinished) {
       const zoomTimer = setTimeout(() => {
         setIsZooming(true);
-      }, 200);
+      }, 50);
 
       const exitTimer = setTimeout(() => {
         setIsFinished(true);
         document.body.style.backgroundColor = ''; // Restore body background
         if (onComplete) onComplete();
-      }, 1000);
+      }, 600);
 
       return () => {
         clearTimeout(zoomTimer);
@@ -94,9 +90,6 @@ export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
   }, [isReady, isFinished, onComplete]);
 
   if (isFinished) return null;
-
-  // Use correct logo based on theme (defaults to dark logo if not mounted to prevent flash)
-  const currentLogo = mounted && resolvedTheme === 'light' ? lightLogoSrc : darkLogoSrc;
 
   // Curvas de animación cinemáticas estilo Apple
   const easeInOutApple: [number, number, number, number] = [0.76, 0, 0.24, 1];
@@ -134,44 +127,34 @@ export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
             }
             className="relative flex flex-col items-center justify-center z-10"
           >
-            {/* Isotipo: Entrada orgánica con blur */}
+            {/* Isotipo y Texto: Entrada orgánica */}
             <motion.div
-              initial={{ scale: 0.92, filter: 'blur(6px)', opacity: 0 }}
+              initial={{ scale: 0.95, filter: 'blur(4px)', opacity: 0 }}
               animate={{ scale: 1, filter: 'blur(0px)', opacity: 1 }}
-              transition={{ duration: 1.2, ease: easeInOutApple }}
-              className="relative w-32 h-40 sm:w-44 sm:h-52 flex items-center justify-center mb-6"
+              transition={{ duration: 0.6, ease: easeInOutApple }}
+              className="relative flex flex-col items-center justify-center mb-6"
             >
               <img
-                src={currentLogo}
+                src={monogramSrc}
                 alt="Casa de Modas Esperanza Laguna"
-                className="w-full h-full object-contain filter drop-shadow-[0_4px_20px_rgba(212,175,55,0.15)]"
+                className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_4px_20px_rgba(212,175,55,0.15)]"
+              />
+              <motion.img
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: easeInOutApple }}
+                src={textLogoSrc}
+                alt="Esperanza Laguna"
+                className="w-48 sm:w-56 h-auto mt-4 object-contain filter drop-shadow-[0_4px_10px_rgba(212,175,55,0.15)]"
               />
 
               {/* Shimmer / Light Sweep líquido */}
               <motion.div
                 initial={{ x: '-150%', opacity: 0 }}
                 animate={{ x: '150%', opacity: [0, 0.65, 0] }}
-                transition={{ duration: 1.8, ease: 'linear', repeat: Infinity, repeatDelay: 1.2 }}
+                transition={{ duration: 1.4, ease: 'linear', repeat: Infinity, repeatDelay: 0.8 }}
                 className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-200/40 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay"
               />
-            </motion.div>
-
-            {/* Tipografía con máscara/revelado vertical */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={
-                isZooming
-                  ? { opacity: 0, y: -20, transition: { duration: 0.4, ease: easeInOutApple } }
-                  : { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.6, ease: easeInOutApple } }
-              }
-              className="flex flex-col items-center text-center overflow-hidden"
-            >
-              <span className="text-[10px] sm:text-[11px] font-light tracking-[0.4em] text-amber-500/80 uppercase">
-                Casa de Modas
-              </span>
-              <span className="font-serif text-lg sm:text-xl tracking-[0.25em] text-[#F4F4F5] mt-1.5 font-medium">
-                ESPERANZA LAGUNA
-              </span>
             </motion.div>
 
             {/* Indicador de carga minimalista */}
@@ -179,15 +162,15 @@ export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
               initial={{ opacity: 0 }}
               animate={
                 isZooming
-                  ? { opacity: 0, transition: { duration: 0.3 } }
-                  : { opacity: 1, transition: { duration: 0.8, delay: 1.0, ease: easeInOutApple } }
+                  ? { opacity: 0, transition: { duration: 0.2 } }
+                  : { opacity: 1, transition: { duration: 0.5, delay: 0.5, ease: easeInOutApple } }
               }
-              className="mt-10 w-44 h-[1.5px] bg-[#1F2024] overflow-hidden rounded-full relative"
+              className="mt-6 w-44 h-[1.5px] bg-[#1F2024] overflow-hidden rounded-full relative"
             >
               <motion.div
                 initial={{ x: '-100%' }}
                 animate={{ x: '100%' }}
-                transition={{ duration: 1.6, ease: 'linear', repeat: Infinity }}
+                transition={{ duration: 1.2, ease: 'linear', repeat: Infinity }}
                 className="absolute inset-0 w-[40%] h-full bg-gradient-to-r from-transparent via-amber-500/80 to-transparent"
               />
             </motion.div>

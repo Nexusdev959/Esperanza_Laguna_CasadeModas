@@ -13,18 +13,16 @@ interface AuthTransitionCurtainProps {
     steps?: LoadingStep[];
     /** Callback al finalizar el zoom de apertura */
     onTransitionComplete: () => void;
-    logoSrc?: string;
-    lightLogoSrc?: string;
-    darkLogoSrc?: string;
+    monogramSrc?: string;
+    textLogoSrc?: string;
 }
 
 export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
     isAuthenticated,
     steps,
     onTransitionComplete,
-    logoSrc = '/images/recurso-25-logo.png', // Ruta a tu logo dorado
-    lightLogoSrc,
-    darkLogoSrc,
+    monogramSrc = '/logos/log2.png',
+    textLogoSrc = '/logos/log3.png',
 }) => {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isDataReady, setIsDataReady] = useState(false);
@@ -53,7 +51,7 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                 clearInterval(interval);
                 setIsDataReady(true);
             }
-        }, 600); // 600ms por cada fase de preparación
+        }, 300); // Acelerado para ser más natural (300ms)
 
         return () => clearInterval(interval);
     }, [isAuthenticated, activeSteps.length]);
@@ -63,11 +61,11 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
         if (isDataReady) {
             const zoomTimer = setTimeout(() => {
                 setIsZooming(true);
-            }, 400);
+            }, 100);
 
             const exitTimer = setTimeout(() => {
                 onTransitionComplete();
-            }, 1200);
+            }, 600);
 
             return () => {
                 clearTimeout(zoomTimer);
@@ -105,33 +103,33 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
 
                 {/* Contenedor del Logo con Zoom de Entrada y Apertura */}
                 <motion.div
-                    initial={{ scale: 0.85, opacity: 0, y: 15 }}
+                    initial={{ scale: 0.9, opacity: 0, y: 10 }}
                     animate={
                         isZooming
                             ? {
-                                scale: 16,
+                                scale: 12,
                                 opacity: 0,
-                                transition: { duration: 0.85, ease: [0.76, 0, 0.24, 1] },
+                                transition: { duration: 0.6, ease: [0.76, 0, 0.24, 1] },
                             }
                             : {
                                 scale: 1,
                                 opacity: 1,
                                 y: 0,
-                                transition: { duration: 0.7, ease: 'easeOut' },
+                                transition: { duration: 0.5, ease: 'easeOut' },
                             }
                     }
                     className="relative flex items-center justify-center"
                 >
-                    <div className="relative w-32 h-40 sm:w-40 sm:h-48 flex items-center justify-center">
+                    <div className="relative flex flex-col items-center justify-center">
                         <img
-                            src={lightLogoSrc || logoSrc}
-                            alt="Logo Esperanza Laguna Claro"
-                            className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)] dark:hidden"
+                            src={monogramSrc}
+                            alt="Monograma EL"
+                            className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)]"
                         />
                         <img
-                            src={darkLogoSrc || logoSrc}
-                            alt="Logo Esperanza Laguna Oscuro"
-                            className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)] hidden dark:block"
+                            src={textLogoSrc}
+                            alt="Esperanza Laguna"
+                            className="w-48 sm:w-56 h-auto mt-4 object-contain filter drop-shadow-[0_4px_10px_rgba(212,175,55,0.2)]"
                         />
 
                         {/* Brillo reflectivo metálico que recorre el isotipo */}
@@ -139,15 +137,15 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                             initial={{ x: '-150%', opacity: 0 }}
                             animate={{
                                 x: '150%',
-                                opacity: [0, 0.7, 0],
+                                opacity: [0, 0.6, 0],
                             }}
                             transition={{
                                 repeat: Infinity,
-                                duration: 2.0,
+                                duration: 1.5,
                                 ease: 'easeInOut',
-                                repeatDelay: 0.6,
+                                repeatDelay: 0.3,
                             }}
-                            className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-100/35 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay"
+                            className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-100/30 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay"
                         />
                     </div>
                 </motion.div>
