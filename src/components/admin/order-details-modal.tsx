@@ -1,19 +1,50 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, PackageOpen } from "lucide-react";
+import { X, PackageOpen, Truck, Wallet, Scissors, ClipboardCheck, CreditCard, PackageCheck, CheckCircle2, XCircle } from "lucide-react";
 import { PaymentActions } from "../payments/payment-actions";
+import { useState } from "react";
+import { api } from "@/lib/api";
+import { useNotification } from "@/components/ui/notification-provider";
 
 export function OrderDetailsModal({
   isOpen,
   onClose,
-  order
+  order,
+  onOrderUpdate
 }: {
   isOpen: boolean;
   onClose: () => void;
   order: any;
+  onOrderUpdate?: () => void;
 }) {
+  const [updating, setUpdating] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(order?.status || '');
+  const [trackingNumber, setTrackingNumber] = useState(order?.trackingNumber || '');
+  const [shippingCarrier, setShippingCarrier] = useState(order?.shippingCarrier || '');
+  const { showNotification } = useNotification();
+
   if (!isOpen || !order) return null;
+
+  const handleUpdateStatus = async () => {
+    try {
+      setUpdating(true);
+      const payload: any = { status: selectedStatus };
+      if (selectedStatus === 'SHIPPED') {
+        payload.trackingNumber = trackingNumber;
+        payload.shippingCarrier = shippingCarrier;
+      }
+      await api.put(`/orders/${order.id}/status`, payload);
+      showNotification('Estado actualizado correctamente', 'success');
+      if (onOrderUpdate) onOrderUpdate();
+      onClose();
+    } catch (error: any) {
+      console.error(error);
+      showNotification(error.response?.data?.error || 'Error al actualizar', 'error');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -89,8 +120,8 @@ export function OrderDetailsModal({
                 )}
               </div>
 
-              {/* Columna Derecha: Componente de Pagos */}
-              <div>
+              {/* Columna Derecha: Componente de Pagos y Estado */}
+              <div className="space-y-6">
                 <PaymentActions 
                   orderId={order.id}
                   clientName={order.user?.name || 'Cliente Anónimo'}
@@ -99,6 +130,83 @@ export function OrderDetailsModal({
                   totalAmount={Number(order.totalAmount)}
                   paidAmount={Number(order.paidAmount)}
                 />
+
+                <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)]">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-4 flex items-center gap-2">
+                    <Truck className="w-4 h-4" /> Gestión Logística
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-[var(--muted)] mb-3">Selecciona el Estado del Pedido</label>
+                      
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          { id: 'PENDING_ADVANCE', label: 'Pago Inicial', icon: Wallet, colorClass: 'text-amber-500', activeClass: 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/20' },
+                          { id: 'IN_CONFECTION', label: 'Confección', icon: Scissors, colorClass: 'text-purple-500', activeClass: 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/20' },
+                          { id: 'QUALITY_CONTROL', label: 'Calidad', icon: ClipboardCheck, colorClass: 'text-blue-500', activeClass: 'border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/20' },
+                          { id: 'PENDING_FINAL_PAY', label: 'Pago Final', icon: CreditCard, colorClass: 'text-orange-500', activeClass: 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/20' },
+                          { id: 'READY_TO_SHIP', label: 'Empacado', icon: PackageCheck, colorClass: 'text-teal-500', activeClass: 'border-teal-500 bg-teal-500/10 ring-2 ring-teal-500/20' },
+                          { id: 'SHIPPED', label: 'Enviado', icon: Truck, colorClass: 'text-indigo-500', activeClass: 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/20' },
+                          { id: 'DELIVERED', label: 'Entregado', icon: CheckCircle2, colorClass: 'text-green-500', activeClass: 'border-green-500 bg-green-500/10 ring-2 ring-green-500/20' },
+                          { id: 'CANCELLED', label: 'Cancelado', icon: XCircle, colorClass: 'text-red-500', activeClass: 'border-red-500 bg-red-500/10 ring-2 ring-red-500/20' }
+                        ].map((statusOp) => {
+                          const Icon = statusOp.icon;
+                          const isSelected = selectedStatus === statusOp.id;
+                          return (
+                            <button
+                              key={statusOp.id}
+                              onClick={() => setSelectedStatus(statusOp.id)}
+                              className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 ${
+                                isSelected 
+                                  ? statusOp.activeClass 
+                                  : 'border-[var(--border-color)] bg-[var(--surface)] hover:bg-[var(--background)] hover:border-[var(--muted)]'
+                              }`}
+                            >
+                              <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? statusOp.colorClass : 'text-[var(--muted)]'}`} />
+                              <span className={`text-[10px] font-medium text-center leading-tight ${isSelected ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
+                                {statusOp.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {selectedStatus === 'SHIPPED' && (
+                      <div className="space-y-3 animate-fade-in-up">
+                        <div>
+                          <label className="block text-xs text-[var(--muted)] mb-1">Transportadora o Agencia de Buses</label>
+                          <input 
+                            type="text" 
+                            value={shippingCarrier}
+                            onChange={(e) => setShippingCarrier(e.target.value)}
+                            placeholder="Ej: Inter Rapidísimo, Flota Macarena"
+                            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg text-sm focus:border-primary outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-[var(--muted)] mb-1">Número de Guía o Indicaciones</label>
+                          <input 
+                            type="text" 
+                            value={trackingNumber}
+                            onChange={(e) => setTrackingNumber(e.target.value)}
+                            placeholder="Ej: GUIA123456789"
+                            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg text-sm focus:border-primary outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <button 
+                      onClick={handleUpdateStatus}
+                      disabled={updating || selectedStatus === order.status && trackingNumber === (order.trackingNumber || '') && shippingCarrier === (order.shippingCarrier || '')}
+                      className="w-full py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {updating ? 'Guardando...' : 'Actualizar Estado'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

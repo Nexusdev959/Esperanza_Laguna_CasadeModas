@@ -289,6 +289,17 @@ export default function AccountPage() {
                             <span className="px-3 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500 text-xs rounded-full border border-yellow-200 dark:border-yellow-900 font-medium">{order.status === 'PENDING' ? 'En Preparación' : order.status}</span>
                           </div>
                         </div>
+
+                        {(order.trackingNumber || order.shippingCarrier) && (
+                          <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl flex items-start gap-3 mt-2">
+                            <Package className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-semibold text-blue-700 dark:text-blue-400">Información de Envío</p>
+                              {order.shippingCarrier && <p className="text-xs text-blue-600 dark:text-blue-300 mt-1"><strong>Agencia/Transportadora:</strong> {order.shippingCarrier}</p>}
+                              {order.trackingNumber && <p className="text-xs text-blue-600 dark:text-blue-300"><strong>Guía/Indicaciones:</strong> {order.trackingNumber}</p>}
+                            </div>
+                          </div>
+                        )}
                         
                         {order.items?.map((item: any) => (
                           <div key={item.id} className="flex items-center space-x-4 pt-2">

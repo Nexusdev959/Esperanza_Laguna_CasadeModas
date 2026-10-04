@@ -109,6 +109,7 @@ export default function AdminOrders() {
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
         order={selectedOrder}
+        onOrderUpdate={fetchOrders}
       />
     </div>
   );
