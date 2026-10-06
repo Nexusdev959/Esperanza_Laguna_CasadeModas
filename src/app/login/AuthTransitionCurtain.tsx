@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 
 export interface LoadingStep {
     label: string;
@@ -27,6 +28,14 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [isDataReady, setIsDataReady] = useState(false);
     const [isZooming, setIsZooming] = useState(false);
+    
+    const { theme, resolvedTheme } = useTheme();
+    const isLightMode = resolvedTheme === "light" || theme === "light";
+
+    // En modo claro cambiamos al logo de texto oscuro (log4) si no se especificó otro
+    const currentTextLogo = textLogoSrc === '/logos/log3.png' && isLightMode 
+        ? '/logos/log4.png' 
+        : textLogoSrc;
 
     // Pasos por defecto si no se pasan desde fuera
     const defaultSteps = [
@@ -88,17 +97,17 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                             }
                             : { opacity: 1, transition: { duration: 0.3 } }
                     }
-                    className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#090A0D] select-none overflow-hidden px-4"
+                    className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#f4f7f5] dark:bg-[#090A0D] select-none overflow-hidden px-4 transition-colors duration-700"
                 >
                     {/* Halo resplandeciente dorado de fondo */}
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0.15 }}
                         animate={{
                             scale: [0.85, 1.25, 0.95],
-                            opacity: [0.2, 0.45, 0.25],
+                            opacity: isLightMode ? [0.1, 0.25, 0.15] : [0.2, 0.45, 0.25],
                         }}
                         transition={{ duration: 2.4, repeat: Infinity, repeatType: 'reverse' }}
-                        className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] rounded-full bg-[radial-gradient(circle,_rgba(212,175,55,0.25)_0%,_rgba(0,0,0,0)_70%)] blur-3xl pointer-events-none"
+                        className="absolute w-[360px] h-[360px] sm:w-[480px] sm:h-[480px] rounded-full bg-[radial-gradient(circle,_rgba(212,175,55,0.25)_0%,_rgba(0,0,0,0)_70%)] blur-3xl pointer-events-none transition-opacity duration-700"
                     />
 
                     {/* Contenedor del Logo con Zoom de Entrada y Apertura */}
@@ -127,9 +136,9 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                                 className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_10px_25px_rgba(212,175,55,0.4)]"
                             />
                             <img
-                                src={textLogoSrc}
+                                src={currentTextLogo}
                                 alt="Esperanza Laguna"
-                                className="w-48 sm:w-56 h-auto mt-4 object-contain filter drop-shadow-[0_4px_10px_rgba(212,175,55,0.2)]"
+                                className="w-48 sm:w-56 h-auto mt-4 object-contain filter drop-shadow-[0_4px_10px_rgba(212,175,55,0.2)] transition-opacity duration-700"
                             />
 
                             {/* Brillo reflectivo metálico que recorre el isotipo */}
@@ -137,7 +146,7 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                                 initial={{ x: '-150%', opacity: 0 }}
                                 animate={{
                                     x: '150%',
-                                    opacity: [0, 0.6, 0],
+                                    opacity: isLightMode ? [0, 0.3, 0] : [0, 0.6, 0],
                                 }}
                                 transition={{
                                     repeat: Infinity,
@@ -145,7 +154,7 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                                     ease: 'easeInOut',
                                     repeatDelay: 0.3,
                                 }}
-                                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-100/30 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay"
+                                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-100/30 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay transition-opacity duration-700"
                             />
                         </div>
                     </motion.div>
@@ -160,7 +169,7 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                         className="mt-8 flex flex-col items-center max-w-xs text-center"
                     >
                         {/* Barra de progreso interactiva */}
-                        <div className="w-56 h-1 bg-neutral-800/80 rounded-full mt-2 overflow-hidden relative">
+                        <div className="w-56 h-1 bg-neutral-300/80 dark:bg-neutral-800/80 rounded-full mt-2 overflow-hidden relative transition-colors duration-700">
                             <motion.div
                                 className="h-full bg-gradient-to-r from-amber-600 via-amber-300 to-amber-500 rounded-full"
                                 initial={{ width: '15%' }}
@@ -180,7 +189,7 @@ export const AuthTransitionCurtain: React.FC<AuthTransitionCurtainProps> = ({
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -5 }}
                                     transition={{ duration: 0.25 }}
-                                    className="text-xs text-neutral-400 font-light tracking-wide"
+                                    className="text-xs text-neutral-600 dark:text-neutral-400 font-light tracking-wide transition-colors duration-700"
                                 >
                                     {activeSteps[currentStepIndex]}
                                 </motion.p>

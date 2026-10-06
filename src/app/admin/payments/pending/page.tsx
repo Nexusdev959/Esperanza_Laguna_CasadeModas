@@ -29,7 +29,7 @@ export default function PendingPaymentsPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 h-[calc(100vh-8rem)] flex flex-col">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-serif text-[var(--foreground)]">Pagos Pendientes de Aprobación</h1>
+        <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Pagos Pendientes de Aprobación</h1>
         <p className="text-sm text-[var(--muted)] mt-1">Verifica los comprobantes manuales para liberar los pedidos correspondientes a preparación.</p>
       </div>
 

@@ -41,7 +41,7 @@ export function OrderDetails({ activeOrder, handleAccept }: any) {
     return (
       <div className="md:col-span-7 lg:col-span-8 bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl flex flex-col items-center justify-center text-[var(--muted)] p-8 text-center shadow-sm">
         <Package className="w-16 h-16 mb-4 opacity-20" />
-        <p className="text-lg font-serif text-[var(--foreground)]">Selecciona un pedido</p>
+        <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Selecciona un pedido</p>
         <p className="text-sm">Revisa los detalles y acéptalo para enviarlo a preparación.</p>
       </div>
     );
@@ -52,12 +52,12 @@ export function OrderDetails({ activeOrder, handleAccept }: any) {
       {/* Header Details */}
       <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start">
         <div>
-          <h2 className="text-xl font-serif text-[var(--foreground)]">Pedido {activeOrder.id}</h2>
+          <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Pedido {activeOrder.id}</h2>
           <p className="text-sm text-[var(--muted)]">{activeOrder.date}</p>
         </div>
         <div className="text-right">
           <p className="text-sm text-[var(--muted)] mb-1">Total del Pedido</p>
-          <p className="text-2xl font-serif text-[var(--foreground)]">{activeOrder.total}</p>
+          <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">{activeOrder.total}</p>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export function OrderDetails({ activeOrder, handleAccept }: any) {
       {showAdvanceModal && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <form onSubmit={handleManualAdvance} className="bg-[var(--surface)] border border-[var(--border-color)] rounded-xl p-6 max-w-sm w-full space-y-4">
-            <h3 className="text-lg font-serif font-bold text-[var(--foreground)]">Registrar Abono Manual</h3>
+            <h3 className="text-2xl font-sans font-semibold tracking-tight font-bold text-[var(--foreground)]">Registrar Abono Manual</h3>
             <p className="text-sm text-[var(--muted)]">Se generará un recibo PDF y se enviará al correo del cliente.</p>
             
             <div>

@@ -48,7 +48,7 @@ export function DispatchModal({
         >
           <div className="flex justify-between items-center p-6 border-b border-[var(--border-color)] bg-[var(--background)]/50">
             <div>
-              <h2 className="text-xl font-serif text-[var(--foreground)]">Registrar Despacho</h2>
+              <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Registrar Despacho</h2>
               <p className="text-sm text-[var(--muted)]">Orden {orderId}</p>
             </div>
             <button onClick={onClose} className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors p-2 rounded-full hover:bg-black/5">

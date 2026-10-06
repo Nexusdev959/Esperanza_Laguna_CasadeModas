@@ -10,7 +10,7 @@ export default function AdminStaff() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--foreground)]">Staff Administrador</h1>
+          <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Staff Administrador</h1>
           <p className="text-sm text-[var(--muted)]">Gestiona qué usuarios tienen acceso a este panel de control.</p>
         </div>
         <Button variant="primary" className="flex items-center gap-2">

@@ -18,7 +18,7 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--foreground)]">Directorio de Clientes</h1>
+          <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Directorio de Clientes</h1>
           <p className="text-sm text-[var(--muted)] mt-1">Lleva el control de todos los clientes registrados y su historial completo de compras.</p>
         </div>
         <button className="flex items-center gap-2 px-5 py-2.5 bg-[var(--surface)] border border-[var(--border-color)] text-[var(--foreground)] rounded-xl font-medium hover:border-primary transition-colors shadow-sm">

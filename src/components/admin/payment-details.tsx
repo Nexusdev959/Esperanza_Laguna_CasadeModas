@@ -7,7 +7,7 @@ export function PaymentDetails({ activePayment, handleApprove, handleReject }: a
     return (
       <div className="md:col-span-7 lg:col-span-8 bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl flex flex-col items-center justify-center text-[var(--muted)] p-8 text-center shadow-sm">
         <Search className="w-16 h-16 mb-4 opacity-20" />
-        <p className="text-lg font-serif text-[var(--foreground)]">Selecciona un pago</p>
+        <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Selecciona un pago</p>
         <p className="text-sm">Revisa el comprobante y aprueba el pago para liberar el pedido.</p>
       </div>
     );
@@ -18,7 +18,7 @@ export function PaymentDetails({ activePayment, handleApprove, handleReject }: a
       {/* Header Details */}
       <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start bg-[var(--background)]/50">
         <div>
-          <h2 className="text-xl font-serif text-[var(--foreground)] flex items-center gap-2">
+          <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] flex items-center gap-2">
             Verificación de Pago
             <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full font-sans font-bold tracking-wider uppercase">
               {activePayment.orderId}
@@ -28,7 +28,7 @@ export function PaymentDetails({ activePayment, handleApprove, handleReject }: a
         </div>
         <div className="text-right">
           <p className="text-sm text-[var(--muted)] mb-1">Monto Reportado</p>
-          <p className="text-3xl font-serif text-[var(--foreground)] text-green-600 dark:text-green-500">{activePayment.amount}</p>
+          <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] text-green-600 dark:text-green-500">{activePayment.amount}</p>
         </div>
       </div>
 

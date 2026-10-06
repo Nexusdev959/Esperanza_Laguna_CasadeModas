@@ -67,7 +67,7 @@ export default function AdminPaymentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-serif text-[var(--foreground)]">Historial de Pagos y Transacciones</h2>
+        <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Historial de Pagos y Transacciones</h2>
       </div>
 
       <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm">

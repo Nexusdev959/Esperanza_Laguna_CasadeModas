@@ -85,7 +85,7 @@ export default function AdminPqrsPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 h-[calc(100vh-2rem)] flex flex-col">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--foreground)] flex items-center gap-2">
+          <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] flex items-center gap-2">
             <Mailbox className="w-6 h-6 text-primary" /> Buzón PQRS
           </h1>
           <p className="text-sm text-[var(--muted)]">Gestiona las peticiones, quejas, reclamos y sugerencias de los clientes.</p>
@@ -143,7 +143,7 @@ export default function AdminPqrsPage() {
               <div className="p-6 border-b border-[var(--border-color)] flex justify-between items-start">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-xl font-serif text-[var(--foreground)]">Caso #{selectedCase.caseNumber}</h2>
+                    <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Caso #{selectedCase.caseNumber}</h2>
                     {getStatusBadge(selectedCase.status)}
                   </div>
                   <div className="flex items-center gap-4 text-sm text-[var(--muted)]">

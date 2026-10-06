@@ -6,6 +6,7 @@ import { NotificationProvider } from "@/components/ui/notification-provider";
 import { Header } from "@/components/header";
 import { CinematicPreloader } from "@/components/ui/CinematicPreloader";
 import { GoogleProvider } from "@/components/ui/google-provider";
+import { GeistSans } from "geist/font/sans";
 
 export const metadata: Metadata = {
   title: "Esperanza Laguna",
@@ -26,7 +27,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased min-h-screen flex flex-col selection:bg-primary/20 overflow-y-scroll">
+      <body className={`${GeistSans.className} antialiased min-h-screen flex flex-col selection:bg-primary/20 overflow-y-scroll`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

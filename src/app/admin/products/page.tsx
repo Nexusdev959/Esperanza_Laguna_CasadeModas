@@ -113,7 +113,7 @@ export default function AdminProducts() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--foreground)]">Catálogo e Inventario</h1>
+          <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Catálogo e Inventario</h1>
           <p className="text-sm text-[var(--muted)]">Gestiona tallas, productos por encargo y combos de uniformes.</p>
         </div>
         <button 

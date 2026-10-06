@@ -16,7 +16,7 @@ export function WorkerDetails({ activeWorker, onTaskAssigned }: any) {
     return (
       <div className="md:col-span-8 lg:col-span-9 bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl flex flex-col items-center justify-center text-[var(--muted)] p-8 text-center shadow-sm">
         <ClipboardList className="w-16 h-16 mb-4 opacity-20" />
-        <p className="text-lg font-serif text-[var(--foreground)]">Selecciona un trabajador</p>
+        <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Selecciona un trabajador</p>
         <p className="text-sm">Revisa su rendimiento y asigna nuevas tareas de confección o logística.</p>
       </div>
     );
@@ -130,7 +130,7 @@ export function WorkerDetails({ activeWorker, onTaskAssigned }: any) {
             )}
           </div>
           <div>
-            <h2 className="text-2xl font-serif text-[var(--foreground)]">{activeWorker.name}</h2>
+            <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">{activeWorker.name}</h2>
             <p className="text-sm text-[var(--muted)]">{activeWorker.email} • ID: {activeWorker.id}</p>
           </div>
         </div>
@@ -155,7 +155,7 @@ export function WorkerDetails({ activeWorker, onTaskAssigned }: any) {
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Tareas Completadas</p>
-              <p className="text-2xl font-serif text-[var(--foreground)] mt-1">{activeWorker.tasksCompleted}</p>
+              <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] mt-1">{activeWorker.tasksCompleted}</p>
               <p className="text-xs text-[var(--muted)] mt-1">Este mes</p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export function WorkerDetails({ activeWorker, onTaskAssigned }: any) {
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Horas Trabajadas</p>
-              <p className="text-2xl font-serif text-[var(--foreground)] mt-1">{activeWorker.hoursLogged}h</p>
+              <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] mt-1">{activeWorker.hoursLogged}h</p>
               <p className="text-xs text-[var(--muted)] mt-1">Acumuladas</p>
             </div>
           </div>
@@ -175,7 +175,7 @@ export function WorkerDetails({ activeWorker, onTaskAssigned }: any) {
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Rendimiento (KPI)</p>
-              <p className="text-2xl font-serif text-[var(--foreground)] mt-1">{activeWorker.efficiency}%</p>
+              <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] mt-1">{activeWorker.efficiency}%</p>
               <p className="text-xs text-green-500 font-medium mt-1">Óptimo</p>
             </div>
           </div>

@@ -27,7 +27,7 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
   return (
     <div className="bg-[var(--surface)] p-6 md:p-8 rounded-2xl border border-[var(--border-color)] shadow-sm mb-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <h2 className="text-xl font-serif text-[var(--foreground)] flex items-center gap-2">
+        <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] flex items-center gap-2">
           <Tag className="w-5 h-5 text-primary" /> Detalles del Nuevo Producto
         </h2>
         

@@ -29,4 +29,5 @@ const nextConfig: NextConfig = {
 
 export default withPWA(nextConfig);
 
-import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+// Para pruebas locales de diseño (UI/UX) sin errores de ruteo de Cloudflare:
+// import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());

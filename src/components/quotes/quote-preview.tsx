@@ -11,11 +11,11 @@ export function QuotePreview({
   total
 }: any) {
   return (
-    <div className="lg:col-span-8 xl:col-span-9 flex justify-center print:block print:w-full overflow-x-auto">
+    <div className="lg:col-span-7 xl:col-span-8 flex justify-center print:block print:w-full overflow-x-auto pt-4 lg:pt-0">
       <AnimateIn delay={0.2} className="w-full flex justify-center print:block print:w-full">
         
         {/* Contenedor A4 (Estilos físicos) */}
-        <div className="w-full max-w-[850px] aspect-[1/1.414] bg-white text-black shadow-2xl rounded-sm p-8 sm:p-12 md:p-16 relative overflow-hidden print:shadow-none print:w-[210mm] print:h-[297mm] print:p-[20mm] print:m-0 shrink-0">
+        <div className="w-full max-w-[850px] aspect-[1/1.414] bg-white text-black shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] border border-stone-200 dark:border-stone-800 ring-1 ring-black/5 rounded-sm p-8 sm:p-12 md:p-16 relative overflow-hidden print:shadow-none print:border-none print:w-[210mm] print:h-[297mm] print:p-[20mm] print:m-0 shrink-0">
           
           {/* Marca de agua elegante */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">

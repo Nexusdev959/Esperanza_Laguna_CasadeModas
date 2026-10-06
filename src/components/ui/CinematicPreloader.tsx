@@ -1,179 +1,256 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "next-themes";
 
 export interface CinematicPreloaderProps {
   monogramSrc?: string;
   textLogoSrc?: string;
-  /** Duración mínima de la cortina para asegurar el efecto cinemático */
+  /** Duración mínima visible para apreciar la entrada */
   minDurationMs?: number;
-  /** Callback al desmontar la cortina */
   onComplete?: () => void;
 }
 
 export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
-  monogramSrc = '/logos/log1.png',
-  textLogoSrc = '/logos/log3.png',
-  minDurationMs = 1000,
+  monogramSrc = "/logos/log1.png",
+  textLogoSrc = "/logos/log3.png",
+  minDurationMs = 1400,
   onComplete,
 }) => {
-  const [isReady, setIsReady] = useState(false);
-  const [isZooming, setIsZooming] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const { theme, resolvedTheme } = useTheme();
 
+  // Esperar a montar para evitar desajustes de hidratación
   useEffect(() => {
     setMounted(true);
-    // Fase 0: Set background color immediately to avoid white flashes (F5)
-    document.body.style.backgroundColor = '#07080A';
+  }, []);
 
-    let windowLoaded = false;
-    let fontsReady = false;
-    let timeElapsed = false;
+  const isLightMode = mounted && (resolvedTheme === "light" || theme === "light");
 
-    const checkReady = () => {
-      if (windowLoaded && fontsReady && timeElapsed) {
-        setIsReady(true);
-      }
-    };
-
-    // 1. Duración mínima
-    const timer = setTimeout(() => {
-      timeElapsed = true;
-      checkReady();
-    }, minDurationMs);
-
-    // 2. Window Load
-    if (document.readyState === 'complete') {
-      windowLoaded = true;
-    } else {
-      window.addEventListener('load', () => {
-        windowLoaded = true;
-        checkReady();
-      });
-    }
-
-    // 3. Fonts Ready
-    if (document.fonts) {
-      document.fonts.ready.then(() => {
-        fontsReady = true;
-        checkReady();
-      });
-    } else {
-      fontsReady = true;
-    }
-
-    checkReady();
-
-    return () => clearTimeout(timer);
-  }, [minDurationMs]);
+  // En modo claro usamos el logo oscuro (log4)
+  const currentTextLogo = textLogoSrc === "/logos/log3.png" && isLightMode
+    ? "/logos/log2.png"
+    : textLogoSrc;
 
   useEffect(() => {
-    // Fase 4: Salida cortina
-    if (isReady && !isFinished) {
-      const zoomTimer = setTimeout(() => {
-        setIsZooming(true);
-      }, 50);
+    const startTime = Date.now();
 
-      const exitTimer = setTimeout(() => {
-        setIsFinished(true);
-        document.body.style.backgroundColor = ''; // Restore body background
-        if (onComplete) onComplete();
-      }, 600);
+    const handleReady = () => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, minDurationMs - elapsed);
 
-      return () => {
-        clearTimeout(zoomTimer);
-        clearTimeout(exitTimer);
-      };
-    }
-  }, [isReady, isFinished, onComplete]);
+      setTimeout(() => {
+        setIsVisible(false);
+      }, remaining);
+    };
 
-  if (isFinished) return null;
+    const fontsPromise = document.fonts ? document.fonts.ready : Promise.resolve();
+    const loadPromise =
+      document.readyState === "complete"
+        ? Promise.resolve()
+        : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
 
-  // Curvas de animación cinemáticas estilo Apple
-  const easeInOutApple: [number, number, number, number] = [0.76, 0, 0.24, 1];
-  const easeOutQuart: [number, number, number, number] = [0.25, 1, 0.5, 1];
+    Promise.all([fontsPromise, loadPromise]).then(handleReady);
+  }, [minDurationMs]);
+
+  const cinematicEase = [0.16, 1, 0.3, 1] as const;
 
   return (
-    <AnimatePresence>
-      {!isFinished && (
+    <AnimatePresence
+      onExitComplete={() => {
+        onComplete?.();
+      }}
+    >
+      {isVisible && (
         <motion.div
-          key="cinematic-preloader"
+          key="cinematic-curtain"
           initial={{ opacity: 1 }}
-          animate={
-            isZooming
-              ? { opacity: 0, transition: { duration: 0.8, ease: easeInOutApple } }
-              : { opacity: 1 }
-          }
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#07080A] select-none overflow-hidden px-4"
+          exit={{
+            opacity: 0,
+            transition: { duration: 0.7, ease: cinematicEase },
+          }}
+          className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#f4f7f5] dark:bg-[#060908] select-none overflow-hidden will-change-opacity transition-colors duration-700"
         >
-          {/* Halo volumétrico respirando (iluminación radial) */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0.2 }}
-            animate={{ scale: [0.8, 1.25, 0.8], opacity: [0.2, 0.35, 0.2] }}
-            transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
-            className="absolute w-[400px] h-[400px] sm:w-[600px] sm:h-[600px] rounded-full bg-[radial-gradient(circle,_rgba(212,175,55,1)_0%,_rgba(0,0,0,0)_70%)] blur-3xl pointer-events-none mix-blend-screen"
+          {/* Trama Textil de Urdimbre en Bajorrelieve */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.05] dark:opacity-[0.04] mix-blend-multiply dark:mix-blend-screen transition-opacity duration-700">
+            <defs>
+              <pattern id="preloaderWeave" width="24" height="24" patternUnits="userSpaceOnUse">
+                <path d="M0 12 L12 0 M12 24 L24 12 M0 0 L24 24" stroke={isLightMode ? "#8c6b16" : "#d4af37"} strokeWidth="1.2" strokeLinecap="round" />
+                <circle cx="12" cy="12" r="1" fill={isLightMode ? "#1a8566" : "#2ec4a6"} />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#preloaderWeave)" />
+          </svg>
+
+          {/* Viñeta de Iluminación Óptica */}
+          <div
+            className="absolute inset-0 pointer-events-none transition-colors duration-700"
+            style={{
+              backgroundImage: isLightMode
+                ? "radial-gradient(ellipse 70% 55% at 50% 45%, rgba(26, 133, 102, 0.03) 0%, rgba(244, 247, 245, 0.7) 60%, #f4f7f5 100%)"
+                : "radial-gradient(ellipse 70% 55% at 50% 45%, rgba(46, 196, 166, 0.08) 0%, rgba(6, 9, 8, 0.7) 60%, #060908 100%)",
+            }}
           />
 
-          {/* Contenedor de elementos para aplicar el Zoom expansivo unificado */}
+          {/* Halo central suave */}
           <motion.div
-            initial={{ scale: 1, opacity: 1 }}
-            animate={
-              isZooming
-                ? { scale: 18, opacity: 0, transition: { duration: 0.8, ease: easeOutQuart } }
-                : { scale: 1, opacity: 1 }
-            }
-            className="relative flex flex-col items-center justify-center z-10"
+            initial={{ opacity: 0.15, scale: 0.95 }}
+            animate={{ opacity: 0.35, scale: 1.05 }}
+            transition={{ duration: 3, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+            className="absolute w-96 h-96 rounded-full bg-[#d4af37]/15 dark:bg-[#d4af37]/8 blur-3xl pointer-events-none transition-colors duration-700"
+          />
+
+          {/* Hilván Perimetral con Pespuntes */}
+          <div className="absolute inset-4 sm:inset-8 rounded-2xl border border-dashed border-[#b48c28]/20 dark:border-[#d4af37]/15 pointer-events-none [stroke-dasharray:6_6] transition-colors duration-700">
+            <span className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-[#b48c28]/40 dark:border-[#d4af37]/35 transition-colors duration-700" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-[#b48c28]/40 dark:border-[#d4af37]/35 transition-colors duration-700" />
+            <span className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-[#b48c28]/40 dark:border-[#d4af37]/35 transition-colors duration-700" />
+            <span className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-[#b48c28]/40 dark:border-[#d4af37]/35 transition-colors duration-700" />
+          </div>
+
+          {/* ================= NÚCLEO CENTRAL ================= */}
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{
+              opacity: 0,
+              y: -10,
+              scale: 1.02,
+              transition: { duration: 0.5, ease: [0.32, 0, 0.67, 0] },
+            }}
+            transition={{ duration: 0.8, ease: cinematicEase }}
+            className="relative z-10 flex flex-col items-center justify-center px-6"
           >
-            {/* Isotipo y Texto: Entrada orgánica */}
-            <motion.div
-              initial={{ scale: 0.95, filter: 'blur(4px)', opacity: 0 }}
-              animate={{ scale: 1, filter: 'blur(0px)', opacity: 1 }}
-              transition={{ duration: 0.6, ease: easeInOutApple }}
-              className="relative flex flex-col items-center justify-center mb-6"
-            >
-              <img
-                src={monogramSrc}
-                alt="Casa de Modas Esperanza Laguna"
-                className="w-24 h-24 sm:w-32 sm:h-32 object-contain filter drop-shadow-[0_4px_20px_rgba(212,175,55,0.15)]"
-              />
-              <motion.img
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2, ease: easeInOutApple }}
-                src={textLogoSrc}
-                alt="Esperanza Laguna"
-                className="w-48 sm:w-56 h-auto mt-4 object-contain filter drop-shadow-[0_4px_10px_rgba(212,175,55,0.15)]"
-              />
+            {/* Monograma / Isotipo (Aumentado de tamaño) */}
+            <motion.img
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: cinematicEase }}
+              src={monogramSrc}
+              alt="Monograma"
+              className="w-32 h-32 sm:w-40 sm:h-40 object-contain brightness-100 dark:brightness-105 drop-shadow-[0_6px_24px_rgba(0,0,0,0.2)] dark:drop-shadow-[0_6px_24px_rgba(0,0,0,0.7)] transition-all duration-700"
+            />
 
-              {/* Shimmer / Light Sweep líquido */}
-              <motion.div
-                initial={{ x: '-150%', opacity: 0 }}
-                animate={{ x: '150%', opacity: [0, 0.65, 0] }}
-                transition={{ duration: 1.4, ease: 'linear', repeat: Infinity, repeatDelay: 0.8 }}
-                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-amber-200/40 to-transparent skew-x-[-25deg] pointer-events-none mix-blend-overlay"
-              />
-            </motion.div>
+            {/* Logotipo Tipográfico (Aumentado de tamaño) */}
+            <motion.img
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.25, ease: cinematicEase }}
+              src={currentTextLogo}
+              alt="Tipografía Logo"
+              className="w-64 sm:w-76 md:w-84 h-auto mt-6 object-contain opacity-95 drop-shadow-[0_4px_16px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] transition-all duration-700"
+            />
 
-            {/* Indicador de carga minimalista */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={
-                isZooming
-                  ? { opacity: 0, transition: { duration: 0.2 } }
-                  : { opacity: 1, transition: { duration: 0.5, delay: 0.5, ease: easeInOutApple } }
-              }
-              className="mt-6 w-44 h-[1.5px] bg-[#1F2024] overflow-hidden rounded-full relative"
-            >
+            {/* ================= BARRA DE COSTURA CON MÁQUINA ACTIVA ================= */}
+            <div className="relative mt-12 w-64 sm:w-72 h-14 flex items-center justify-center">
+              {/* Carril de Tela Base (Guía de puntada tenue) */}
+              <div className="w-full h-[2px] bg-black/[0.04] dark:bg-white/[0.04] relative rounded-full overflow-hidden transition-colors duration-700">
+                <div className="absolute inset-0 border-b border-dashed border-[#b48c28]/30 dark:border-[#d4af37]/20 [stroke-dasharray:4_4] transition-colors duration-700" />
+              </div>
+
+              {/* Pespunte de Hilo Luminoso Revelado (Efecto de Hilo que se Cose) */}
+              <div className="absolute left-0 right-0 h-full flex items-center pointer-events-none">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  animate={{ width: ["0%", "100%", "0%"] }}
+                  transition={{
+                    duration: 2.2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    times: [0, 0.85, 1],
+                  }}
+                  className="h-full overflow-hidden flex items-center"
+                >
+                  <svg 
+                    width="400" 
+                    height="4" 
+                    className="shrink-0 transition-all duration-700" 
+                    style={{ 
+                      filter: isLightMode ? "drop-shadow(0 0 2px rgba(28,120,95,0.4))" : "drop-shadow(0 0 3px rgba(212,175,55,0.6))"
+                    }}
+                  >
+                    <line 
+                      x1="0" y1="2" x2="400" y2="2" 
+                      stroke={isLightMode ? "#1c785f" : "#d4af37"} 
+                      strokeWidth="2.5" 
+                      strokeDasharray="6 5" 
+                      strokeLinecap="round" 
+                    />
+                  </svg>
+                </motion.div>
+              </div>
+
+              {/* Pie de Máquina de Coser (Prensatelas y Aguja Mecánica) */}
               <motion.div
-                initial={{ x: '-100%' }}
-                animate={{ x: '100%' }}
-                transition={{ duration: 1.2, ease: 'linear', repeat: Infinity }}
-                className="absolute inset-0 w-[40%] h-full bg-gradient-to-r from-transparent via-amber-500/80 to-transparent"
-              />
-            </motion.div>
+                initial={{ left: "0%" }}
+                animate={{ left: ["0%", "100%", "0%"] }}
+                transition={{
+                  duration: 2.2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  times: [0, 0.85, 1],
+                }}
+                className="absolute top-1 pointer-events-none -translate-x-1/2 z-20"
+              >
+                {/* Micro-rebote vertical de la aguja al penetrar la tela */}
+                <motion.div
+                  animate={{ y: [0, 3, 0] }}
+                  transition={{
+                    duration: 0.16,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="flex flex-col items-center"
+                >
+                  <svg width="26" height="32" viewBox="0 0 26 32" fill="none">
+                    <defs>
+                      <linearGradient id="machineMetal" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={isLightMode ? "#cca643" : "#f5e1a4"} />
+                        <stop offset="50%" stopColor={isLightMode ? "#997b2d" : "#bfa054"} />
+                        <stop offset="100%" stopColor={isLightMode ? "#66511e" : "#7a5c1e"} />
+                      </linearGradient>
+                      <linearGradient id="needleSteel" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={isLightMode ? "#94a3b8" : "#ffffff"} />
+                        <stop offset="50%" stopColor={isLightMode ? "#64748b" : "#cbd5e1"} />
+                        <stop offset="100%" stopColor={isLightMode ? "#475569" : "#64748b"} />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Barra porta-aguja superior */}
+                    <rect x="11.5" y="0" width="3" height="12" rx="0.5" fill="url(#needleSteel)" />
+                    {/* Tornillo de sujeción dorado */}
+                    <rect x="9.5" y="7" width="7" height="3" rx="1" fill="url(#machineMetal)" />
+
+                    {/* Aguja ultra fina con punta afilada */}
+                    <line x1="13" y1="12" x2="13" y2="24" stroke="url(#needleSteel)" strokeWidth="1.4" strokeLinecap="round" />
+                    {/* Ojo de la aguja */}
+                    <circle cx="13" cy="20" r="0.6" fill={isLightMode ? "#1a2b22" : "#060908"} />
+
+                    {/* Hilo tenso saliendo del ojo de la aguja */}
+                    <path d="M13 20 Q16 17 20 14" stroke={isLightMode ? "#1c785f" : "#d4af37"} strokeWidth="1.2" fill="none" opacity="0.9" className="transition-colors duration-700" />
+
+                    {/* Pie prensatelas de doble patín (perfil lateral de máquina) */}
+                    <path
+                      d="M7 21 C7 21 8 23 10 23 L16 23 C18 23 19 21 19 21"
+                      stroke="url(#machineMetal)"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+
+                  {/* Destello de fricción / luz en el punto exacto de la puntada */}
+                  <span className={`w-1.5 h-1.5 rounded-full blur-[1px] -mt-1 transition-colors duration-700 ${isLightMode ? 'bg-[#1c785f] drop-shadow-[0_0_3px_rgba(28,120,95,0.8)]' : 'bg-[#d4af37] drop-shadow-[0_0_4px_rgba(212,175,55,0.8)]'}`} />
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Sello inferior sutil */}
+            <span className="mt-1 text-[10px] tracking-[0.38em] text-[#a37c1d] dark:text-[#d4af37]/60 uppercase font-mono transition-colors duration-700">
+              Alta Costura • Confección
+            </span>
           </motion.div>
         </motion.div>
       )}

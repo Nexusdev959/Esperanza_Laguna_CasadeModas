@@ -53,6 +53,14 @@ export function Cart() {
 
   const handleCheckout = async () => {
     try {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        showNotification("Por favor inicia sesión o regístrate para continuar con la compra.", "error");
+        setIsOpen(false);
+        router.push('/login');
+        return;
+      }
+
       setLoading(true);
       const payload = {
         items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
@@ -86,6 +94,7 @@ export function Cart() {
   return (
     <>
       <button 
+        aria-label="Ver carrito de compras"
         onClick={() => setIsOpen(true)}
         className="p-2 text-current hover:text-primary transition-colors relative group"
       >

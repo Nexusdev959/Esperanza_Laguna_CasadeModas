@@ -29,7 +29,7 @@ export function QualityControlModal({
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b border-[var(--border-color)] bg-[var(--background)]/50 shrink-0">
             <div>
-              <h2 className="text-xl font-serif text-[var(--foreground)] flex items-center gap-2">
+              <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-purple-500" /> Control de Calidad
               </h2>
               <p className="text-sm text-[var(--muted)]">Revisa y aprueba el trabajo de tus operarios antes del despacho.</p>

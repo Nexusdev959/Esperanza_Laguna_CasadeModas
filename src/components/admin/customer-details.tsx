@@ -7,7 +7,7 @@ export function CustomerDetails({ activeCustomer }: any) {
     return (
       <div className="md:col-span-8 lg:col-span-9 bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl flex flex-col items-center justify-center text-[var(--muted)] p-8 text-center shadow-sm">
         <ClipboardList className="w-16 h-16 mb-4 opacity-20" />
-        <p className="text-lg font-serif text-[var(--foreground)]">Selecciona un cliente</p>
+        <p className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Selecciona un cliente</p>
         <p className="text-sm">Revisa el historial de pedidos, su información de contacto y su relación con tu negocio.</p>
       </div>
     );
@@ -23,7 +23,7 @@ export function CustomerDetails({ activeCustomer }: any) {
             {activeCustomer.name.charAt(0)}
           </div>
           <div>
-            <h2 className="text-2xl font-serif text-[var(--foreground)]">{activeCustomer.name}</h2>
+            <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">{activeCustomer.name}</h2>
             <p className="text-sm text-[var(--muted)]">Cliente desde: {activeCustomer.registeredAt} • ID: {activeCustomer.id}</p>
           </div>
         </div>

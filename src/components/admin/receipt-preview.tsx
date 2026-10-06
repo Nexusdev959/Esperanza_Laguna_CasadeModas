@@ -39,7 +39,7 @@ export function ReceiptPreview({
 
             <div className="text-right flex flex-col justify-between">
               <div>
-                <h2 className="text-3xl font-serif text-stone-800 tracking-tight uppercase">Comprobante de Pago o Avance</h2>
+                <h2 className="text-2xl font-sans font-semibold tracking-tight text-stone-800 tracking-tight uppercase">Comprobante de Pago o Avance</h2>
                 <p className="text-lg font-bold text-stone-600 font-sans mt-1">N° {quoteDetails.quoteNumber}</p>
               </div>
               <div className="mt-8 space-y-1 text-sm font-sans">
@@ -104,7 +104,7 @@ export function ReceiptPreview({
             <div className="w-full max-w-[300px] space-y-3">
               <div className="flex justify-between items-end pt-2">
                 <span className="text-base font-bold text-stone-800 uppercase tracking-wider">Total</span>
-                <span className="text-2xl font-serif font-bold text-stone-900 tabular-nums">
+                <span className="text-2xl font-sans font-semibold tracking-tight font-bold text-stone-900 tabular-nums">
                   {total.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}
                 </span>
               </div>

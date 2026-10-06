@@ -117,6 +117,7 @@ export function ProductGallery() {
         <div className="relative group/gallery">
           {/* Botones de Navegación Cinemáticos */}
           <button 
+            aria-label="Producto anterior"
             onClick={() => scroll("left")}
             className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-stone-900/60 backdrop-blur-xl border border-black/5 dark:border-white/10 text-stone-900 dark:text-white p-4 rounded-full shadow-xl opacity-0 group-hover/gallery:opacity-100 transition-all duration-300 hidden md:flex items-center justify-center hover:bg-white dark:hover:bg-white/10 hover:scale-110 -ml-6"
           >
@@ -124,6 +125,7 @@ export function ProductGallery() {
           </button>
 
           <button 
+            aria-label="Siguiente producto"
             onClick={() => scroll("right")}
             className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/80 dark:bg-stone-900/60 backdrop-blur-xl border border-black/5 dark:border-white/10 text-stone-900 dark:text-white p-4 rounded-full shadow-xl opacity-0 group-hover/gallery:opacity-100 transition-all duration-300 hidden md:flex items-center justify-center hover:bg-white dark:hover:bg-white/10 hover:scale-110 -mr-6"
           >

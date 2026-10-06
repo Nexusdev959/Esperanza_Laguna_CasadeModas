@@ -53,7 +53,7 @@ export default function WorkersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--foreground)]">Administración de Trabajadores</h1>
+          <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Administración de Trabajadores</h1>
           <p className="text-sm text-[var(--muted)] mt-1">Supervisa el rendimiento, asigna tareas y gestiona el tiempo de tu equipo de confección y logística.</p>
         </div>
         <button 

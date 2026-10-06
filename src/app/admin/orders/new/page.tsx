@@ -24,7 +24,7 @@ export default function NewOrdersPage() {
       {/* Header & Telegram Integration */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--foreground)]">Bandeja de Entrada: Pedidos</h1>
+          <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Bandeja de Entrada: Pedidos</h1>
           <p className="text-sm text-[var(--muted)] mt-1">Acepta nuevos pedidos y contacta a los clientes inmediatamente.</p>
         </div>
         

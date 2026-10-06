@@ -88,13 +88,13 @@ export default function QuoteGenerator() {
   const total = subtotal;
 
   return (
-    <main className="min-h-screen pt-28 pb-12 px-4 relative flex flex-col items-center bg-[var(--background)] overflow-hidden">
+    <main className="min-h-screen pt-40 pb-12 px-4 relative flex flex-col items-center bg-[var(--background)] overflow-hidden">
       
       {/* Background Ambience */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] pointer-events-none mix-blend-screen print:hidden"></div>
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[150px] pointer-events-none mix-blend-screen print:hidden"></div>
 
-      <div className="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10 print:block print:max-w-none print:m-0 print:p-0">
+      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10 print:block print:max-w-none print:m-0 print:p-0">
         
         <QuoteEditor 
           clientInfo={clientInfo} 

@@ -285,7 +285,7 @@ export default function AccountPage() {
                     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm text-center">
                       <p className="text-[var(--muted)] text-sm mb-4">No tienes compras registradas aún.</p>
                       <button 
-                        onClick={() => window.location.href = '/collections/all'}
+                        onClick={() => window.location.href = '/catalogo'}
                         className="px-6 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
                       >
                         Explorar Productos

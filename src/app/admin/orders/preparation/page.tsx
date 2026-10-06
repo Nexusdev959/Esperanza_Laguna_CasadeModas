@@ -88,7 +88,7 @@ export default function PreparationBoard() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--foreground)]">Tablero de Preparación (Kanban)</h1>
+          <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Tablero de Preparación (Kanban)</h1>
           <p className="text-sm text-[var(--muted)] mt-1">Supervisa el estado logístico de los despachos y asigna tareas a tu equipo.</p>
         </div>
         

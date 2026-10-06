@@ -67,7 +67,7 @@ export function OrderDetailsModal({
         >
           <div className="flex justify-between items-center p-6 border-b border-[var(--border-color)] bg-[var(--background)]/50 shrink-0">
             <div>
-              <h2 className="text-xl font-serif text-[var(--foreground)] flex items-center gap-2">
+              <h2 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)] flex items-center gap-2">
                 <PackageOpen className="w-5 h-5 text-primary" /> Detalle de Pedido {order.id}
               </h2>
               <p className="text-sm text-[var(--muted)]">Información financiera y logística de la orden.</p>
