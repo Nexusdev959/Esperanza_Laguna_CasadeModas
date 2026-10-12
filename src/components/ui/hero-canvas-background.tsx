@@ -6,9 +6,10 @@ import { motion } from "framer-motion";
 
 interface HeroCanvasBackgroundProps {
   themeHue?: "emerald" | "gold" | "mist" | string;
+  paused?: boolean; // fuera de pantalla o movimiento reducido: dibuja un solo frame
 }
 
-export function HeroCanvasBackground({ themeHue = "emerald" }: HeroCanvasBackgroundProps) {
+export function HeroCanvasBackground({ themeHue = "emerald", paused = false }: HeroCanvasBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -33,14 +34,20 @@ export function HeroCanvasBackground({ themeHue = "emerald" }: HeroCanvasBackgro
     if (!ctx) return;
 
     let animationFrameId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    // Nitidez en pantallas retina, limitada a 1.5x por el costo de shadowBlur
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    let width = 0;
+    let height = 0;
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
+    handleResize();
     window.addEventListener("resize", handleResize);
 
     const mousePos = { x: width / 2, y: height / 2 };
@@ -250,7 +257,7 @@ export function HeroCanvasBackground({ themeHue = "emerald" }: HeroCanvasBackgro
         }
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      if (!paused) animationFrameId = requestAnimationFrame(render);
     };
 
     render();
@@ -260,7 +267,8 @@ export function HeroCanvasBackground({ themeHue = "emerald" }: HeroCanvasBackgro
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [themeHue, isLight, showCanvas]);
+    // themeHue no entra aquí: no se usa al dibujar y reiniciaba la animación (salto visible) en cada escena
+  }, [isLight, showCanvas, paused]);
 
   if (!showCanvas) return null;
 

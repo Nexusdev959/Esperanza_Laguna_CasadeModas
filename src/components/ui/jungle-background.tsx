@@ -76,6 +76,7 @@ const MountainRange = ({ isLight }: { isLight: boolean }) => {
       flatShading: true,
     });
   }, [isLight]);
+  useEffect(() => () => mountainMat.dispose(), [mountainMat]); // libera el material anterior al cambiar de tema
 
   return (
     <mesh
@@ -203,32 +204,34 @@ interface FrondProps {
   colorVariant: number;
 }
 
+// Una sola geometría de hoja compartida por las ~300 frondas (antes cada una creaba la suya)
+let sharedFrondGeometry: THREE.ShapeGeometry | null = null;
+const getFrondGeometry = () => {
+  if (sharedFrondGeometry) return sharedFrondGeometry;
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0);
+  shape.lineTo(0.1, 0.8);
+  shape.bezierCurveTo(1.6, 2.5, 1.4, 5.0, 0, 7.0);
+  shape.bezierCurveTo(-1.4, 5.0, -1.6, 2.5, -0.1, 0.8);
+  shape.lineTo(0, 0);
+
+  const geo = new THREE.ShapeGeometry(shape, 6); // Reducido de 16 a 6 para optimización
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const bendX = Math.abs(x) * 0.25;
+    const bendY = Math.pow(y * 0.25, 2);
+    pos.setZ(i, -bendX - bendY);
+  }
+  geo.computeVertexNormals();
+  sharedFrondGeometry = geo;
+  return geo;
+};
+
 const BotanicalFrond = ({ position, rotation, scale, isLight, colorVariant }: FrondProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
-
-  const leafShape = useMemo(() => {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0);
-    shape.lineTo(0.1, 0.8);
-    shape.bezierCurveTo(1.6, 2.5, 1.4, 5.0, 0, 7.0);
-    shape.bezierCurveTo(-1.4, 5.0, -1.6, 2.5, -0.1, 0.8);
-    shape.lineTo(0, 0);
-    return shape;
-  }, []);
-
-  const geometry = useMemo(() => {
-    const geo = new THREE.ShapeGeometry(leafShape, 6); // Reducido de 16 a 6 para optimización
-    const pos = geo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const bendX = Math.abs(x) * 0.25;
-      const bendY = Math.pow(y * 0.25, 2);
-      pos.setZ(i, -bendX - bendY);
-    }
-    geo.computeVertexNormals();
-    return geo;
-  }, [leafShape]);
+  const geometry = getFrondGeometry();
 
   const colorsLight = ["#2b6b41", "#368751", "#42a362", "#50bd73", "#1f5733"];
   const colorsDark = ["#143a29", "#1b4d37", "#236145", "#2a7353", "#1b4733"];
@@ -419,7 +422,7 @@ const JungleScene = ({ isLight }: { isLight: boolean }) => {
 /**
  * 7. Componente Contenedor Exportado
  */
-export function JungleBackground() {
+export function JungleBackground({ paused = false }: { paused?: boolean }) {
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
@@ -452,6 +455,7 @@ export function JungleBackground() {
             gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
             dpr={[1, 1.2]} // Limitado el pixel ratio máximo a 1.2 para rendimiento
             camera={{ position: [0, 1.4, 5], fov: 52 }}
+            frameloop={paused ? "demand" : "always"} // "demand" deja la escena quieta sin consumir GPU
           >
             <JungleScene isLight={isLight} />
           </Canvas>
