@@ -71,22 +71,13 @@ export default function CheckoutPage() {
     try {
       setWompiLoading(true);
       
-      const totalAmount = parseFloat(order.totalAmount);
-      const amountToPay = (paymentType === "ADVANCE" || paymentType === "BALANCE") 
-        ? totalAmount / 2 
-        : totalAmount;
-      
-      const amountInCents = Math.round(amountToPay * 100);
-
-      // Call our robust backend to generate the signature
+      // El backend calcula el monto y lo firma; el widget debe usar exactamente ese monto
       const hashRes = await api.post('/payments/wompi/hash', {
         orderId: order.id,
-        amountInCents,
-        currency: 'COP',
         type: paymentType === "ADVANCE" ? "ADVANCE_50" : (paymentType === "BALANCE" ? "BALANCE_50" : "FULL_100")
       });
 
-      const { reference, signature } = hashRes.data;
+      const { reference, signature, amountInCents } = hashRes.data;
 
       // Initialize Wompi
       const checkout = new window.WidgetCheckout({

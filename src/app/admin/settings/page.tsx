@@ -159,9 +159,9 @@ export default function AdminSettings() {
                   <input type="number" name="taxRate" value={settings.taxRate} onChange={handleChange} placeholder="Ej. 19" className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-[var(--foreground)]">Clave Pública Wompi (Opcional)</label>
-                  <input type="text" name="wompiPublicKey" value={settings.wompiPublicKey} onChange={handleChange} placeholder="pub_prod_..." className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
-                  <p className="text-xs text-[var(--muted)]">Se utilizará para procesar los pagos en línea en la tienda virtual.</p>
+                  <label className="text-xs font-medium text-[var(--foreground)]">Clave Pública Wompi</label>
+                  <input type="text" name="wompiPublicKey" value={settings.wompiPublicKey} readOnly className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--muted)] cursor-not-allowed outline-none" />
+                  <p className="text-xs text-[var(--muted)]">Por seguridad, la configuración de pagos solo se cambia en el servidor, no desde este panel.</p>
                 </div>
               </div>
             </div>
