@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import { QuoteEditor } from "@/components/quotes/quote-editor";
 import { QuotePreview } from "@/components/quotes/quote-preview";
+import { useNotification } from "@/components/ui/notification-provider";
 
 export default function QuoteGenerator() {
+  const { showNotification } = useNotification();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [clientInfo, setClientInfo] = useState({
     name: "",
     club: "",
@@ -37,11 +40,17 @@ export default function QuoteGenerator() {
     }
   }, []);
 
+  const generateQuoteNumber = () => `COT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+
   const [quoteDetails, setQuoteDetails] = useState({
     validUntil: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +15 days
-    quoteNumber: `COT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+    quoteNumber: "",
     date: new Date().toISOString().split('T')[0],
   });
+
+  useEffect(() => {
+    setQuoteDetails(prev => ({ ...prev, quoteNumber: generateQuoteNumber() }));
+  }, []);
 
   const [items, setItems] = useState<any[]>([]);
 
@@ -65,30 +74,56 @@ export default function QuoteGenerator() {
     }
   }, []);
 
-  const handlePrint = async () => {
+  const saveQuoteToDB = async () => {
     try {
       const { api } = await import('@/lib/api');
       await api.post('/orders/save-quote', {
         clientInfo,
-        items,
+        items: items.map((i: any) => ({ ...i, description: i.description || "Artículo sin nombre" })),
         subtotal,
         quoteDetails
       });
+      return true;
     } catch (e) {
       console.error("Error saving quote", e);
+      showNotification("No se pudo guardar la copia en la nube. Sin embargo, tu archivo se procesará.", "warning");
+      return false;
     }
+  };
+
+  const handlePrint = async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    await saveQuoteToDB();
     
     // Pequeño timeout para asegurar renderizado final antes de imprimir
     setTimeout(() => {
       window.print();
+      // Generar nuevo número para futuras cotizaciones en esta misma sesión
+      setQuoteDetails(prev => ({ ...prev, quoteNumber: generateQuoteNumber() }));
+      setIsGenerating(false);
     }, 100);
+  };
+
+  const handleDownload = async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    await saveQuoteToDB();
+    
+    showNotification("Generando... Por favor selecciona 'Guardar como PDF' en la ventana.", "info");
+    
+    setTimeout(() => {
+      window.print();
+      setQuoteDetails(prev => ({ ...prev, quoteNumber: generateQuoteNumber() }));
+      setIsGenerating(false);
+    }, 500);
   };
 
   const subtotal = items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
   const total = subtotal;
 
   return (
-    <main className="min-h-screen pt-40 pb-12 px-4 relative flex flex-col items-center bg-[var(--background)] overflow-hidden">
+    <main className="min-h-screen pt-40 pb-12 px-4 relative flex flex-col items-center bg-[var(--background)] overflow-hidden print:p-0 print:m-0 print:min-h-0 print:block">
       
       {/* Background Ambience */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] pointer-events-none mix-blend-screen print:hidden"></div>
@@ -102,7 +137,9 @@ export default function QuoteGenerator() {
           items={items} 
           setItems={setItems} 
           onPrint={handlePrint} 
+          onDownload={handleDownload}
           isAuthenticated={isAuthenticated}
+          isGenerating={isGenerating}
         />
 
         <QuotePreview 

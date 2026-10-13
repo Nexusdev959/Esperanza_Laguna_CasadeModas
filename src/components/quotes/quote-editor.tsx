@@ -10,7 +10,9 @@ export function QuoteEditor({
   items, 
   setItems, 
   onPrint,
-  isAuthenticated 
+  onDownload,
+  isAuthenticated,
+  isGenerating 
 }: any) {
   
   const addItem = () => {
@@ -39,22 +41,32 @@ export function QuoteEditor({
           <div className="flex gap-4 mb-8">
             <button 
               onClick={onPrint} 
+              disabled={isGenerating}
               title="Imprimir"
-              className="group/btn relative flex-1 overflow-hidden rounded-2xl p-[1px] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_20px_rgba(28,120,95,0.25)] dark:shadow-[0_8px_20px_rgba(212,175,55,0.2)]"
+              className={`group/btn relative flex-1 overflow-hidden rounded-2xl p-[1px] transition-all duration-300 ${isGenerating ? 'opacity-50 cursor-wait' : 'hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_20px_rgba(28,120,95,0.25)] dark:shadow-[0_8px_20px_rgba(212,175,55,0.2)]'}`}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-[#1c785f] via-[#2ec4a6] to-[#1c785f] dark:from-[#d4af37] dark:via-[#f5e1a4] dark:to-[#d4af37] opacity-80 group-hover/btn:opacity-100 transition-opacity duration-300" />
               <div className="relative flex items-center justify-center bg-gradient-to-br from-[#1a6652] to-[#134d3d] dark:from-[#bfa054] dark:to-[#997b2d] h-12 rounded-[15px] transition-all duration-300">
-                <Printer className="w-5 h-5 text-white dark:text-[#070a09]" />
+                {isGenerating ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <Printer className="w-5 h-5 text-white dark:text-[#070a09]" />
+                )}
               </div>
             </button>
             <button 
-              onClick={onPrint} 
+              onClick={onDownload || onPrint} 
+              disabled={isGenerating}
               title="Descargar PDF"
-              className="group/btn relative flex-1 overflow-hidden rounded-2xl p-[1px] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_20px_rgba(28,120,95,0.25)] dark:shadow-[0_8px_20px_rgba(212,175,55,0.2)]"
+              className={`group/btn relative flex-1 overflow-hidden rounded-2xl p-[1px] transition-all duration-300 ${isGenerating ? 'opacity-50 cursor-wait' : 'hover:scale-[1.02] active:scale-[0.98] shadow-[0_8px_20px_rgba(28,120,95,0.25)] dark:shadow-[0_8px_20px_rgba(212,175,55,0.2)]'}`}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-[#1c785f] via-[#2ec4a6] to-[#1c785f] dark:from-[#d4af37] dark:via-[#f5e1a4] dark:to-[#d4af37] opacity-80 group-hover/btn:opacity-100 transition-opacity duration-300" />
               <div className="relative flex items-center justify-center bg-gradient-to-br from-[#1a6652] to-[#134d3d] dark:from-[#bfa054] dark:to-[#997b2d] h-12 rounded-[15px] transition-all duration-300">
-                <Download className="w-5 h-5 text-white dark:text-[#070a09]" />
+                {isGenerating ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <Download className="w-5 h-5 text-white dark:text-[#070a09]" />
+                )}
               </div>
             </button>
           </div>

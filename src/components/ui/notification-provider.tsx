@@ -36,7 +36,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     <NotificationContext.Provider value={{ showNotification }}>
       {children}
       {notifications.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-[150] flex justify-center pointer-events-none p-6 pb-10">
+        <div className="fixed bottom-0 left-0 right-0 z-[150] flex justify-center pointer-events-none p-6 pb-10 print:hidden">
           <div className="flex flex-col gap-4 pointer-events-auto max-w-md w-full items-center">
             {notifications.map(notification => (
               <div 

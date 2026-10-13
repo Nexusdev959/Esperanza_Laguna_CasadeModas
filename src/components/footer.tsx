@@ -47,10 +47,10 @@ export function Footer() {
 
       {/* ================= CONTENIDO PRINCIPAL ================= */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 pt-16 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-y-10 gap-x-6 lg:gap-8">
 
           {/* Columna 1: Identidad y Misión */}
-          <div className="space-y-5 lg:pr-4">
+          <div className="col-span-2 lg:col-span-1 space-y-5 lg:pr-4">
             <Link href="/" className="inline-flex items-center gap-4 group">
               <img
                 src="/logos/log1.png"

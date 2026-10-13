@@ -85,7 +85,7 @@ export function ProductGallery() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="flex flex-wrap items-center justify-center gap-3 p-2 rounded-3xl bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-xl border border-black/5 dark:border-white/10"
+            className="flex md:flex-wrap items-center justify-start md:justify-center gap-2 md:gap-3 p-2 rounded-[2rem] bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-xl border border-black/5 dark:border-white/10 w-[95%] md:w-auto max-w-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
           >
             {CATEGORIES.map((cat) => {
               const active = activeCategory === cat.id;
@@ -93,7 +93,7 @@ export function ProductGallery() {
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`relative px-6 py-2.5 rounded-full text-sm font-medium tracking-wide transition-all duration-300 ${
+                  className={`shrink-0 snap-center relative px-5 md:px-6 py-2.5 rounded-full text-[13px] md:text-sm font-medium tracking-wide transition-all duration-300 ${
                     active 
                       ? "text-white dark:text-stone-950" 
                       : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--border-color)]"

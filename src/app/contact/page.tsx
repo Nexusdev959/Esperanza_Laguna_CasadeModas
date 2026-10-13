@@ -65,7 +65,7 @@ export default function Contact() {
             Volver al inicio
           </Link>
           
-          <div className="group/container relative bg-gradient-to-b from-[#f9fbfaf0] via-white to-[#f4f7f5] dark:from-[#111916]/95 dark:via-[#0a0f0d] dark:to-[#070a09] backdrop-blur-xl border border-black/[0.05] dark:border-white/[0.05] hover:border-[#1c785f]/30 dark:hover:border-[#d4af37]/30 rounded-[2rem] p-8 md:p-14 shadow-2xl shadow-black/[0.03] dark:shadow-[0_20px_40px_rgba(0,0,0,0.8),_0_0_25px_rgba(46,196,166,0.03)] transition-all duration-700 overflow-hidden">
+          <div className="group/container relative bg-gradient-to-b from-[#f9fbfaf0] via-white to-[#f4f7f5] dark:from-[#111916]/95 dark:via-[#0a0f0d] dark:to-[#070a09] backdrop-blur-xl border border-black/[0.05] dark:border-white/[0.05] hover:border-[#1c785f]/30 dark:hover:border-[#d4af37]/30 rounded-3xl md:rounded-[2rem] p-5 sm:p-6 md:p-14 shadow-2xl shadow-black/[0.03] dark:shadow-[0_20px_40px_rgba(0,0,0,0.8),_0_0_25px_rgba(46,196,166,0.03)] transition-all duration-700 overflow-hidden">
             
             {/* Spotlight hover effect */}
             <div className="absolute inset-0 opacity-0 group-hover/container:opacity-100 transition-opacity duration-1000 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 50% -20%, rgba(212, 175, 55, 0.05) 0%, transparent 70%)" }} />
@@ -83,42 +83,51 @@ export default function Contact() {
             </div>
 
             {/* Canales de Atención Superiores */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 relative z-10">
-              <a href={`https://wa.me/${settings?.phone?.replace(/\D/g, '') || ''}`} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center text-center gap-4 p-8 rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
-                <div className="bg-[#1c785f]/10 dark:bg-[#d4af37]/10 p-5 rounded-full text-[#1c785f] dark:text-[#d4af37] group-hover:scale-110 transition-transform duration-300">
-                  <MessageCircle className="w-8 h-8" />
+            <div className="grid grid-cols-3 gap-3 md:gap-6 mb-10 md:mb-12 relative z-10">
+              <a href={`https://wa.me/${settings?.phone?.replace(/\D/g, '') || ''}`} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center text-center gap-2 md:gap-4 p-4 md:p-8 rounded-2xl md:rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
+                <div className="bg-[#1c785f]/10 dark:bg-[#d4af37]/10 p-3 md:p-5 rounded-full text-[#1c785f] dark:text-[#d4af37] group-hover:scale-110 transition-transform duration-300">
+                  <MessageCircle className="w-5 h-5 md:w-8 md:h-8" />
                 </div>
-                <div>
+                <div className="hidden md:block">
                   <h3 className="font-bold text-[#1a2b22] dark:text-[#f0f4f2] text-sm uppercase tracking-wider mb-2">WhatsApp</h3>
                   <p className="text-[15px] text-[#5a6c65] dark:text-[#7a8c85] font-medium">{settings?.phone || 'Cargando...'}</p>
                   <p className="text-[11px] text-[#5a6c65]/70 dark:text-[#7a8c85]/70 mt-1 uppercase tracking-widest">Respuestas Rápidas</p>
                 </div>
+                <div className="block md:hidden mt-1">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[#1a2b22] dark:text-[#f0f4f2]">WhatsApp</span>
+                </div>
               </a>
 
-              <a href={`mailto:${settings?.supportEmail || ''}`} className="group flex flex-col items-center text-center gap-4 p-8 rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
-                <div className="bg-[#1c785f]/10 dark:bg-[#d4af37]/10 p-5 rounded-full text-[#1c785f] dark:text-[#d4af37] group-hover:scale-110 transition-transform duration-300">
-                  <Mail className="w-8 h-8" />
+              <a href={`mailto:${settings?.supportEmail || ''}`} className="group flex flex-col items-center text-center gap-2 md:gap-4 p-4 md:p-8 rounded-2xl md:rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
+                <div className="bg-[#1c785f]/10 dark:bg-[#d4af37]/10 p-3 md:p-5 rounded-full text-[#1c785f] dark:text-[#d4af37] group-hover:scale-110 transition-transform duration-300">
+                  <Mail className="w-5 h-5 md:w-8 md:h-8" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-[#1a2b22] dark:text-[#f0f4f2] text-sm uppercase tracking-wider mb-2">Correo Electrónico</h3>
+                <div className="hidden md:block">
+                  <h3 className="font-bold text-[#1a2b22] dark:text-[#f0f4f2] text-sm uppercase tracking-wider mb-2">Correo</h3>
                   <p className="text-[15px] text-[#5a6c65] dark:text-[#7a8c85] font-medium">{settings?.supportEmail || 'Cargando...'}</p>
                   <p className="text-[11px] text-[#5a6c65]/70 dark:text-[#7a8c85]/70 mt-1 uppercase tracking-widest">Soporte Detallado</p>
                 </div>
+                <div className="block md:hidden mt-1">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[#1a2b22] dark:text-[#f0f4f2]">Correo</span>
+                </div>
               </a>
 
-              <div className="group flex flex-col items-center text-center gap-4 p-8 rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
-                <div className="bg-[#1c785f]/10 dark:bg-[#d4af37]/10 p-5 rounded-full text-[#1c785f] dark:text-[#d4af37] group-hover:scale-110 transition-transform duration-300">
-                  <MapPin className="w-8 h-8" />
+              <a href={`https://maps.google.com/?q=${encodeURIComponent(settings?.address || 'Oficina Principal')}`} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center text-center gap-2 md:gap-4 p-4 md:p-8 rounded-2xl md:rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
+                <div className="bg-[#1c785f]/10 dark:bg-[#d4af37]/10 p-3 md:p-5 rounded-full text-[#1c785f] dark:text-[#d4af37] group-hover:scale-110 transition-transform duration-300">
+                  <MapPin className="w-5 h-5 md:w-8 md:h-8" />
                 </div>
-                <div>
+                <div className="hidden md:block">
                   <h3 className="font-bold text-[#1a2b22] dark:text-[#f0f4f2] text-sm uppercase tracking-wider mb-2">Sede Principal</h3>
                   <p className="text-[14px] text-[#5a6c65] dark:text-[#7a8c85] font-medium whitespace-pre-line leading-relaxed">{settings?.address || 'Cargando...'}</p>
                 </div>
-              </div>
+                <div className="block md:hidden mt-1">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[#1a2b22] dark:text-[#f0f4f2]">Sede</span>
+                </div>
+              </a>
             </div>
 
             {/* Formulario de Mensaje Rápido (Ancho Completo) */}
-            <div className="bg-white/60 dark:bg-[#060908]/60 p-8 md:p-12 rounded-[2.5rem] border border-black/[0.06] dark:border-white/[0.06] shadow-inner relative overflow-hidden z-10 w-full mx-auto max-w-4xl">
+            <div className="bg-transparent md:bg-white/60 dark:bg-transparent md:dark:bg-[#060908]/60 p-0 md:p-12 rounded-none md:rounded-[2.5rem] border-none md:border-solid border-black/[0.06] dark:border-white/[0.06] shadow-none md:shadow-inner relative overflow-hidden z-10 w-full mx-auto max-w-4xl mt-6 md:mt-0">
               {successData ? (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-10 flex flex-col items-center justify-center">
                   <div className="w-24 h-24 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-6 border border-green-200 dark:border-green-500/20 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
@@ -162,7 +171,7 @@ export default function Contact() {
                           id="type"
                           value={formData.type}
                           onChange={e => setFormData({...formData, type: e.target.value})}
-                          className="w-full px-5 py-4 bg-white dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm appearance-none"
+                          className="w-full px-4 md:px-5 py-3.5 md:py-4 bg-white/80 md:bg-white dark:bg-[#060908]/80 md:dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-xl md:rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm appearance-none"
                         >
                           <option value="PETITION">Petición General</option>
                           <option value="COMPLAINT">Queja sobre el Servicio</option>
@@ -180,7 +189,7 @@ export default function Contact() {
                           value={formData.name}
                           onChange={e => setFormData({...formData, name: e.target.value})}
                           placeholder="Ej. María Esperanza" 
-                          className="w-full px-5 py-4 bg-white dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] placeholder:text-[#5a6c65]/60 dark:placeholder:text-[#7a8c85]/50 focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm"
+                          className="w-full px-4 md:px-5 py-3.5 md:py-4 bg-white/80 md:bg-white dark:bg-[#060908]/80 md:dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-xl md:rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] placeholder:text-[#5a6c65]/60 dark:placeholder:text-[#7a8c85]/50 focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm"
                         />
                       </div>
                     </div>
@@ -194,7 +203,7 @@ export default function Contact() {
                         value={formData.email}
                         onChange={e => setFormData({...formData, email: e.target.value})}
                         placeholder="tu@correo.com" 
-                        className="w-full px-5 py-4 bg-white dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] placeholder:text-[#5a6c65]/60 dark:placeholder:text-[#7a8c85]/50 focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm"
+                        className="w-full px-4 md:px-5 py-3.5 md:py-4 bg-white/80 md:bg-white dark:bg-[#060908]/80 md:dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-xl md:rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] placeholder:text-[#5a6c65]/60 dark:placeholder:text-[#7a8c85]/50 focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm"
                       />
                     </div>
 
@@ -207,13 +216,13 @@ export default function Contact() {
                         value={formData.message}
                         onChange={e => setFormData({...formData, message: e.target.value})}
                         placeholder="Descríbenos en qué te podemos ayudar hoy..." 
-                        className="w-full px-5 py-4 bg-white dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] placeholder:text-[#5a6c65]/60 dark:placeholder:text-[#7a8c85]/50 focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm resize-none"
+                        className="w-full px-4 md:px-5 py-3.5 md:py-4 bg-white/80 md:bg-white dark:bg-[#060908]/80 md:dark:bg-[#060908] border border-black/[0.08] dark:border-white/[0.08] rounded-xl md:rounded-2xl text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] placeholder:text-[#5a6c65]/60 dark:placeholder:text-[#7a8c85]/50 focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37] focus:ring-1 focus:ring-[#1c785f]/30 dark:focus:ring-[#d4af37]/30 transition-all duration-300 shadow-sm resize-none"
                       ></textarea>
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-[11px] font-sans font-bold tracking-[0.1em] uppercase text-[#1a2b22] dark:text-[#d4af37]/90 ml-2">Archivo Adjunto <span className="opacity-60 normal-case font-medium">(Opcional)</span></label>
-                      <label className="w-full cursor-pointer bg-white dark:bg-[#111916] border border-dashed border-black/[0.15] dark:border-white/[0.15] hover:border-[#1c785f] dark:hover:border-[#d4af37] rounded-2xl px-5 py-6 text-sm text-[#5a6c65] dark:text-[#7a8c85] hover:text-[#1c785f] dark:hover:text-[#d4af37] flex flex-col items-center justify-center gap-3 transition-all duration-300 group">
+                      <label className="w-full cursor-pointer bg-white/80 md:bg-white dark:bg-[#111916]/80 md:dark:bg-[#111916] border border-dashed border-black/[0.15] dark:border-white/[0.15] hover:border-[#1c785f] dark:hover:border-[#d4af37] rounded-xl md:rounded-2xl px-5 py-5 md:py-6 text-sm text-[#5a6c65] dark:text-[#7a8c85] hover:text-[#1c785f] dark:hover:text-[#d4af37] flex flex-col items-center justify-center gap-3 transition-all duration-300 group">
                         <div className="bg-[#1c785f]/5 dark:bg-[#d4af37]/5 p-3 rounded-full group-hover:scale-110 transition-transform duration-300">
                           <Paperclip className="w-6 h-6 text-[#1c785f] dark:text-[#d4af37]" />
                         </div>
