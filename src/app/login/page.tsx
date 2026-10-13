@@ -9,7 +9,8 @@ import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 import { AuthTransitionCurtain } from "./AuthTransitionCurtain";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useTheme } from "next-themes";
 
@@ -21,6 +22,9 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [targetRoute, setTargetRoute] = useState("");
+  const [googleHint, setGoogleHint] = useState(false);
+  const googleRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const { theme, systemTheme } = useTheme();
   const currentTheme = theme === 'system' ? systemTheme : theme;
@@ -57,6 +61,17 @@ export default function LoginPage() {
       setTargetRoute(role === 'ADMIN' || role === 'SUPERADMIN' ? "/admin" : "/account");
       setIsAuthenticated(true);
     } catch (err: any) {
+      const code = err.response?.data?.code;
+      if (code === "ACCOUNT_NOT_FOUND") {
+        // El correo viaja por sessionStorage, nunca en la URL
+        try { sessionStorage.setItem("register_email", email); } catch {}
+        router.push("/register?origen=login");
+        return;
+      }
+      if (code === "USE_GOOGLE") {
+        setGoogleHint(true);
+        googleRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       showNotification(err.response?.data?.error || "Error al iniciar sesión", "error");
       setLoading(false);
     }
@@ -146,7 +161,12 @@ export default function LoginPage() {
               <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[var(--border-color)]"></div>
             </div>
             
-            <div className="flex justify-center w-full min-h-[44px]">
+            <div ref={googleRef} className={`flex flex-col items-center gap-3 w-full min-h-[44px] rounded-2xl transition-all duration-300 ${googleHint ? "p-3 ring-2 ring-primary/60 bg-primary/5" : ""}`}>
+              {googleHint && (
+                <p role="status" className="text-sm text-[var(--foreground)] text-center">
+                  Tu cuenta se creó con Google. Usa este botón para entrar.
+                </p>
+              )}
               {mounted && (
                 <div className="w-full flex justify-center hover:scale-[1.02] transition-transform duration-300">
                   <GoogleLogin

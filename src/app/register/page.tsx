@@ -18,9 +18,19 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [fromLogin, setFromLogin] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    // Llega desde el login con un correo sin cuenta: se prellena y se destaca Google
+    if (new URLSearchParams(window.location.search).get("origen") === "login") {
+      setFromLogin(true);
+      try {
+        const saved = sessionStorage.getItem("register_email");
+        if (saved) setEmail(saved);
+        sessionStorage.removeItem("register_email");
+      } catch {}
+    }
   }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -71,7 +81,25 @@ export default function RegisterPage() {
             
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[var(--foreground)] mb-2 text-center tracking-tight">Crear Cuenta</h1>
             <p className="text-[var(--muted)] text-sm mb-8 text-center leading-relaxed">Únete a Pilypage y descubre una nueva forma de comprar.</p>
-            
+
+            {fromLogin && mounted && (
+              <div role="status" className="w-full mb-8 p-4 rounded-2xl ring-2 ring-primary/60 bg-primary/5 flex flex-col items-center gap-3">
+                <p className="text-sm text-[var(--foreground)] text-center">
+                  No encontramos una cuenta con ese correo. Créala en un paso con Google o completa el formulario.
+                </p>
+                <GoogleOAuthProvider clientId="886916002371-9a1rl4kal3f70ddhdq5117s23b4bdejf.apps.googleusercontent.com">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => showNotification("Fallo al registrarse con Google", "error")}
+                    theme="outline"
+                    size="large"
+                    text="signup_with"
+                    shape="rectangular"
+                  />
+                </GoogleOAuthProvider>
+              </div>
+            )}
+
             <form className="w-full space-y-5" onSubmit={handleRegister}>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--foreground)] ml-1">Nombre Completo</label>
@@ -137,7 +165,8 @@ export default function RegisterPage() {
             </div>
             
             <div className="flex justify-center w-full min-h-[44px]">
-              {mounted && (
+              {/* Si vino del login, el botón de Google ya está destacado arriba */}
+              {mounted && !fromLogin && (
                 <GoogleOAuthProvider clientId="886916002371-9a1rl4kal3f70ddhdq5117s23b4bdejf.apps.googleusercontent.com">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
