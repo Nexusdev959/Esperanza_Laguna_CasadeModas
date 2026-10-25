@@ -135,7 +135,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      showNotification('Comprobante enviado exitosamente. Quedará en estado PENDIENTE de aprobación manual (24 a 72 horas). Serás notificado.', 'success');
+      showNotification('Comprobante recibido. Verificamos el pago en 24 a 72 horas hábiles y te notificaremos cuando confirmemos el ingreso.', 'success');
       window.location.href = `/track-order?ref=${order.id}`;
     } catch (err: any) {
       console.error(err);
@@ -254,7 +254,7 @@ export default function CheckoutPage() {
               <div>
                 <h4 className="font-medium text-[var(--foreground)] mb-1">Pago 100% Seguro</h4>
                 <p className="text-xs text-[var(--muted)] leading-relaxed">
-                  Tus datos de pago están encriptados y procesados de manera segura a través de la pasarela Wompi (Bancolombia). Pilypage no almacena la información de tus tarjetas.
+                  Tus datos de pago están encriptados y procesados de manera segura a través de la pasarela Wompi (Bancolombia). Esperanza Laguna no almacena la información de tus tarjetas.
                 </p>
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function CheckoutPage() {
                   </Button>
 
                   <div className="mt-6 flex items-center justify-center gap-4 grayscale opacity-60">
-                    <img src="https://wompi.com/wp-content/uploads/2021/08/logo-wompi.svg" alt="Wompi" className="h-6" />
+                    <span className="text-sm font-semibold tracking-wide text-[var(--muted)]">Wompi</span>
                     <span className="text-xl text-[var(--muted)]">|</span>
                     <span className="text-xs text-[var(--muted)] font-medium">Respaldado por Bancolombia</span>
                   </div>
@@ -377,7 +377,7 @@ export default function CheckoutPage() {
                     )}
                   </Button>
                   <p className="text-xs text-center text-amber-600 dark:text-amber-400">
-                    Al enviar, tu pago quedará PENDIENTE mientras lo confirmamos con el banco (24 a 72 horas). Te contactaremos por WhatsApp.
+                    Al enviar el comprobante, tu pago queda PENDIENTE: la verificación con el banco tarda de 24 a 72 horas hábiles. Te notificaremos por correo o WhatsApp cuando confirmemos el ingreso del pago.
                   </p>
                 </div>
               )}

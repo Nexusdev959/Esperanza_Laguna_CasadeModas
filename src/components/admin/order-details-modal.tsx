@@ -66,7 +66,7 @@ export function OrderDetailsModal({
       return;
     }
     const msg = `Hola ${order.user?.name || order.contactName || ''}, te informamos que tu pedido de Esperanza Laguna ha sido despachado 🚚.\n\n*Medio de envío:* ${shippingCarrier}\n*Guía o Datos del conductor:* ${trackingNumber}\n\n¡Muchas gracias por tu compra!`;
-    window.open(`https://wa.me/57${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(`https://wa.me/${phone.length === 10 ? `57${phone}` : phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   return (
@@ -264,26 +264,28 @@ export function OrderDetailsModal({
                   <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
                     <div className="flex justify-between">
                       <p className="text-sm text-[var(--muted)]">Total de la Orden</p>
-                      <p className="text-sm font-bold text-[var(--foreground)]">${Number(order.totalAmount).toFixed(2)}</p>
+                      <p className="text-sm font-bold text-[var(--foreground)]">{Number(order.totalAmount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</p>
                     </div>
                     <div className="flex justify-between">
                       <p className="text-sm text-[var(--muted)]">Abonado hasta ahora</p>
-                      <p className="text-sm font-bold text-green-500">${Number(order.paidAmount).toFixed(2)}</p>
+                      <p className="text-sm font-bold text-green-500">{Number(order.paidAmount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</p>
                     </div>
                     <div className="pt-2 mt-2 border-t border-[var(--border-color)] flex justify-between">
                       <p className="text-sm font-semibold text-[var(--foreground)]">Saldo Pendiente</p>
-                      <p className="text-sm font-bold text-primary">${(Number(order.totalAmount) - Number(order.paidAmount)).toFixed(2)}</p>
+                      <p className="text-sm font-bold text-primary">{Number(Number(order.totalAmount) - Number(order.paidAmount)).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</p>
                     </div>
                   </div>
                 </div>
 
                 <PaymentActions 
                   orderId={order.id}
-                  clientName={order.user?.name || 'Cliente Anónimo'}
-                  clientEmail={order.user?.email || "cliente@ejemplo.com"}
-                  clientPhone={order.user?.phone || "3000000000"}
+                  // Lo que el cliente dejó en el pedido manda sobre los datos de su cuenta
+                  clientName={order.contactName || order.user?.name || 'Cliente'}
+                  clientEmail={order.contactEmail || order.user?.email}
+                  clientPhone={order.contactPhone || order.user?.phone}
                   totalAmount={Number(order.totalAmount)}
                   paidAmount={Number(order.paidAmount)}
+                  deliveryMethod={order.deliveryMethod}
                 />
 
                 {order.payments && order.payments.length > 0 && (

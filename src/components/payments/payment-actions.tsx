@@ -1,141 +1,131 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, MessageCircle, Mail, Send, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MessageCircle, Mail, Link2, CheckCircle2 } from "lucide-react";
+import { useNotification } from "@/components/ui/notification-provider";
 
 interface PaymentActionsProps {
   orderId: string;
   clientName: string;
-  clientPhone: string;
-  clientEmail: string;
+  clientPhone?: string | null;
+  clientEmail?: string | null;
   totalAmount: number;
   paidAmount: number;
+  deliveryMethod?: string | null;
 }
 
-export function PaymentActions({
-  orderId,
-  clientName,
-  clientPhone,
-  clientEmail,
-  totalAmount,
-  paidAmount
-}: PaymentActionsProps) {
-  const [isWompiLoading, setIsWompiLoading] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<"ADVANCE" | "BALANCE" | "FULL">("ADVANCE");
+const money = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
-  const amountDue = selectedTemplate === "FULL" ? totalAmount : (totalAmount / 2);
-  const formattedAmount = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amountDue);
+// Celulares colombianos de 10 dígitos llevan el 57; si ya trae indicativo se respeta
+const whatsappNumber = (phone?: string | null) => {
+  const digits = String(phone ?? "").replace(/\D/g, "");
+  if (digits.length < 7) return null;
+  return digits.length === 10 && digits.startsWith("3") ? `57${digits}` : digits;
+};
 
-  const getMessageTemplate = (platform: "WA" | "EMAIL") => {
-    let text = "";
-    const paymentLink = `${window.location.origin}/checkout/${orderId}?type=${selectedTemplate}`;
-    
-    if (selectedTemplate === "ADVANCE") {
-      text = `Hola ${clientName}, somos Pilypage. Tu cotización está lista. Para iniciar la confección de tu pedido, requerimos el pago del 50% de anticipo (${formattedAmount}). Puedes realizar el pago de forma segura aquí: ${paymentLink}`;
-    } else if (selectedTemplate === "BALANCE") {
-      text = `Hola ${clientName}. ¡Buenas noticias! Tu pedido en Pilypage ya casi está listo para ser despachado. Por favor realiza el pago del saldo restante (${formattedAmount}) aquí: ${paymentLink}`;
-    } else {
-      text = `Hola ${clientName}. Adjuntamos el enlace para el pago total de tu pedido en Pilypage por un valor de ${formattedAmount}. Enlace: ${paymentLink}`;
-    }
+export function PaymentActions({ orderId, clientName, clientPhone, clientEmail, totalAmount, paidAmount, deliveryMethod }: PaymentActionsProps) {
+  const { showNotification } = useNotification();
+  // Mismas reglas que el servidor (computeChargeInCents): nunca se cobra más del saldo pendiente
+  const pending = Math.max(0, Math.round((totalAmount - paidAmount) * 100) / 100);
+  const advance = Math.min(totalAmount / 2, pending);
+  const hasPaid = paidAmount > 0;
+  const [mode, setMode] = useState<"ADVANCE" | "PENDING">(hasPaid ? "PENDING" : "ADVANCE");
 
-    if (platform === "WA") {
-      return `https://wa.me/57${clientPhone}?text=${encodeURIComponent(text)}`;
-    } else {
-      const subject = encodeURIComponent(`Pago Pilypage - Orden ${orderId}`);
-      return `mailto:${clientEmail}?subject=${subject}&body=${encodeURIComponent(text)}`;
-    }
-  };
+  const code = orderId.slice(0, 8).toUpperCase();
+  const amountDue = mode === "ADVANCE" ? advance : pending;
+  const paymentLink = typeof window !== "undefined" ? `${window.location.origin}/checkout/${orderId}` : "";
+  const wa = whatsappNumber(clientPhone);
 
-  const handleWompiPay = async () => {
-    setIsWompiLoading(true);
-    // Simulación de llamada al backend para obtener la firma (hash)
+  const message = pending <= 0
+    ? deliveryMethod === "STORE_PICKUP"
+      ? `Hola ${clientName}, tu pedido #${code} de Esperanza Laguna está pagado y listo. Puedes recogerlo en tienda presentando el código ${code}.`
+      : `Hola ${clientName}, tu pedido #${code} de Esperanza Laguna está pagado y listo. Te avisaremos con la guía cuando lo despachemos.`
+    : mode === "ADVANCE"
+      ? `Hola ${clientName}, somos Esperanza Laguna. Para iniciar la confección de tu pedido #${code} necesitamos el anticipo del 50% (${money(amountDue)}). Puedes pagar aquí: ${paymentLink}`
+      : `Hola ${clientName}, tu pedido #${code} de Esperanza Laguna está casi listo. Tienes un saldo pendiente de ${money(amountDue)}. Puedes pagarlo aquí: ${paymentLink}`;
+
+  const waLink = wa ? `https://wa.me/${wa}?text=${encodeURIComponent(message)}` : null;
+  const mailLink = clientEmail
+    ? `mailto:${clientEmail}?subject=${encodeURIComponent(`Tu pedido #${code} - Esperanza Laguna`)}&body=${encodeURIComponent(message)}`
+    : null;
+
+  const copyLink = async () => {
     try {
-      // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/payments/wompi/hash`, { ... })
-      // const { reference, signature } = await res.json();
-      
-      setTimeout(() => {
-        setIsWompiLoading(false);
-        // Aquí se inyectaría el script de Wompi real usando window.WidgetCheckout
-        alert(`Widget de Wompi abierto simulado para pagar ${formattedAmount} (Tipo: ${selectedTemplate})`);
-      }, 1000);
-    } catch (e) {
-      console.error(e);
-      setIsWompiLoading(false);
+      await navigator.clipboard.writeText(paymentLink);
+      showNotification("Enlace de pago copiado", "success");
+    } catch {
+      showNotification(paymentLink, "info");
     }
   };
 
   return (
     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 shadow-sm">
       <h3 className="text-lg font-serif text-[var(--foreground)] mb-1">Gestión de Cobros y Pagos</h3>
-      <p className="text-sm text-[var(--muted)] mb-6">Genera enlaces de pago y envíalos rápidamente por WhatsApp o Correo.</p>
+      <p className="text-sm text-[var(--muted)] mb-5">
+        Se envía al contacto que dejó el cliente: {clientPhone || "sin teléfono"}{clientEmail ? ` · ${clientEmail}` : ""}
+      </p>
 
-      {/* Selector de Tipo de Cobro */}
-      <div className="grid grid-cols-3 gap-2 mb-6 p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-[var(--border-color)]">
-        <button 
-          onClick={() => setSelectedTemplate("ADVANCE")}
-          className={`py-2 px-3 text-xs md:text-sm font-medium rounded-lg transition-all ${selectedTemplate === "ADVANCE" ? "bg-[var(--surface)] shadow-sm text-primary" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
-        >
-          Anticipo (50%)
-        </button>
-        <button 
-          onClick={() => setSelectedTemplate("BALANCE")}
-          className={`py-2 px-3 text-xs md:text-sm font-medium rounded-lg transition-all ${selectedTemplate === "BALANCE" ? "bg-[var(--surface)] shadow-sm text-primary" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
-        >
-          Saldo (50%)
-        </button>
-        <button 
-          onClick={() => setSelectedTemplate("FULL")}
-          className={`py-2 px-3 text-xs md:text-sm font-medium rounded-lg transition-all ${selectedTemplate === "FULL" ? "bg-[var(--surface)] shadow-sm text-primary" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
-        >
-          Total (100%)
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {/* Wompi Direct Button */}
-        <Button 
-          onClick={handleWompiPay}
-          disabled={isWompiLoading}
-          className="w-full bg-[#0047FF] hover:bg-[#003BCC] text-white flex items-center justify-center gap-2 h-12 shadow-lg shadow-[#0047FF]/20"
-        >
-          {isWompiLoading ? (
-            <span className="animate-pulse flex items-center gap-2"><CreditCard className="w-5 h-5"/> Generando...</span>
-          ) : (
-            <>
-              <CreditCard className="w-5 h-5" /> 
-              Pagar {formattedAmount} con Wompi
-            </>
-          )}
-        </Button>
-
-        <div className="relative py-2">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-[var(--border-color)]"></span>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[var(--surface)] px-2 text-[var(--muted)] font-bold tracking-widest">Compartir Enlace</span>
-          </div>
+      {pending <= 0 ? (
+        <div className="mb-5 flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 className="w-4 h-4 shrink-0" /> Pedido pagado en su totalidad. Avísale al cliente que está listo.
         </div>
+      ) : (
+        <>
+          {/* Con abonos solo queda el saldo real; sin abonos se elige anticipo o total */}
+          <div className={`grid gap-2 mb-4 p-1 bg-black/5 dark:bg-white/5 rounded-xl border border-[var(--border-color)] ${hasPaid ? "grid-cols-1" : "grid-cols-2"}`}>
+            {!hasPaid && (
+              <button
+                onClick={() => setMode("ADVANCE")}
+                aria-pressed={mode === "ADVANCE"}
+                className={`py-2 px-3 text-xs md:text-sm font-medium rounded-lg transition-all ${mode === "ADVANCE" ? "bg-[var(--surface)] shadow-sm text-primary" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
+              >
+                Anticipo 50% · {money(advance)}
+              </button>
+            )}
+            <button
+              onClick={() => setMode("PENDING")}
+              aria-pressed={mode === "PENDING"}
+              className={`py-2 px-3 text-xs md:text-sm font-medium rounded-lg transition-all ${mode === "PENDING" ? "bg-[var(--surface)] shadow-sm text-primary" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
+            >
+              {hasPaid ? "Saldo pendiente" : "Total"} · {money(pending)}
+            </button>
+          </div>
+          <button
+            onClick={copyLink}
+            className="w-full mb-5 flex items-center justify-center gap-2 h-11 rounded-xl border border-[var(--border-color)] text-sm font-medium text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          >
+            <Link2 className="w-4 h-4" /> Copiar enlace de pago
+          </button>
+        </>
+      )}
 
-        {/* WhatsApp & Email Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <a 
-            href={getMessageTemplate("WA")} 
-            target="_blank" 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {waLink ? (
+          <a
+            href={waLink}
+            target="_blank"
             rel="noreferrer"
             className="flex items-center justify-center gap-2 px-4 py-3 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 border border-[#25D366]/20 rounded-xl font-medium transition-colors"
           >
-            <MessageCircle className="w-5 h-5" /> Enviar WhatsApp
+            <MessageCircle className="w-5 h-5" /> {pending <= 0 ? "Avisar por WhatsApp" : "Cobrar por WhatsApp"}
           </a>
-          
-          <a 
-            href={getMessageTemplate("EMAIL")}
+        ) : (
+          <span className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-[var(--border-color)] text-sm text-[var(--muted)]">
+            <MessageCircle className="w-5 h-5" /> Sin teléfono válido
+          </span>
+        )}
+        {mailLink ? (
+          <a
+            href={mailLink}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-[var(--background)] hover:bg-black/5 dark:hover:bg-white/5 border border-[var(--border-color)] text-[var(--foreground)] rounded-xl font-medium transition-colors"
           >
             <Mail className="w-5 h-5" /> Enviar Correo
           </a>
-        </div>
+        ) : (
+          <span className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-[var(--border-color)] text-sm text-[var(--muted)]">
+            <Mail className="w-5 h-5" /> Sin correo
+          </span>
+        )}
       </div>
     </div>
   );
