@@ -7,9 +7,8 @@ import { Mail, Lock, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
-import { AuthTransitionCurtain } from "./AuthTransitionCurtain";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useTheme } from "next-themes";
@@ -20,8 +19,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [targetRoute, setTargetRoute] = useState("");
   const [googleHint, setGoogleHint] = useState(false);
   const googleRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -36,19 +33,15 @@ export default function LoginPage() {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.role === 'ADMIN' || payload.role === 'SUPERADMIN') {
-          window.location.href = "/admin";
+          router.replace("/admin");
         } else {
-          window.location.href = "/account";
+          router.replace("/account");
         }
       } catch (e) {
         // Invalid token, do nothing
       }
     }
   }, []);
-
-  const handleTransitionComplete = useCallback(() => {
-    if (targetRoute) window.location.href = targetRoute;
-  }, [targetRoute]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,8 +51,7 @@ export default function LoginPage() {
       localStorage.setItem('jwt_token', res.data.token);
       
       const role = res.data.user.role;
-      setTargetRoute(role === 'ADMIN' || role === 'SUPERADMIN' ? "/admin" : "/account");
-      setIsAuthenticated(true);
+      router.replace(role === 'ADMIN' || role === 'SUPERADMIN' ? "/admin" : "/account");
     } catch (err: any) {
       const code = err.response?.data?.code;
       if (code === "ACCOUNT_NOT_FOUND") {
@@ -84,9 +76,15 @@ export default function LoginPage() {
       localStorage.setItem('jwt_token', res.data.token);
       
       const role = res.data.user.role;
-      setTargetRoute(role === 'ADMIN' || role === 'SUPERADMIN' ? "/admin" : "/account");
-      setIsAuthenticated(true);
+      router.replace(role === 'ADMIN' || role === 'SUPERADMIN' ? "/admin" : "/account");
     } catch (err: any) {
+      // Google sin cuenta: no se crea sola, se lleva al registro para pedir el club.
+      // La credencial (vence en 1 h) viaja por sessionStorage para no pedir Google otra vez
+      if (err.response?.data?.code === "ACCOUNT_NOT_FOUND") {
+        try { sessionStorage.setItem("google_credential", credentialResponse.credential); } catch {}
+        router.push("/register?origen=google");
+        return;
+      }
       showNotification(err.response?.data?.error || "Error al iniciar sesión con Google", "error");
       setLoading(false);
     }
@@ -189,12 +187,6 @@ export default function LoginPage() {
           </div>
         </AnimateIn>
 
-        <AuthTransitionCurtain 
-          isAuthenticated={isAuthenticated} 
-          onTransitionComplete={handleTransitionComplete}
-          monogramSrc="/logos/log2.png"
-          textLogoSrc="/logos/log3.png"
-        />
       </main>
     </>
   );

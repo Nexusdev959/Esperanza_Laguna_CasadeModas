@@ -65,3 +65,11 @@
     color: var(--foreground);
   }
 }
+
+/* Barras con scroll horizontal (filtros del catálogo): se desliza sin mostrar la barra */
+@utility hide-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

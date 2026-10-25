@@ -1,27 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Camera } from "lucide-react";
 import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
+import { usePanelUser, ROLE_LABELS } from "@/components/panel/panel-user";
 
 interface UserProfileCardProps {
   isCollapsed?: boolean;
 }
 
 export function UserProfileCard({ isCollapsed = false }: UserProfileCardProps) {
-  const [user, setUser] = useState<{ name: string; role: string; avatar?: string } | null>(null);
+  const { user, setUser } = usePanelUser();
   const { showNotification } = useNotification();
-
-  useEffect(() => {
-    const token = localStorage.getItem("jwt_token");
-    if (token) {
-      api
-        .get("/auth/profile")
-        .then((res) => setUser(res.data))
-        .catch((err) => console.error(err));
-    }
-  }, []);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -41,11 +31,10 @@ export function UserProfileCard({ isCollapsed = false }: UserProfileCardProps) {
     }
   };
 
-  const displayName = user?.name || "Felipe Miranda";
-  const displayRole = user?.role || "SUPERADMIN";
+  const displayName = user.name;
+  const displayRole = ROLE_LABELS[user.role] ?? user.role;
   const displayAvatar =
-    user?.avatar ||
-    "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=400";
+    user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=1B4332&color=fff`;
 
   return (
     <div

@@ -2,12 +2,13 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { isPanelRoute } from "@/components/panel/panel-user";
 
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
   // Disable global page transitions for the admin section to preserve sidebar layout state
-  if (pathname.startsWith('/admin')) {
+  if (isPanelRoute(pathname)) {
     return <>{children}</>;
   }
 

@@ -41,10 +41,7 @@ export function TrackOrderForm({ onTrackSuccess, initialOrderId }: { onTrackSucc
         isLocal: true, 
         courier: order.shippingCarrier || 'Mensajería Express Pilypage',
         trackingNumber: order.trackingNumber || 'En preparación',
-        deliveryInstructions: order.shippingAddress || 'Pendiente',
-        originCoords: [-74.0817, 4.6097], // Bogotá
-        destinationCoords: [-75.5652, 6.2518], // Medellín (si es transito)
-        currentCoords: [-74.5, 5.0], // Mitad de camino
+        deliveryInstructions: '', // la dirección no se expone en el rastreo público
         estimatedDate: "Próximamente"
       };
 

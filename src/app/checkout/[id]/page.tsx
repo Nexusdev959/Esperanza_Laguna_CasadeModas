@@ -25,7 +25,16 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"WOMPI" | "TRANSFER">("WOMPI");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [storeAddress, setStoreAddress] = useState("");
+  const [bankTransferInfo, setBankTransferInfo] = useState("");
   const { showNotification } = useNotification();
+
+  useEffect(() => {
+    api.get('/settings').then((res) => {
+      setStoreAddress(res.data?.address || "");
+      setBankTransferInfo(res.data?.bankTransferInfo || "");
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Load Wompi script dynamically
@@ -44,7 +53,7 @@ export default function CheckoutPage() {
       try {
         const res = await api.get(`/orders/track/${orderId}`);
         setOrder(res.data);
-        
+
         // Determinar qué pago le toca por defecto
         if (res.data.status === 'PENDING_ADVANCE') {
           setPaymentType("ADVANCE");
@@ -67,26 +76,26 @@ export default function CheckoutPage() {
       showNotification("El widget de Wompi aún no ha cargado. Por favor, espera un momento.", "error");
       return;
     }
-    
+
     try {
       setWompiLoading(true);
-      
+
       // El backend calcula el monto y lo firma; el widget debe usar exactamente ese monto
       const hashRes = await api.post('/payments/wompi/hash', {
         orderId: order.id,
         type: paymentType === "ADVANCE" ? "ADVANCE_50" : (paymentType === "BALANCE" ? "BALANCE_50" : "FULL_100")
       });
 
-      const { reference, signature, amountInCents } = hashRes.data;
+      const { reference, signature, amountInCents, publicKey } = hashRes.data;
 
       // Initialize Wompi
       const checkout = new window.WidgetCheckout({
         currency: 'COP',
         amountInCents,
         reference,
-        publicKey: process.env.NEXT_PUBLIC_WOMPI_PUB_KEY || 'pub_test_eqVy6s9mTWM0DqwquHj4r3M7z4vw83mt', // Usar public key real en prod
+        publicKey, // la entrega el backend junto con la firma
         signature: { integrity: signature },
-        redirectUrl: `https://esperanzalaguna.com/track-order?ref=${order.id}` // Regresa al track después del pago
+        redirectUrl: `${window.location.origin}/track-order?ref=${order.id}` // Regresa al track después del pago
       });
 
       checkout.open((result: any) => {
@@ -118,12 +127,14 @@ export default function CheckoutPage() {
       setUploadingProof(true);
       const formData = new FormData();
       formData.append('orderId', order.id);
+      // El servidor registra el monto de este tipo (anticipo, saldo o total), el mismo que se le mostró al cliente
+      formData.append('type', paymentType === "ADVANCE" ? "ADVANCE_50" : (paymentType === "BALANCE" ? "BALANCE_50" : "FULL_100"));
       formData.append('proof', proofFile);
 
       await api.post('/payments/wompi/proof', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
+
       showNotification('Comprobante enviado exitosamente. Quedará en estado PENDIENTE de aprobación manual (24 a 72 horas). Serás notificado.', 'success');
       window.location.href = `/track-order?ref=${order.id}`;
     } catch (err: any) {
@@ -165,12 +176,12 @@ export default function CheckoutPage() {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
+
           {/* Columna Izquierda: Detalles del Pedido */}
           <div className="space-y-6">
             <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-3xl p-8 shadow-sm">
               <h2 className="text-2xl font-serif text-[var(--foreground)] mb-6">Resumen del Pedido</h2>
-              
+
               <div className="space-y-4 mb-6 pb-6 border-b border-[var(--border-color)]">
                 {order.items?.map((item: any) => (
                   <div key={item.id} className="flex justify-between items-center">
@@ -206,6 +217,38 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* El código sirve para rastrear (sobre todo sin cuenta) y para reclamar en tienda */}
+            <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl p-6 space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-[var(--muted)]">Código del pedido</span>
+                <span className="font-mono text-lg font-bold tracking-widest text-[var(--foreground)]">{order.id.slice(0, 8).toUpperCase()}</span>
+              </div>
+              {order.deliveryMethod === 'STORE_PICKUP' && (
+                <p className="text-sm text-[var(--foreground)]">
+                  <span className="font-semibold">Recoges en tienda</span>{storeAddress && <> en <span className="font-medium">{storeAddress}</span></>}. Presenta este código cuando te avisemos que está listo.
+                </p>
+              )}
+              {order.deliveryMethod === 'MEDELLIN_DELIVERY' && (
+                <p className="text-sm text-[var(--muted)]">Domicilio en Medellín: el costo lo cobra la plataforma de domicilios al momento de la entrega y no está incluido en este total.</p>
+              )}
+              {order.deliveryMethod === 'NATIONAL_SHIPPING' && (
+                <p className="text-sm text-[var(--muted)]">Envío por transportadora: el flete no está incluido en este total. Te enviaremos la guía cuando despachemos.</p>
+              )}
+              {order.leadBusinessDays && (
+                <p className="text-sm text-[var(--foreground)]">
+                  <span className="font-semibold">Confección:</span> ~{order.leadBusinessDays} días hábiles desde el pago del anticipo.
+                </p>
+              )}
+              {order.status === 'PENDING_ADVANCE' && order.items?.some((i: any) => i.isUniform) && (
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  Paga el anticipo antes del{" "}
+                  <strong>{new Date(new Date(order.createdAt).getTime() + 48 * 3600_000).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' })}</strong>{" "}
+                  para asegurar tu cupo de confección.
+                </p>
+              )}
+              <p className="text-xs text-[var(--muted)]">Guárdalo: con él puedes consultar tu pedido en Rastrear.</p>
+            </div>
+
             <div className="bg-black/5 dark:bg-white/5 border border-[var(--border-color)] rounded-2xl p-6 flex items-start gap-4">
               <ShieldCheck className="w-8 h-8 text-emerald-500 shrink-0" />
               <div>
@@ -222,7 +265,7 @@ export default function CheckoutPage() {
             <div className="bg-[var(--surface)] border-2 border-primary/20 rounded-3xl p-8 shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)]">
               <h3 className="text-xl font-serif text-[var(--foreground)] mb-2">Completar Pago</h3>
               <p className="text-sm text-[var(--muted)] mb-6">Selecciona el monto que vas a cancelar ahora mismo para la orden #{order.id.slice(0,8).toUpperCase()}.</p>
-              
+
               <div className="space-y-3 mb-8">
                 {order.status === 'PENDING_ADVANCE' && (
                   <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentType === 'ADVANCE' ? 'border-primary bg-primary/5' : 'border-[var(--border-color)] bg-[var(--background)] opacity-70'}`} onClick={() => setPaymentType('ADVANCE')}>
@@ -272,24 +315,24 @@ export default function CheckoutPage() {
 
               {/* Selector de Método de Pago */}
               <div className="flex gap-2 mb-6">
-                <button 
+                <button
                   onClick={() => setPaymentMethod("WOMPI")}
                   className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === "WOMPI" ? 'border-primary bg-primary/10 text-primary' : 'border-[var(--border-color)] text-[var(--muted)] hover:border-primary/50'}`}
                 >
                   Pago Automático (Wompi)
                 </button>
-                <button 
+                {bankTransferInfo && <button
                   onClick={() => setPaymentMethod("TRANSFER")}
                   className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === "TRANSFER" ? 'border-primary bg-primary/10 text-primary' : 'border-[var(--border-color)] text-[var(--muted)] hover:border-primary/50'}`}
                 >
                   Transferencia Manual
-                </button>
+                </button>}
               </div>
 
               {paymentMethod === "WOMPI" ? (
                 <>
-                  <Button 
-                    onClick={handlePay} 
+                  <Button
+                    onClick={handlePay}
                     disabled={wompiLoading}
                     className="w-full bg-[#0047FF] hover:bg-[#003BCC] text-white flex items-center justify-center gap-2 h-14 rounded-xl shadow-[0_4px_20px_rgba(0,71,255,0.3)] hover:shadow-[0_4px_25px_rgba(0,71,255,0.4)] text-lg font-bold transition-all"
                   >
@@ -299,7 +342,7 @@ export default function CheckoutPage() {
                       <>Pagar {amountToPay.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</>
                     )}
                   </Button>
-                  
+
                   <div className="mt-6 flex items-center justify-center gap-4 grayscale opacity-60">
                     <img src="https://wompi.com/wp-content/uploads/2021/08/logo-wompi.svg" alt="Wompi" className="h-6" />
                     <span className="text-xl text-[var(--muted)]">|</span>
@@ -310,19 +353,20 @@ export default function CheckoutPage() {
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
                   <div className="p-4 bg-[var(--background)] border border-[var(--border-color)] rounded-xl">
                     <p className="text-sm text-[var(--foreground)] font-medium mb-1">Datos para Transferencia:</p>
-                    <p className="text-xs text-[var(--muted)] mb-4">Bancolombia Ahorros: <strong>123-456789-00</strong><br/>Nequi/Daviplata: <strong>3215028653</strong></p>
-                    
+                    <p className="text-xs text-[var(--muted)] mb-3 whitespace-pre-line">{bankTransferInfo}</p>
+                    <p className="text-sm text-[var(--foreground)] mb-4">Transfiere exactamente <strong>{amountToPay.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</strong> y adjunta el comprobante.</p>
+
                     <label className="block mb-2 text-sm font-medium text-[var(--foreground)]">Adjuntar Comprobante (Imagen o PDF)</label>
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*,.pdf"
                       onChange={(e) => setProofFile(e.target.files?.[0] || null)}
                       className="w-full text-sm text-[var(--muted)] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all cursor-pointer"
                     />
                   </div>
 
-                  <Button 
-                    onClick={handleUploadProof} 
+                  <Button
+                    onClick={handleUploadProof}
                     disabled={uploadingProof || !proofFile}
                     className="w-full h-14 rounded-xl text-lg font-bold transition-all"
                   >
@@ -333,7 +377,7 @@ export default function CheckoutPage() {
                     )}
                   </Button>
                   <p className="text-xs text-center text-amber-600 dark:text-amber-400">
-                    Al enviar, tu pedido quedará PENDIENTE y tomará de 24 a 72 horas para su aprobación manual. Se te notificará por correo.
+                    Al enviar, tu pago quedará PENDIENTE mientras lo confirmamos con el banco (24 a 72 horas). Te contactaremos por WhatsApp.
                   </p>
                 </div>
               )}

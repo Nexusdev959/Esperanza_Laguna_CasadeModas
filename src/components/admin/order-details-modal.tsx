@@ -7,6 +7,19 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
 
+const DELIVERY_LABELS: Record<string, string> = {
+  NATIONAL_SHIPPING: 'Envío nacional (transportadora)',
+  MEDELLIN_DELIVERY: 'Domicilio en Medellín (costo aparte)',
+  STORE_PICKUP: 'Recoge en tienda con el código',
+};
+
+const INSIGNIA_LABELS: Record<string, string> = {
+  COMPLETAS: 'Banda y camisa',
+  SOLO_BANDA: 'Solo banda',
+  SOLO_CAMISA: 'Solo camisa',
+  NINGUNA: 'Sin insignias',
+};
+
 export function OrderDetailsModal({
   isOpen,
   onClose,
@@ -47,12 +60,12 @@ export function OrderDetailsModal({
   };
 
   const handleSendShippingWhatsApp = () => {
-    const phone = order.user?.phone?.replace(/\D/g, '') || "";
+    const phone = (order.contactPhone || order.user?.phone)?.replace(/\D/g, '') || "";
     if (!phone) {
       showNotification('El cliente no tiene teléfono registrado', 'error');
       return;
     }
-    const msg = `Hola ${order.user?.name || ''}, te informamos que tu pedido de Esperanza Laguna ha sido despachado 🚚.\n\n*Medio de envío:* ${shippingCarrier}\n*Guía o Datos del conductor:* ${trackingNumber}\n\n¡Muchas gracias por tu compra!`;
+    const msg = `Hola ${order.user?.name || order.contactName || ''}, te informamos que tu pedido de Esperanza Laguna ha sido despachado 🚚.\n\n*Medio de envío:* ${shippingCarrier}\n*Guía o Datos del conductor:* ${trackingNumber}\n\n¡Muchas gracias por tu compra!`;
     window.open(`https://wa.me/57${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -84,12 +97,71 @@ export function OrderDetailsModal({
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Datos del Cliente</h3>
                   <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
-                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Nombre:</span> {order.user?.name || 'Cliente Anónimo'}</p>
-                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Teléfono:</span> {order.user?.phone || 'No registrado'}</p>
-                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Club:</span> {order.user?.club || 'Sin club'}</p>
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Nombre:</span> {order.user?.name || order.contactName || 'Cliente sin cuenta'}{!order.userId && <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">(sin cuenta)</span>}</p>
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Teléfono:</span> {order.contactPhone || order.user?.phone || 'No registrado'}</p>
+                    {(order.contactEmail || order.user?.email) && <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Correo:</span> {order.contactEmail || order.user?.email}</p>}
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Entrega:</span> {DELIVERY_LABELS[order.deliveryMethod] || 'No indicada'}</p>
+                    {order.shippingAddress && <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Dirección:</span> {order.shippingAddress}</p>}
+                    <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Club:</span> {order.clubName || order.user?.club || 'Sin club'}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Fecha:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Estado Actual:</span> {order.status}</p>
                   </div>
+                </div>
+
+                {/* Lo que el taller debe confeccionar: talla, nombre y unión por artículo */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Artículos</h3>
+                  {(order.clubName || order.leadBusinessDays) && (
+                    <div className="mb-3 flex flex-wrap gap-2 text-xs">
+                      {order.clubName && <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">Lote · {order.clubName}</span>}
+                      {order.leadBusinessDays && <span className="px-2.5 py-1 rounded-full bg-[var(--background)] border border-[var(--border-color)] text-[var(--muted)]">Confección ~{order.leadBusinessDays} días hábiles desde el anticipo</span>}
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    {order.items?.map((item: any) => (
+                      <div key={item.id} className="bg-[var(--background)] p-3 rounded-xl border border-[var(--border-color)]">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="text-sm font-medium text-[var(--foreground)]">{item.product?.name || 'Producto'}</span>
+                            {item.size && <span className="text-xs text-[var(--muted)]">Talla: <span className="text-[var(--foreground)]">{item.size}</span></span>}
+                            {item.insignias && <span className="text-xs text-[var(--muted)]">Insignias: <span className={`font-medium ${item.insignias === 'COMPLETAS' ? 'text-[var(--foreground)]' : 'text-amber-600 dark:text-amber-400'}`}>{INSIGNIA_LABELS[item.insignias] ?? item.insignias}</span></span>}
+                            {item.personalization && <span className="text-xs text-[var(--muted)]">Nombre: <span className="text-[var(--foreground)] font-medium">{item.personalization}</span></span>}
+                            {item.union && <span className="text-xs text-[var(--muted)]">Unión: <span className="text-[var(--foreground)]">{item.union}{item.association ? ` · ${item.association}` : ''}</span></span>}
+                            {item.details && <span className="text-xs text-[var(--muted)]">Detalles: <span className="text-[var(--foreground)] whitespace-pre-line">{item.details}</span></span>}
+                          </div>
+                          <span className="text-sm font-bold bg-[var(--surface)] border border-[var(--border-color)] px-3 py-1 rounded-md shrink-0">x{item.quantity}</span>
+                        </div>
+                        {Array.isArray(item.members) && item.members.length > 0 && (
+                          <table className="mt-3 w-full text-xs">
+                            <thead>
+                              <tr className="text-left text-[var(--muted)]">
+                                <th className="font-medium py-1 w-6">#</th>
+                                <th className="font-medium py-1">Integrante</th>
+                                <th className="font-medium py-1 w-12">RH</th>
+                                <th className="font-medium py-1 w-14">Talla</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {item.members.map((m: any, n: number) => (
+                                <tr key={n} className="border-t border-[var(--border-color)] text-[var(--foreground)]">
+                                  <td className="py-1 text-[var(--muted)]">{n + 1}</td>
+                                  <td className="py-1">{m.name}</td>
+                                  <td className="py-1">{m.rh}</td>
+                                  <td className="py-1">{m.size || '—'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {order.notes && (
+                    <div className="mt-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10">
+                      <p className="text-xs font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-1">Detalles del cliente</p>
+                      <p className="text-sm text-[var(--foreground)] whitespace-pre-line">{order.notes}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)]">

@@ -29,7 +29,9 @@ export default function Contact() {
     try {
       const data = new FormData();
       data.append('type', formData.type);
-      data.append('description', `Nombre: ${formData.name}\nCorreo: ${formData.email}\n\nMensaje:\n${formData.message}`);
+      data.append('description', formData.message);
+      data.append('contactName', formData.name);
+      data.append('contactEmail', formData.email);
       if (file) {
         data.append('attachments', file);
       }

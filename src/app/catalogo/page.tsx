@@ -1,64 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ArchiveX } from "lucide-react";
-import { ProductCard, Product } from "@/components/product-card";
+import { Sparkles, ArchiveX, X } from "lucide-react";
+import { ProductCard, Product, toCardProduct, PRODUCT_CATEGORIES } from "@/components/product-card";
 
-const CATEGORIES = [
-  { id: "all", label: "Colección Completa" },
-  { id: "reglamentarios", label: "Uniformes Reglamentarios" },
-  { id: "women", label: "Moda para Damas" },
-  { id: "men", label: "Moda para Caballeros" },
-  { id: "accessories", label: "Insignias y Accesorios" },
-];
+const CATEGORIES = [{ id: "all", label: "Colección Completa" }, ...PRODUCT_CATEGORIES];
 
-// Datos de prueba temporales para visualización
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "Uniforme de Conquistadores Femenino",
-    price: 195000,
-    image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&q=80&w=600&h=800",
-    category: "Uniformes Reglamentarios",
-    status: "Destacado",
-    rating: 4.9,
-    reviewsCount: 124,
-    sizes: ["XS", "S", "M", "L", "XL"],
-  },
-  {
-    id: 2,
-    name: "Camisa Oxford Blanca (Damas)",
-    price: 85000,
-    image: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&q=80&w=600&h=800",
-    category: "Moda para Damas",
-    status: "Nuevo",
-    rating: 4.8,
-    reviewsCount: 56,
-  },
-  {
-    id: 3,
-    name: "Pantalón de Gabardina Clásico",
-    price: 110000,
-    image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&q=80&w=600&h=800",
-    category: "Moda para Caballeros",
-    rating: 4.7,
-    reviewsCount: 89,
-    sizes: ["28", "30", "32", "34", "36"],
-  },
-];
+// Sin tildes ni mayúsculas: "insignia" encuentra "Insígnia" y viceversa
+const normalize = (s = "") => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
+// useSearchParams exige Suspense para que el build pueda prerenderizar la página
 export default function CataloguePage() {
+  return (
+    <Suspense>
+      <Catalogue />
+    </Suspense>
+  );
+}
+
+function Catalogue() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const query = (searchParams.get("q") || "").trim();
   const [activeCategory, setActiveCategory] = useState("all");
 
-  const filteredProducts = MOCK_PRODUCTS.filter((p) => {
-    if (activeCategory === "all") return true;
-    if (activeCategory === "reglamentarios" && p.category === "Uniformes Reglamentarios") return true;
-    if (activeCategory === "women" && p.category === "Moda para Damas") return true;
-    if (activeCategory === "men" && p.category === "Moda para Caballeros") return true;
-    if (activeCategory === "accessories" && p.category === "Insignias y Accesorios") return true;
-    return false;
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+  // Mientras carga no se muestra "Colección en Preparación": parecería una tienda vacía
+  const [loaded, setLoaded] = useState(false);
+
+  // Enlaces como /catalogo?categoria=Insignias%20y%20Parches abren la categoría ya filtrada
+  const categoryFromUrl = searchParams.get("categoria");
+  useEffect(() => {
+    if (categoryFromUrl && CATEGORIES.some((c) => c.id === categoryFromUrl)) setActiveCategory(categoryFromUrl);
+  }, [categoryFromUrl]);
+
+  useEffect(() => {
+    api.get('/products')
+      .then((res) => setProducts((res.data || []).map(toCardProduct)))
+      .catch((err) => console.error('Error cargando el catálogo', err))
+      .finally(() => setLoaded(true));
+  }, []);
+
+  // En móvil la barra se desplaza: la categoría activa (p. ej. llegada desde el hero) siempre queda a la vista
+  useEffect(() => {
+    // Se mueve solo la barra: scrollIntoView también desplazaba el <main> (overflow-hidden) y corría toda la página
+    const btn = document.querySelector(`[data-category="${CSS.escape(activeCategory)}"]`);
+    const bar = btn?.closest('.overflow-x-auto');
+    if (!btn || !bar) return;
+    const b = btn.getBoundingClientRect();
+    const r = bar.getBoundingClientRect();
+    bar.scrollLeft += b.left - r.left - (r.width - b.width) / 2;
+  }, [activeCategory]);
+
+  const q = normalize(query);
+  const filteredProducts = products.filter(
+    (p) =>
+      (activeCategory === "all" || p.category === activeCategory) &&
+      (!q || normalize(p.name).includes(q) || normalize(p.category).includes(q))
+  );
 
   return (
     <main className="min-h-screen bg-[#f4f7f5] dark:bg-[#050807] pt-40 pb-24 text-stone-900 dark:text-white overflow-hidden selection:bg-[#2ec4a6]/30 transition-colors duration-700">
@@ -96,14 +98,16 @@ export default function CataloguePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-          className="w-full overflow-x-auto pb-4 hide-scrollbar flex justify-center"
+          className="w-full overflow-x-auto pb-4 hide-scrollbar flex"
         >
-          <div className="flex items-center gap-1.5 p-1.5 bg-black/5 dark:bg-[#0a0f0d]/80 backdrop-blur-md border border-black/[0.04] dark:border-white/[0.06] rounded-full min-w-max shadow-xl transition-colors duration-700">
+          {/* mx-auto en vez de justify-center en el padre: con scroll, justify-center dejaba las primeras categorías fuera de alcance */}
+          <div className="mx-auto flex items-center gap-1.5 p-1.5 bg-black/5 dark:bg-[#0a0f0d]/80 backdrop-blur-md border border-black/[0.04] dark:border-white/[0.06] rounded-full min-w-max shadow-xl transition-colors duration-700">
             {CATEGORIES.map((cat) => {
               const isActive = activeCategory === cat.id;
               return (
                 <button
                   key={cat.id}
+                  data-category={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
                   className={`relative px-5 py-2.5 rounded-full text-[13px] font-sans font-medium tracking-wide transition-all duration-500 outline-none
                     ${isActive ? "text-white dark:text-[#050807]" : "text-[#5a6c65] dark:text-[#7a8c85] hover:text-[#1a2b22] dark:hover:text-[#d4dcd9]"}
@@ -122,10 +126,30 @@ export default function CataloguePage() {
             })}
           </div>
         </motion.div>
+
+        {query && (
+          <div className="mt-4 inline-flex items-center gap-2 pl-4 pr-1.5 py-1.5 rounded-full border border-[#2ec4a6]/30 bg-[#2ec4a6]/10 text-[13px] text-[#1a2b22] dark:text-[#d4dcd9]">
+            <span>
+              Resultados para <strong className="font-semibold">“{query}”</strong>
+            </span>
+            <button
+              onClick={() => router.replace("/catalogo")}
+              aria-label="Quitar búsqueda"
+              className="p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </section>
 
       {/* ================= GRILLA DE PRODUCTOS ================= */}
       <section className="relative w-full max-w-7xl mx-auto px-6 min-h-[40vh]">
+        {!loaded ? (
+          <div className="flex justify-center py-24" role="status" aria-label="Cargando productos">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#2ec4a6]" />
+          </div>
+        ) : (
         <AnimatePresence mode="wait">
           {filteredProducts.length > 0 ? (
             <motion.div
@@ -161,14 +185,19 @@ export default function CataloguePage() {
                 <ArchiveX className="w-8 h-8 text-[#5a6c65] dark:text-[#5d6f68] transition-colors duration-700" />
               </div>
               <h3 className="text-xl font-serif text-[#2a3b32] dark:text-[#c8d4cf] mb-3 transition-colors duration-700">
-                Colección en Preparación
+                {query ? "Sin resultados" : "Colección en Preparación"}
               </h3>
               <p className="text-[#5a6c65] dark:text-[#7a8c85] font-sans text-[13px] max-w-md mx-auto leading-relaxed transition-colors duration-700">
-                Nuestros sastres están trabajando meticulosamente en las nuevas prendas para esta categoría. Vuelve pronto para descubrir la excelencia de nuestra manufactura nacional.
+                {query
+                  ? `No encontramos prendas para “${query}”. Prueba con otra palabra, como “insignia” o “uniforme”.`
+                  : "Nuestros sastres están trabajando meticulosamente en las nuevas prendas para esta categoría. Vuelve pronto para descubrir la excelencia de nuestra manufactura nacional."}
               </p>
-              
-              <button 
-                onClick={() => setActiveCategory("all")}
+
+              <button
+                onClick={() => {
+                  setActiveCategory("all");
+                  if (query) router.replace("/catalogo");
+                }}
                 className="mt-8 px-6 py-2.5 rounded-full bg-transparent border border-black/10 dark:border-white/10 text-[#2a3b32] dark:text-[#d4dcd9] text-xs font-medium tracking-[0.15em] uppercase hover:bg-black/5 dark:hover:bg-white/5 hover:border-black/20 dark:hover:border-white/20 transition-all duration-300"
               >
                 Ver Colección Completa
@@ -176,6 +205,7 @@ export default function CataloguePage() {
             </motion.div>
           )}
         </AnimatePresence>
+        )}
       </section>
       
     </main>

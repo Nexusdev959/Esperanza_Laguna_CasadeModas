@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 
+// Solo se muestra en la carga inicial del sitio; las navegaciones internas no recargan la página
 export interface CinematicPreloaderProps {
   monogramSrc?: string;
   textLogoSrc?: string;

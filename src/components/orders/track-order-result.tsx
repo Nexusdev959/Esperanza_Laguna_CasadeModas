@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { useEffect } from "react";
 import confetti from "canvas-confetti";
-import { CheckCircle2, MapPin, Package, Scissors, Search, Truck, ClipboardCheck } from "lucide-react";
+import { CheckCircle2, Package, Scissors, Truck, ClipboardCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -21,9 +19,6 @@ export interface OrderTrackData {
   courier: string;
   trackingNumber: string;
   deliveryInstructions: string;
-  originCoords: [number, number];
-  destinationCoords: [number, number];
-  currentCoords: [number, number];
   estimatedDate: string;
 }
 
@@ -36,9 +31,6 @@ const STEPS = [
 ];
 
 export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBack: () => void }) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
 
   const currentStepIndex = STEPS.findIndex(s => s.id === data.status);
 
@@ -63,79 +55,6 @@ export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBac
     }
   }, [data.status]);
 
-  // Mapbox initialization
-  useEffect(() => {
-    if (!mapContainer.current) return;
-    
-    // Fallback token if user hasn't set one yet
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoibW9ja2FwaSIsImEiOiJjbTBybXo4bHAwM2MwMndzNnI0bWJjNzF2In0.mock';
-
-    // We only init the map if we have a token (or we use a placeholder that might fail gracefully)
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: "mapbox://styles/mapbox/dark-v11",
-        center: data.currentCoords,
-        zoom: data.status === 'TRANSITO' ? 12 : 5,
-        pitch: 60, // 3D effect
-        bearing: -20,
-        interactive: false,
-      });
-
-      map.current.on('load', () => {
-        setMapLoaded(true);
-
-        if (!map.current) return;
-
-        // Add 3D buildings
-        map.current.addLayer({
-          'id': '3d-buildings',
-          'source': 'composite',
-          'source-layer': 'building',
-          'filter': ['==', 'extrude', 'true'],
-          'type': 'fill-extrusion',
-          'minzoom': 15,
-          'paint': {
-            'fill-extrusion-color': '#aaa',
-            'fill-extrusion-height': ['get', 'height'],
-            'fill-extrusion-base': ['get', 'min_height'],
-            'fill-extrusion-opacity': 0.6
-          }
-        });
-
-        // Add Marker for current position
-        new mapboxgl.Marker({ color: 'var(--primary)' })
-          .setLngLat(data.currentCoords)
-          .addTo(map.current);
-
-        // Add Route if in transit
-        if (data.status === 'TRANSITO' || data.status === 'ENTREGADO') {
-          map.current.addSource('route', {
-            'type': 'geojson',
-            'data': {
-              'type': 'Feature',
-              'properties': {},
-              'geometry': {
-                'type': 'LineString',
-                'coordinates': [data.originCoords, data.destinationCoords]
-              }
-            }
-          });
-          map.current.addLayer({
-            'id': 'route',
-            'type': 'line',
-            'source': 'route',
-            'layout': { 'line-join': 'round', 'line-cap': 'round' },
-            'paint': { 'line-color': '#C5A859', 'line-width': 4, 'line-dasharray': [2, 2] }
-          });
-        }
-      });
-    } catch (e) {
-      console.warn("Mapbox initialization skipped or failed. Provide valid token.");
-    }
-
-    return () => map.current?.remove();
-  }, [data]);
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
@@ -226,36 +145,9 @@ export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBac
           </div>
         </div>
 
-        {/* PANEL DERECHO: Mapa 3D e Instrucciones */}
+        {/* PANEL DERECHO: Instrucciones (sin mapa: no hay GPS real del envío) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           
-          {/* MAPA 3D */}
-          <div className="relative h-[400px] w-full rounded-3xl overflow-hidden border border-[var(--border-color)] shadow-inner bg-stone-900 group">
-            <div ref={mapContainer} className="absolute inset-0" />
-            
-            {!mapLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface)]/80 backdrop-blur-sm z-10">
-                <div className="flex flex-col items-center">
-                  <MapPin className="w-8 h-8 text-primary animate-bounce mb-2" />
-                  <p className="text-sm font-medium">Cargando visualización geográfica...</p>
-                  <p className="text-xs text-[var(--muted)] mt-1 max-w-xs text-center">Asegúrate de configurar NEXT_PUBLIC_MAPBOX_TOKEN en el .env</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Overlay Gradient UI for Map */}
-            <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10"></div>
-            <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md rounded-xl px-4 py-2 border border-white/10 z-10">
-              <p className="text-white text-xs font-medium flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                GPS Satelital Activo
-              </p>
-            </div>
-          </div>
-
           {/* Instrucciones de Recepción */}
           <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-3xl p-6 shadow-sm flex-1">
             <div className="flex items-start gap-4">

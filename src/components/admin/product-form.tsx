@@ -2,6 +2,7 @@
 
 import { Tag, Ruler, Box, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PRODUCT_CATEGORIES } from "@/components/product-card";
 
 export function ProductForm({ formData, setFormData, handleCreate, onCancel }: any) {
   const handleSizeToggle = (size: keyof typeof formData.sizes) => {
@@ -91,11 +92,7 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Categoría / Familia</label>
               <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
-                <option>Moda Damas</option>
-                <option>Moda Caballeros</option>
-                <option>Conquistadores</option>
-                <option>Aventureros</option>
-                <option>Insignias y Parches</option>
+                {PRODUCT_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
             <div className="space-y-2">
@@ -170,9 +167,53 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
                 />
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-[var(--foreground)]">Permitir Personalización (Insignias)</span>
-                  <span className="text-xs text-[var(--muted)]">El cliente podrá escribir un texto para mediaslunas, nombres, etc.</span>
+                  <span className="text-xs text-[var(--muted)]">El cliente deberá escribir el nombre (club, mediaslunas, etc.).</span>
                 </div>
               </label>
+
+              <label className="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--background)] transition-colors">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 text-primary rounded border-[var(--border-color)] focus:ring-primary"
+                  checked={formData.requiresUnion}
+                  onChange={(e) => setFormData({...formData, requiresUnion: e.target.checked})}
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-[var(--foreground)]">Insignia de Unión</span>
+                  <span className="text-xs text-[var(--muted)]">El cliente elige la unión y su asociación. Solo se fabrican las de la Unión Colombiana del Norte.</span>
+                </div>
+              </label>
+
+              <div className={`p-3 border rounded-xl transition-colors ${formData.isUniform ? "border-primary/40 bg-primary/5" : "border-[var(--border-color)]"}`}>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-primary rounded border-[var(--border-color)] focus:ring-primary"
+                    checked={formData.isUniform}
+                    onChange={(e) => setFormData({...formData, isUniform: e.target.checked})}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-[var(--foreground)]">Uniforme completo</span>
+                    <span className="text-xs text-[var(--muted)]">Banda y camisa con insignias. Cuenta en el cupo mensual; 10 días hábiles por unidad y 15 en lotes desde 3.</span>
+                  </div>
+                </label>
+                {formData.isUniform && (
+                  <div className="mt-3 pl-7 space-y-1.5">
+                    <label htmlFor="noInsigniaDiscount" className="text-xs font-medium text-[var(--foreground)]">Rebaja si no lleva ninguna insignia (COP)</label>
+                    <input
+                      id="noInsigniaDiscount"
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={formData.noInsigniaDiscount}
+                      onChange={(e) => setFormData({...formData, noInsigniaDiscount: e.target.value})}
+                      placeholder="Ej. 25000"
+                      className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary"
+                    />
+                    <p className="text-xs text-[var(--muted)]">Se descuenta solo si quita las insignias de la banda y de la camisa. Quitar una sola pieza no cambia el precio.</p>
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Imágenes del Producto</label>

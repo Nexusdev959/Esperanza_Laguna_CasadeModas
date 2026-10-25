@@ -25,6 +25,9 @@ export default function AdminProducts() {
     productionType: 'stock',
     estimatedDays: '7',
     requiresPersonalization: false,
+    requiresUnion: false,
+    isUniform: false,
+    noInsigniaDiscount: '' as string | number,
     images: [] as File[],
     sizes: { 
       XS: { active: false, qty: '' }, 
@@ -64,6 +67,9 @@ export default function AdminProducts() {
       data.append('productionType', formData.productionType);
       data.append('estimatedDays', formData.estimatedDays);
       data.append('requiresPersonalization', String(formData.requiresPersonalization));
+      data.append('requiresUnion', String(formData.requiresUnion));
+      data.append('isUniform', String(formData.isUniform));
+      data.append('noInsigniaDiscount', String(formData.isUniform ? Number(formData.noInsigniaDiscount) || 0 : 0));
       
       // Enviar audience como array JSON
       data.append('audience', JSON.stringify(formData.audience));
@@ -95,7 +101,7 @@ export default function AdminProducts() {
       // Limpiar form
       setFormData({
         name: '', description: '', category: 'Conquistadores', audience: ['Unisex'], price: '', saleMode: 'unidad',
-        isPublished: true, productionType: 'stock', estimatedDays: '7', requiresPersonalization: false,
+        isPublished: true, productionType: 'stock', estimatedDays: '7', requiresPersonalization: false, requiresUnion: false, isUniform: false, noInsigniaDiscount: '',
         images: [],
         sizes: { 
           XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' }, 
@@ -159,7 +165,10 @@ export default function AdminProducts() {
             price: product.price.toString(),
             isPublished: product.isPublished,
             requiresPersonalization: product.requiresPersonalization,
-            productionType: product.stock > 0 ? 'stock' : 'encargo',
+            requiresUnion: product.requiresUnion,
+            isUniform: product.isUniform,
+            noInsigniaDiscount: product.noInsigniaDiscount || '',
+            productionType: product.isCraftable ? 'encargo' : 'stock',
             sizes: product.sizes || { 
               XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' }, 
               L: { active: false, qty: '' }, XL: { active: false, qty: '' }, Única: { active: false, qty: '' } 

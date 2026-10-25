@@ -86,8 +86,8 @@ export default function AdminOrders() {
                 <tr key={order.id} className="hover:bg-[var(--background)]/50 transition-colors">
                   <td className="px-6 py-4 font-medium">{order.id.slice(0, 8).toUpperCase()}</td>
                   <td className="px-6 py-4">
-                    <p className="font-medium">{order.user?.name || 'Cliente Anónimo'}</p>
-                    <p className="text-xs text-[var(--muted)]">{order.user?.club || 'Sin club'}</p>
+                    <p className="font-medium">{order.user?.name || order.contactName || 'Cliente sin cuenta'}</p>
+                    <p className="text-xs text-[var(--muted)]">{order.userId ? (order.user?.club || 'Sin club') : 'Sin cuenta'}</p>
                   </td>
                   <td className="px-6 py-4 text-[var(--muted)]">{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="px-6 py-4 font-medium">${parseFloat(order.totalAmount).toFixed(2)}</td>

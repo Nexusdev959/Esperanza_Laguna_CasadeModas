@@ -1,18 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ProductCard } from "./product-card";
+import { ProductCard, toCardProduct, PRODUCT_CATEGORIES } from "./product-card";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 
-const CATEGORIES = [
-  { id: "Todos", label: "Colección Completa" },
-  { id: "Uniformes", label: "Uniformes Oficiales" },
-  { id: "Moda Damas", label: "Moda para Damas" },
-  { id: "Moda Caballeros", label: "Moda para Caballeros" },
-  { id: "Insignias", label: "Insignias y Accesorios" },
-];
+const CATEGORIES = [{ id: "Todos", label: "Colección Completa" }, ...PRODUCT_CATEGORIES];
 
 const FALLBACK_PRODUCTS: any[] = [];
 
@@ -168,13 +162,7 @@ export function ProductGallery() {
                     transition={{ duration: 0.5, delay: idx * 0.05 }}
                     className="min-w-[85vw] sm:min-w-[320px] max-w-[320px] snap-center shrink-0"
                   >
-                    <ProductCard product={{
-                      id: product.id,
-                      name: product.name,
-                      price: product.price,
-                      image: product.image || product.images?.[0] || 'https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg',
-                      status: product.status || (product.stock > 0 ? '' : '')
-                    }} />
+                    <ProductCard product={toCardProduct(product)} />
                   </motion.div>
                 ))
               )}

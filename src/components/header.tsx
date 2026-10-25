@@ -4,10 +4,11 @@ import Link from "next/link";
 import { Search, User, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Cart } from "./cart";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
+import { isPanelRoute } from "@/components/panel/panel-user";
 
 const NAV_LINKS = [
   { path: "/", label: "Inicio" },
@@ -17,29 +18,27 @@ const NAV_LINKS = [
 ];
 
 export function Header() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [userRoute, setUserRoute] = useState("/login");
   const pathname = usePathname();
   const [bannerMessage, setBannerMessage] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const term = searchTerm.trim();
+    if (!term) return;
+    setIsSearchOpen(false);
+    setSearchTerm("");
+    router.push(`/catalogo?q=${encodeURIComponent(term)}`);
+  };
 
   useEffect(() => {
     setMounted(true);
-    const token = localStorage.getItem("jwt_token");
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        if (payload.role === "ADMIN" || payload.role === "SUPERADMIN") {
-          setUserRoute("/admin");
-        } else {
-          setUserRoute("/account");
-        }
-      } catch {
-        setUserRoute("/login");
-      }
-    }
-
     api
       .get("/settings")
       .then((res: any) => {
@@ -50,16 +49,33 @@ export function Header() {
       .catch(console.error);
   }, []);
 
-  // Cerrar menú móvil al navegar
+  // Al navegar: cerrar menús y releer la sesión (el login ya no recarga la página)
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsSearchOpen(false);
+    const token = localStorage.getItem("jwt_token");
+    let route = "/login";
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        route = payload.role === "ADMIN" || payload.role === "SUPERADMIN" ? "/admin" : "/account";
+      } catch {}
+    }
+    setUserRoute(route);
   }, [pathname]);
 
-  if (pathname?.startsWith("/admin")) {
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsSearchOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isSearchOpen]);
+
+  if (isPanelRoute(pathname)) {
     return null;
   }
 
-  const isDark = mounted ? theme === "dark" : true;
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   return (
     <>
@@ -151,8 +167,13 @@ export function Header() {
           <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Buscador */}
             <button
+              onClick={() => {
+                setIsSearchOpen(!isSearchOpen);
+                setIsMobileMenuOpen(false);
+              }}
               aria-label="Buscar productos"
-              className="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/[0.08] text-foreground/80 hover:text-[#2ec4a6] transition-colors"
+              aria-expanded={isSearchOpen}
+              className={`p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/[0.08] hover:text-[#2ec4a6] transition-colors ${isSearchOpen ? "text-[#2ec4a6] bg-black/5 dark:bg-white/[0.08]" : "text-foreground/80"}`}
             >
               <Search className="w-4 h-4" />
             </button>
@@ -193,7 +214,10 @@ export function Header() {
 
             {/* Botón Menú Hamburguesa (Sólo Móviles / Tablets) */}
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={() => {
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+                setIsSearchOpen(false);
+              }}
               aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
               className="p-2.5 rounded-full lg:hidden text-foreground/80 hover:text-[#2ec4a6] hover:bg-black/5 dark:hover:bg-white/[0.08] transition-colors ml-1"
             >
@@ -201,6 +225,42 @@ export function Header() {
             </button>
           </div>
         </div>
+
+        {/* ================= BUSCADOR DESPLEGABLE ================= */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.form
+              role="search"
+              onSubmit={submitSearch}
+              initial={{ opacity: 0, y: -10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className={`mt-2 ml-auto w-full sm:max-w-md p-2 rounded-2xl border backdrop-blur-2xl flex items-center gap-2 shadow-2xl ${isDark
+                ? "bg-[#070b09]/95 border-white/[0.08]"
+                : "bg-white/95 border-stone-200"
+                }`}
+            >
+              <Search className="w-4 h-4 ml-3 shrink-0 text-[#2ec4a6]" />
+              <input
+                autoFocus
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Busca insignias, uniformes, parches…"
+                aria-label="Buscar productos"
+                className="flex-1 min-w-0 bg-transparent py-2.5 text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!searchTerm.trim()}
+                className="px-4 py-2 rounded-xl bg-[#2ec4a6] text-[#050807] text-xs font-semibold tracking-wide disabled:opacity-40 transition-opacity"
+              >
+                Buscar
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
 
         {/* ================= PANEL LATERAL / DROPDOWN MÓVIL ================= */}
         <AnimatePresence>

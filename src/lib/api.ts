@@ -26,7 +26,10 @@ api.interceptors.request.use((config) => {
 
 // Interceptor para manejo global de errores (ej: Token expirado)
 api.interceptors.response.use((response) => response, (error) => {
-  if (error.response?.status === 401) {
+  // 401 = sesión vencida o inválida, salvo en login/registro/Google, donde significa "credenciales incorrectas":
+  // ahí recargar /login borraba el mensaje de error antes de que se viera
+  const isCredentialCheck = /^\/auth\/(login|register|google|recover|reset-password)$/.test(error.config?.url ?? '');
+  if (error.response?.status === 401 && !isCredentialCheck) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_data');

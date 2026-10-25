@@ -1,19 +1,20 @@
 import { AdminSidebar } from "./sidebar";
-import { AdminHeader } from "@/components/admin/admin-header";
+import { PanelHeader } from "@/components/panel/panel-header";
+import { PanelUserProvider } from "@/components/panel/panel-user";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[var(--background)] overflow-hidden">
-      {/* Sidebar */}
-      <AdminSidebar />
-      
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-[var(--background)]">
-        <AdminHeader />
-        <div className="p-6">
-          {children}
-        </div>
-      </main>
-    </div>
+    // Nada del panel se muestra hasta que el backend confirme que el usuario es administrador
+    <PanelUserProvider allowedRoles={["ADMIN", "SUPERADMIN"]}>
+      <div className="flex h-screen bg-[var(--background)] overflow-hidden">
+        <AdminSidebar />
+        <main className="flex-1 overflow-y-auto bg-[var(--background)]">
+          <PanelHeader title="Panel de Control" />
+          <div className="p-6">
+            {children}
+          </div>
+        </main>
+      </div>
+    </PanelUserProvider>
   );
 }

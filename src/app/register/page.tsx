@@ -3,27 +3,44 @@
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 import { Button } from "@/components/ui/button";
-import { Mail, Lock, ArrowRight, User } from "lucide-react";
+import { Mail, Lock, ArrowRight, User, Users } from "lucide-react";
 import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const { showNotification } = useNotification();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [fromLogin, setFromLogin] = useState(false);
+  const [club, setClub] = useState("");
+  // Credencial de Google guardada por el login cuando ese correo no tenía cuenta
+  const [pendingGoogle, setPendingGoogle] = useState<{ credential: string; email: string } | null>(null);
+  const clubReady = club.trim().length >= 2;
 
   useEffect(() => {
     setMounted(true);
-    // Llega desde el login con un correo sin cuenta: se prellena y se destaca Google
-    if (new URLSearchParams(window.location.search).get("origen") === "login") {
+    const origen = new URLSearchParams(window.location.search).get("origen");
+    if (origen === "google") {
+      try {
+        const credential = sessionStorage.getItem("google_credential");
+        sessionStorage.removeItem("google_credential");
+        if (credential) {
+          const payload = JSON.parse(atob(credential.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+          setPendingGoogle({ credential, email: payload.email });
+        }
+      } catch {}
+    }
+    // Llega desde el login con un correo sin cuenta: se prellena el correo
+    if (origen === "login") {
       setFromLogin(true);
       try {
         const saved = sessionStorage.getItem("register_email");
@@ -37,11 +54,11 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post('/auth/register', { name, email, password });
+      const res = await api.post('/auth/register', { name, email, password, club });
       localStorage.setItem('jwt_token', res.data.token);
       showNotification("Cuenta creada exitosamente. Redirigiendo...", "success");
       setTimeout(() => {
-        window.location.href = "/account";
+        router.replace("/account");
       }, 1000);
     } catch (err: any) {
       showNotification(err.response?.data?.error || "Error al crear cuenta", "error");
@@ -49,21 +66,27 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const registerWithGoogle = async (credential: string) => {
+    if (!clubReady) {
+      showNotification("Indica el club al que perteneces para crear tu cuenta", "error");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await api.post('/auth/google', { token: credentialResponse.credential });
+      const res = await api.post('/auth/google', { token: credential, club });
       localStorage.setItem('jwt_token', res.data.token);
       showNotification("Cuenta creada exitosamente. Redirigiendo...", "success");
       const role = res.data.user.role;
       setTimeout(() => {
         if (role === 'ADMIN' || role === 'SUPERADMIN') {
-          window.location.href = "/admin";
+          router.replace("/admin");
         } else {
-          window.location.href = "/account";
+          router.replace("/account");
         }
       }, 1000);
     } catch (err: any) {
+      // Credencial vencida (dura 1 h): se vuelve al botón normal de Google
+      setPendingGoogle(null);
       showNotification(err.response?.data?.error || "Error al registrarse con Google", "error");
       setLoading(false);
     }
@@ -82,21 +105,24 @@ export default function RegisterPage() {
             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[var(--foreground)] mb-2 text-center tracking-tight">Crear Cuenta</h1>
             <p className="text-[var(--muted)] text-sm mb-8 text-center leading-relaxed">Únete a Pilypage y descubre una nueva forma de comprar.</p>
 
-            {fromLogin && mounted && (
-              <div role="status" className="w-full mb-8 p-4 rounded-2xl ring-2 ring-primary/60 bg-primary/5 flex flex-col items-center gap-3">
+            {pendingGoogle && mounted && (
+              <div role="status" className="w-full mb-8 p-4 rounded-2xl ring-2 ring-primary/60 bg-primary/5 flex flex-col gap-3">
                 <p className="text-sm text-[var(--foreground)] text-center">
-                  No encontramos una cuenta con ese correo. Créala en un paso con Google o completa el formulario.
+                  <strong>{pendingGoogle.email}</strong> aún no tiene cuenta. Indica tu club y créala en un paso.
                 </p>
-                <GoogleOAuthProvider clientId="886916002371-9a1rl4kal3f70ddhdq5117s23b4bdejf.apps.googleusercontent.com">
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => showNotification("Fallo al registrarse con Google", "error")}
-                    theme="outline"
-                    size="large"
-                    text="signup_with"
-                    shape="rectangular"
-                  />
-                </GoogleOAuthProvider>
+                <ClubInput club={club} setClub={setClub} />
+                <Button type="button" variant="primary" disabled={loading || !clubReady} onClick={() => registerWithGoogle(pendingGoogle.credential)} className="w-full flex justify-between items-center group">
+                  {loading ? "Creando cuenta..." : "Crear cuenta con Google"}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            )}
+
+            {fromLogin && mounted && (
+              <div role="status" className="w-full mb-8 p-4 rounded-2xl ring-2 ring-primary/60 bg-primary/5">
+                <p className="text-sm text-[var(--foreground)] text-center">
+                  No encontramos una cuenta con ese correo. Completa el formulario o regístrate con Google más abajo.
+                </p>
               </div>
             )}
 
@@ -117,6 +143,8 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
+
+              {!pendingGoogle && <ClubInput club={club} setClub={setClub} />}
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[var(--foreground)] ml-1">Correo Electrónico</label>
@@ -165,22 +193,23 @@ export default function RegisterPage() {
             </div>
             
             <div className="flex justify-center w-full min-h-[44px]">
-              {/* Si vino del login, el botón de Google ya está destacado arriba */}
-              {mounted && !fromLogin && (
+              {/* El club es obligatorio también con Google: el botón aparece cuando ya lo escribió */}
+              {mounted && !pendingGoogle && (clubReady ? (
                 <GoogleOAuthProvider clientId="886916002371-9a1rl4kal3f70ddhdq5117s23b4bdejf.apps.googleusercontent.com">
                   <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
+                    onSuccess={(r) => r.credential && registerWithGoogle(r.credential)}
                     onError={() => {
                       showNotification("Fallo al registrarse con Google", "error");
                     }}
-                    useOneTap
                     theme="outline"
                     size="large"
                     text="signup_with"
                     shape="rectangular"
                   />
                 </GoogleOAuthProvider>
-              )}
+              ) : (
+                <p className="text-xs text-[var(--muted)] text-center self-center">Escribe tu club arriba para registrarte con Google.</p>
+              ))}
             </div>
             
             <p className="mt-8 text-sm text-[var(--muted)] text-center">
@@ -190,5 +219,30 @@ export default function RegisterPage() {
         </AnimateIn>
       </main>
     </>
+  );
+}
+
+/** Club obligatorio en el registro (con correo o con Google). */
+function ClubInput({ club, setClub }: { club: string; setClub: (v: string) => void }) {
+  return (
+    <div className="space-y-1.5 w-full">
+      <label htmlFor="club" className="text-sm font-medium text-[var(--foreground)] ml-1">Club al que perteneces</label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+          <Users className="w-5 h-5 text-[var(--muted)]" />
+        </div>
+        <input
+          id="club"
+          type="text"
+          required
+          minLength={2}
+          maxLength={120}
+          value={club}
+          onChange={e => setClub(e.target.value)}
+          placeholder="Ej. Conquistadores Orión"
+          className="w-full bg-black/5 dark:bg-white/5 border border-[var(--border-color)] rounded-xl py-3 pl-11 pr-4 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+        />
+      </div>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { QuoteEditor } from "@/components/quotes/quote-editor";
 import { QuotePreview } from "@/components/quotes/quote-preview";
 import { useNotification } from "@/components/ui/notification-provider";
+import { itemDetails } from "@/store/cart";
 
 export default function QuoteGenerator() {
   const { showNotification } = useNotification();
@@ -40,7 +41,8 @@ export default function QuoteGenerator() {
     }
   }, []);
 
-  const generateQuoteNumber = () => `COT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+  // Fecha + aleatorio: con solo 4 dígitos los números se repetían y la copia en la nube fallaba (quoteNumber es único)
+  const generateQuoteNumber = () => `COT-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0')}`;
 
   const [quoteDetails, setQuoteDetails] = useState({
     validUntil: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +15 days
@@ -62,7 +64,7 @@ export default function QuoteGenerator() {
         if (Array.isArray(parsedItems) && parsedItems.length > 0) {
           setItems(parsedItems.map((item: any, idx: number) => ({
             id: Date.now() + idx,
-            description: `${item.name} - ${item.size} | ${item.type}`,
+            description: [item.name, itemDetails(item)].filter(Boolean).join(" - "),
             quantity: item.quantity,
             unitPrice: item.price
           })));

@@ -155,6 +155,11 @@ export default function AdminPqrsPage() {
                       <strong>Cliente:</strong> {selectedCase.user.name} ({selectedCase.user.email})
                     </div>
                   )}
+                  {!selectedCase.user && selectedCase.contactEmail && (
+                    <div className="mt-2 text-sm text-[var(--muted)]">
+                      <strong>Invitado:</strong> {selectedCase.contactName || 'Sin nombre'} ({selectedCase.contactEmail})
+                    </div>
+                  )}
                   {selectedCase.order && (
                     <div className="mt-1 text-sm text-[var(--muted)]">
                       <strong>Pedido Relacionado:</strong> #{selectedCase.order.id.slice(0,8).toUpperCase()}

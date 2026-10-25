@@ -18,8 +18,12 @@ export default function AdminSettings() {
     taxRate: 0,
     wompiPublicKey: "",
     emailNotifications: true,
-    orderNotifications: true
+    orderNotifications: true,
+    madeToOrderMonthlyLimit: "" as string | number,
+    bankTransferInfo: "",
+    associationsText: ""
   });
+  const [madeToOrderUsed, setMadeToOrderUsed] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { showNotification } = useNotification();
@@ -37,8 +41,12 @@ export default function AdminSettings() {
         taxRate: res.data.taxRate || 0,
         wompiPublicKey: res.data.wompiPublicKey || "",
         emailNotifications: res.data.emailNotifications ?? true,
-        orderNotifications: res.data.orderNotifications ?? true
+        orderNotifications: res.data.orderNotifications ?? true,
+        madeToOrderMonthlyLimit: res.data.madeToOrderMonthlyLimit ?? "",
+        bankTransferInfo: res.data.bankTransferInfo || "",
+        associationsText: (res.data.associations || []).join("\n")
       });
+      setMadeToOrderUsed(res.data.madeToOrderUsed ?? 0);
       setLoading(false);
     }).catch(err => {
       console.error(err);
@@ -53,7 +61,8 @@ export default function AdminSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/settings', settings);
+      const { associationsText, ...rest } = settings;
+      await api.put('/settings', { ...rest, associations: associationsText.split("\n").map((a) => a.trim()).filter(Boolean) });
       showNotification('Configuración guardada correctamente', 'success');
     } catch (err) {
       console.error(err);
@@ -127,6 +136,19 @@ export default function AdminSettings() {
                   <input type="text" name="bannerMessage" value={settings.bannerMessage} onChange={handleChange} placeholder="Ej. Envíos gratis..." className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
                   <p className="text-xs text-[var(--muted)]">Este mensaje aparecerá en la parte superior de la página principal si está activo.</p>
                 </div>
+                <div className="space-y-2">
+                  <label htmlFor="madeToOrderMonthlyLimit" className="text-xs font-medium text-[var(--foreground)]">Cupo mensual de uniformes completos</label>
+                  <input id="madeToOrderMonthlyLimit" type="number" min="0" name="madeToOrderMonthlyLimit" value={settings.madeToOrderMonthlyLimit} onChange={handleChange} placeholder="Vacío = sin límite" className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+                  <p className="text-xs text-[var(--muted)]">
+                    Este mes van <span className="font-semibold text-[var(--foreground)]">{madeToOrderUsed}</span> uniformes en el taller. Insignias y parches no cuentan.
+                    Al marcar un pedido como Entregado o Cancelado, sus unidades vuelven al cupo. Un pedido sin anticipo solo reserva cupo por 48 horas. El día 1 de cada mes se reinicia.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="associations" className="text-xs font-medium text-[var(--foreground)]">Sugerencias de asociaciones y misiones</label>
+                  <textarea id="associations" rows={5} value={settings.associationsText} onChange={(e) => setSettings({ ...settings, associationsText: e.target.value })} placeholder={"Una por línea, por ejemplo:\nAsociación Noroccidental\nAsociación del Caribe"} className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" />
+                  <p className="text-xs text-[var(--muted)]">El cliente escribe su asociación o misión; estas aparecen como sugerencias mientras escribe para evitar errores. Puede escribir una que no esté en la lista.</p>
+                </div>
               </div>
             </div>
           )}
@@ -162,6 +184,11 @@ export default function AdminSettings() {
                   <label className="text-xs font-medium text-[var(--foreground)]">Clave Pública Wompi</label>
                   <input type="text" name="wompiPublicKey" value={settings.wompiPublicKey} readOnly className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm text-[var(--muted)] cursor-not-allowed outline-none" />
                   <p className="text-xs text-[var(--muted)]">Por seguridad, la configuración de pagos solo se cambia en el servidor, no desde este panel.</p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="bankTransferInfo" className="text-xs font-medium text-[var(--foreground)]">Datos para pago por transferencia</label>
+                  <textarea id="bankTransferInfo" rows={4} maxLength={500} value={settings.bankTransferInfo} onChange={(e) => setSettings({ ...settings, bankTransferInfo: e.target.value })} placeholder={"Bancolombia Ahorros 000-000000-00\nTitular: Esperanza Laguna\nNequi: 300 000 0000"} className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" />
+                  <p className="text-xs text-[var(--muted)]">Es lo que ve el cliente al pagar por transferencia. Si lo dejas vacío, solo se ofrece el pago por Wompi. Revísalo con cuidado: un número equivocado manda el dinero a otra cuenta.</p>
                 </div>
               </div>
             </div>

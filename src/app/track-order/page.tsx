@@ -11,7 +11,8 @@ import { Suspense, useState, useEffect } from "react";
 function TrackOrderContent() {
   const [trackData, setTrackData] = useState<OrderTrackData | null>(null);
   const searchParams = useSearchParams();
-  const reference = searchParams.get("reference");
+  // El checkout y Wompi vuelven con ?ref=; ?reference= se mantiene por enlaces antiguos
+  const reference = searchParams.get("ref") || searchParams.get("reference");
 
   return (
     <>

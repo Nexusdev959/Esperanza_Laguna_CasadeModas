@@ -6,11 +6,12 @@ import { Globe, Mail, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { api } from "@/lib/api";
+import { isPanelRoute } from "@/components/panel/panel-user";
 
 export function Footer() {
   const pathname = usePathname();
   const [storeName, setStoreName] = useState("Esperanza Laguna Casa de Modas");
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -23,11 +24,11 @@ export function Footer() {
       .catch(console.error);
   }, []);
 
-  if (pathname?.startsWith("/admin")) {
+  if (isPanelRoute(pathname)) {
     return null;
   }
 
-  const isDark = mounted ? theme === "dark" : true;
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   return (
     <footer className={`relative w-full mt-24 font-sans select-none overflow-hidden transition-colors duration-500 ${isDark ? "bg-[#050807] text-[#8e9f99]" : "bg-[#fbfcfb] text-[#5e6e68]"}`}>

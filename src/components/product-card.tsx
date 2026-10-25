@@ -5,7 +5,7 @@ import { Star, Heart, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   image: string;
@@ -15,6 +15,45 @@ export interface Product {
   reviewsCount?: number;
   sizes?: string[];
 }
+
+// Única fuente de categorías: el admin las asigna y la tienda filtra por el mismo valor
+export const PRODUCT_CATEGORIES = [
+  { id: 'Conquistadores', label: 'Conquistadores' },
+  { id: 'Aventureros', label: 'Aventureros' },
+  { id: 'Moda Damas', label: 'Moda para Damas' },
+  { id: 'Moda Caballeros', label: 'Moda para Caballeros' },
+  { id: 'Insignias y Parches', label: 'Insignias y Parches' },
+];
+
+const FALLBACK_IMAGE = 'https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg';
+
+/** Convierte un producto de la API (/products) al formato de la tarjeta. */
+export const toCardProduct = (p: any): Product => ({
+  id: p.id,
+  name: p.name,
+  price: p.price,
+  image: p.image || p.images?.[0] || FALLBACK_IMAGE,
+  category: p.category,
+  status: p.status,
+  rating: p.ratingAvg,
+  reviewsCount: p.reviewsCount,
+  sizes: Array.isArray(p.sizes)
+    ? p.sizes.map((s: any) => (typeof s === 'string' ? s : s?.size ?? s?.name)).filter(Boolean)
+    : p.sizes && typeof p.sizes === 'object'
+      // formato del admin: { S: { active, qty } }. La BD guarda las llaves en otro orden (L, M, S…): se ordenan como talla
+      ? Object.keys(p.sizes).filter((k) => p.sizes[k]?.active).sort(bySize)
+      : undefined,
+});
+
+const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+// Tallas de letra en su orden natural; las numéricas (4, 6, 8…) por número; las demás (Única) al final
+const bySize = (a: string, b: string) => {
+  const rank = (s: string) => {
+    const i = SIZE_ORDER.indexOf(s.toUpperCase());
+    return i >= 0 ? i : Number.isFinite(Number(s)) ? 100 + Number(s) : 1000;
+  };
+  return rank(a) - rank(b) || a.localeCompare(b);
+};
 
 export function ProductCard({ product }: { product: Product }) {
   const [isFavorite, setIsFavorite] = useState(false);
@@ -26,9 +65,10 @@ export function ProductCard({ product }: { product: Product }) {
     maximumFractionDigits: 0,
   }).format(Number(product.price) || 0);
 
-  const rating = product.rating ?? 4.9;
-  const reviewsCount = product.reviewsCount ?? 48;
-  const sizes = product.sizes ?? ["S", "M", "L", "XL"];
+  // Sin reseñas reales no se muestra calificación: inventarla es publicidad engañosa
+  const reviewsCount = product.reviewsCount ?? 0;
+  const rating = product.rating ?? 0;
+  const sizes = product.sizes ?? [];
 
   return (
     <div className="group relative flex flex-col w-full rounded-2xl bg-gradient-to-b from-white dark:from-[#111916]/90 via-[#f9fbfaf0] dark:via-[#0a0f0d] to-[#eef2f0] dark:to-[#070a09] border border-black/[0.05] dark:border-white/[0.08] hover:border-[#2ec4a6]/40 p-3 transition-all duration-700 ease-out hover:shadow-[0_20px_40px_rgba(0,0,0,0.08),_0_0_25px_rgba(46,196,166,0.12)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.8),_0_0_25px_rgba(46,196,166,0.12)] hover:-translate-y-1 select-none overflow-hidden font-sans">
@@ -83,7 +123,7 @@ export function ProductCard({ product }: { product: Product }) {
 
         {/* ================= SELECTOR DE TALLAS RÁPIDAS (EMERGE EN HOVER) ================= */}
         <div className="absolute bottom-2.5 inset-x-2.5 z-20 flex items-center justify-between opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out">
-          <div className="flex items-center gap-1 bg-white/90 dark:bg-[#070b09]/90 backdrop-blur-md px-2 py-1 rounded-lg border border-black/10 dark:border-white/10 shadow-lg transition-colors duration-700">
+          <div className={`flex items-center gap-1 bg-white/90 ${sizes.length ? '' : 'invisible'} dark:bg-[#070b09]/90 backdrop-blur-md px-2 py-1 rounded-lg border border-black/10 dark:border-white/10 shadow-lg transition-colors duration-700`}>
             <span className="text-[10px] text-[#5a6c65] dark:text-[#7a8c85] mr-1 font-mono uppercase transition-colors duration-700">Tallas:</span>
             {sizes.map((s) => (
               <span
@@ -115,7 +155,7 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
 
           {/* Sistema de Calificaciones (Rating) */}
-          <div className="flex items-center gap-1 text-[#d4af37] dark:text-[#f5e1a4]">
+          {reviewsCount > 0 && <div className="flex items-center gap-1 text-[#d4af37] dark:text-[#f5e1a4]">
             <Star className="w-3.5 h-3.5 fill-[#d4af37] text-[#d4af37]" />
             <span className="font-semibold text-[#1a2b22] dark:text-white/90 text-xs tabular-nums transition-colors duration-700">
               {Number(rating).toFixed(1)}
@@ -123,7 +163,7 @@ export function ProductCard({ product }: { product: Product }) {
             <span className="text-[#7a8c85] dark:text-[#5d6f68] text-[10px] transition-colors duration-700">
               ({reviewsCount})
             </span>
-          </div>
+          </div>}
         </div>
 
         {/* Título de Producto */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ShoppingBag, Plus, Minus, Package, Tag, ArrowLeft, Star, ThumbsUp, Loader2 } from "lucide-react";
+import { ShoppingBag, Plus, Minus, ArrowLeft, Star, Loader2, Check, Clock, Users } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -9,14 +9,29 @@ import { useNotification } from "@/components/ui/notification-provider";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import useSWR, { useSWRConfig } from "swr";
-import { useCartStore } from "@/store/cart";
+import { useCartStore, InsigniaOption, ClubMember, LOT_MIN_UNIFORMS, LEAD_DAYS, RH_OPTIONS } from "@/store/cart";
+import { toCardProduct } from "@/components/product-card";
+
+// Valor del selector para quien no es de la Unión Colombiana del Norte
+const OTHER_UNION = "__otra__";
 
 export default function ProductDetail() {
   const params = useParams();
   const id = params.id as string;
-  const [purchaseMode, setPurchaseMode] = useState<"unidad" | "lote">("unidad");
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState("M");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [personalization, setPersonalization] = useState("");
+  const [selectedUnion, setSelectedUnion] = useState("");
+  const [otherUnion, setOtherUnion] = useState("");
+  const [selectedAssociation, setSelectedAssociation] = useState("");
+  // Especificaciones exactas que el cliente pide para este producto
+  const [specs, setSpecs] = useState("");
+  const [showSpecs, setShowSpecs] = useState(false);
+  // Insignias del uniforme: las dos piezas vienen con insignias; el cliente puede quitarlas
+  const [insigniaBanda, setInsigniaBanda] = useState(true);
+  const [insigniaCamisa, setInsigniaCamisa] = useState(true);
+  // Cada uniforme lleva insignia de nombre y de RH: una fila por unidad (en lote se completan en el carrito)
+  const [wearers, setWearers] = useState<ClubMember[]>([{ name: "", rh: "" }]);
   const { showNotification } = useNotification();
 
   const [isReviewing, setIsReviewing] = useState(false);
@@ -31,6 +46,12 @@ export default function ProductDetail() {
     const res = await api.get(url);
     return res.data;
   });
+  // La lista de uniones vive en la configuración de la tienda (por ahora solo la Unión Colombiana del Norte)
+  const { data: settings } = useSWR("/settings", async (url) => (await api.get(url)).data);
+  const unions: string[] = settings?.unions ?? [];
+  const associations: string[] = settings?.associations ?? [];
+  // null = sin límite configurado; el servidor vuelve a comprobarlo al crear el pedido
+  const madeToOrderLeft: number | null = settings?.madeToOrderRemaining ?? null;
 
   if (isLoading) {
     return (
@@ -52,29 +73,88 @@ export default function ProductDetail() {
     );
   }
 
-  const basePrice = product.price;
-  const currentPrice = purchaseMode === "lote" ? basePrice * 0.8 : basePrice; // 20% discount for batches
-  const lotSize = 12; // A batch contains 12 units
+  const sizes = toCardProduct(product).sizes ?? [];
+  const isUniform = !!product.isUniform;
+  // En lote (3 o más) la talla se anota por integrante en el carrito
+  const lotMode = isUniform && quantity >= LOT_MIN_UNIFORMS;
+  // Con una sola talla, unión o asociación no hay nada que elegir: se asignan solas
+  const size = selectedSize || (sizes.length === 1 ? sizes[0] : "");
+  const union = selectedUnion || (unions.length === 1 ? unions[0] : "");
+  // Asociación o misión: texto libre; la lista del admin solo sugiere mientras escribe
+  const association = selectedAssociation.trim();
+  const isOtherUnion = selectedUnion === OTHER_UNION;
+
+  const insignias: InsigniaOption | undefined = !isUniform ? undefined
+    : insigniaBanda && insigniaCamisa ? "COMPLETAS" : insigniaBanda ? "SOLO_BANDA" : insigniaCamisa ? "SOLO_CAMISA" : "NINGUNA";
+  const discount = Number(product.noInsigniaDiscount) || 0;
+  const unitPrice = insignias === "NINGUNA" ? Math.max(0, product.price - discount) : product.price;
+  // Sin insignias no hay insignia de unión que elegir
+  const needsUnion = product.requiresUnion && insignias !== "NINGUNA";
+  const money = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
   const handleAddToCart = () => {
-    const totalUnits = purchaseMode === "lote" ? quantity * lotSize : quantity;
-    const cartId = `${product.id}-${selectedSize}-${purchaseMode}`;
-    
+    if (!lotMode && sizes.length > 0 && !sizes.includes(size)) {
+      showNotification("Elige una talla", "error");
+      return;
+    }
+    const name = personalization.trim();
+    if (product.requiresPersonalization && !name) {
+      showNotification("Escribe el nombre que llevará la insignia", "error");
+      return;
+    }
+    if (isUniform && !lotMode && wearers.some((w) => w.name.trim().length < 2 || !w.rh)) {
+      showNotification(quantity > 1 ? "Escribe el nombre y el RH de cada uniforme" : "Escribe el nombre para la insignia y el RH", "error");
+      return;
+    }
+    const unionValue = isOtherUnion ? otherUnion.trim() : union;
+    if (needsUnion && unionValue.length < 2) {
+      showNotification(isOtherUnion ? "Escribe el nombre de tu unión" : "Elige la unión", "error");
+      return;
+    }
+    if (needsUnion && !isOtherUnion && association.length < 2) {
+      showNotification("Escribe tu asociación o misión", "error");
+      return;
+    }
+
+    const details = {
+      size: !lotMode && sizes.length > 0 ? size : undefined,
+      personalization: product.requiresPersonalization ? name : undefined,
+      union: needsUnion ? unionValue : undefined,
+      association: needsUnion && !isOtherUnion ? association : undefined,
+      details: specs.trim() || undefined,
+      insignias,
+    };
     addItem({
-      id: cartId,
+      // Cada combinación de talla, insignias, nombre y unión es una línea distinta del pedido
+      id: [product.id, details.size ?? (lotMode ? "lote" : ""), details.insignias, details.personalization, details.union, details.association, details.details].filter(Boolean).join("|"),
       productId: product.id,
       name: product.name,
-      price: currentPrice,
-      quantity: totalUnits,
+      price: unitPrice,
+      quantity,
       image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/800x1000?text=Sin+Imagen',
-      size: selectedSize
+      isUniform,
+      sizes: isUniform ? sizes : undefined,
+      members: isUniform && !lotMode ? wearers.map((w) => ({ name: w.name.trim(), rh: w.rh })) : undefined,
+      ...details,
     });
 
-    showNotification(`Añadido al carrito: ${totalUnits} unidad(es) de ${product.name}`, "success");
+    showNotification(
+      lotMode
+        ? `Añadiste ${quantity} uniformes. En el carrito completa la lista del club (nombre, RH y talla).`
+        : `Añadido al carrito: ${quantity} unidad(es) de ${product.name}`,
+      "success"
+    );
+    setPersonalization("");
+    setSpecs("");
+    setWearers(Array.from({ length: quantity }, () => ({ name: "", rh: "" })));
   };
 
-  const increment = () => setQuantity(q => q + 1);
-  const decrement = () => setQuantity(q => Math.max(1, q - 1));
+  const setQty = (q: number) => {
+    setQuantity(q);
+    setWearers((w) => Array.from({ length: q }, (_, n) => w[n] ?? { name: "", rh: "" }));
+  };
+  const increment = () => setQty(quantity + 1);
+  const decrement = () => setQty(Math.max(1, quantity - 1));
 
   const handleSubmitReview = async () => {
     try {
@@ -122,9 +202,10 @@ export default function ProductDetail() {
           Volver a la tienda
         </Link>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+        {/* Móvil: imagen, compra, especificaciones. Escritorio: imagen y especificaciones a la izquierda, compra a la derecha */}
+        <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-[auto_1fr] gap-x-10 lg:gap-x-16 gap-y-8">
           {/* Product Images */}
-          <AnimateIn delay={0.1} className="space-y-4">
+          <AnimateIn delay={0.1} className="space-y-4 md:col-start-1 md:row-start-1">
             <div className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-2xl border border-[var(--border-color)]">
               <img 
                 src={mainImage} 
@@ -148,77 +229,250 @@ export default function ProductDetail() {
           </AnimateIn>
 
           {/* Product Info */}
-          <AnimateIn delay={0.2} className="flex flex-col">
+          <AnimateIn delay={0.2} className="flex flex-col md:col-start-2 md:row-start-1 md:row-span-2">
             <div className="mb-6">
               <div className="inline-block px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-[10px] font-medium tracking-widest uppercase mb-3">
                 {product.category || 'Colección'}
               </div>
               <h1 className="text-2xl md:text-3xl font-serif text-[var(--foreground)] mb-2">{product.name}</h1>
-              <div className="flex items-end gap-3">
-                <p className="text-xl text-[var(--foreground)] font-medium">{currentPrice.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
-                {purchaseMode === "lote" && (
-                  <p className="text-xs text-[var(--muted)] line-through mb-0.5">{basePrice.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
-                )}
+              <div className="flex items-baseline gap-3">
+                <p className="text-xl text-[var(--foreground)] font-medium">{money(unitPrice)}</p>
+                {unitPrice !== product.price && <p className="text-sm text-[var(--muted)] line-through">{money(product.price)}</p>}
               </div>
+              {isUniform && <p className="text-xs text-[var(--muted)] mt-1">{insignias === "NINGUNA" ? "Precio sin insignias" : "Incluye insignias en banda y camisa"}</p>}
             </div>
             
+            {sizes.length > 0 && !lotMode && (
+              <div className="mb-6">
+                <span className="block text-xs font-medium text-[var(--foreground)] mb-3">Talla</span>
+                <div className="grid grid-cols-4 gap-2">
+                  {sizes.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setSelectedSize(s)}
+                      aria-pressed={size === s}
+                      className={`py-2 rounded-lg border text-xs font-medium transition-all ${
+                        size === s
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-[var(--border-color)] text-[var(--muted)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {lotMode && (
+              <div className="mb-6 flex items-start gap-3 px-4 py-3 rounded-xl border border-primary/30 bg-primary/5">
+                <Users className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                <p className="text-xs text-[var(--foreground)] leading-relaxed">
+                  <span className="font-semibold">Pedido por lote.</span> En el carrito anotarás el nombre del club y, por cada integrante, su nombre, RH y talla. Así cada uniforme llega a la persona correcta.
+                </p>
+              </div>
+            )}
+
+            {isUniform && (
+              <fieldset className="mb-6">
+                <legend className="block text-xs font-medium text-[var(--foreground)] mb-3">Insignias</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {([["Banda", insigniaBanda, setInsigniaBanda], ["Camisa", insigniaCamisa, setInsigniaCamisa]] as const).map(([label, on, toggle]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggle(!on)}
+                      aria-pressed={on}
+                      aria-label={`Insignias en la ${label.toLowerCase()}`}
+                      className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border text-left transition-all ${on ? 'border-primary bg-primary/5' : 'border-[var(--border-color)] hover:border-[var(--foreground)]/40'}`}
+                    >
+                      <span className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${on ? 'bg-primary border-primary text-white' : 'border-[var(--border-color)]'}`}>
+                        {on && <Check className="w-3.5 h-3.5" />}
+                      </span>
+                      <span className="flex flex-col">
+                        <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
+                        <span className="text-[11px] text-[var(--muted)]">{on ? "Con insignias" : "Sin insignias"}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className={`text-[11px] mt-2 ${insignias === "COMPLETAS" ? "text-[var(--muted)]" : "text-amber-700 dark:text-amber-400"}`}>
+                  {insignias === "COMPLETAS"
+                    ? "Las insignias de banda y camisa están incluidas en el precio."
+                    : insignias === "NINGUNA"
+                      ? discount > 0 ? `Sin ninguna insignia: ahorras ${money(discount)} por uniforme.` : "Sin ninguna insignia. El precio no cambia para este uniforme."
+                      : "Quitar las insignias de una sola pieza no cambia el precio."}
+                </p>
+              </fieldset>
+            )}
+
+            {isUniform && !lotMode && (
+              <fieldset className="mb-6">
+                <legend className="block text-xs font-medium text-[var(--foreground)] mb-2">
+                  {quantity > 1 ? "¿Quiénes lo usarán?" : "¿Quién lo usará?"} <span className="font-normal text-[var(--muted)]">Va en las insignias de nombre y RH</span>
+                </legend>
+                <div className="space-y-2">
+                  {wearers.map((w, n) => (
+                    <div key={n} className="grid grid-cols-[1fr_5.5rem] gap-2">
+                      <input
+                        value={w.name}
+                        onChange={(e) => setWearers(wearers.map((x, k) => (k === n ? { ...x, name: e.target.value } : x)))}
+                        maxLength={80}
+                        placeholder={quantity > 1 ? `Nombre en la insignia (${n + 1})` : "Nombre en la insignia"}
+                        aria-label={`Nombre en la insignia del uniforme ${n + 1}`}
+                        className="min-w-0 px-4 py-2.5 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary transition-colors"
+                      />
+                      <select
+                        value={w.rh}
+                        onChange={(e) => setWearers(wearers.map((x, k) => (k === n ? { ...x, rh: e.target.value } : x)))}
+                        aria-label={`RH del uniforme ${n + 1}`}
+                        className="px-3 py-2.5 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary transition-colors"
+                      >
+                        <option value="">RH</option>
+                        {RH_OPTIONS.map((rh) => <option key={rh} value={rh}>{rh}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
+            {product.requiresPersonalization && (
+              <div className="mb-6">
+                <label htmlFor="personalization" className="block text-xs font-medium text-[var(--foreground)] mb-2">Nombre en la insignia</label>
+                <input
+                  id="personalization"
+                  value={personalization}
+                  onChange={e => setPersonalization(e.target.value)}
+                  maxLength={80}
+                  placeholder="Ej: Club Orión"
+                  className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary transition-colors"
+                />
+                <p className="text-[11px] text-[var(--muted)] mt-1.5">Escríbelo tal como debe bordarse. Para varios nombres, añade cada uno por separado.</p>
+              </div>
+            )}
+
+            {needsUnion && (
+              <div className={`mb-6 grid gap-3 ${!isOtherUnion ? "sm:grid-cols-[3fr_2fr]" : ""}`}>
+                <div>
+                  <label htmlFor="union" className="block text-xs font-medium text-[var(--foreground)] mb-2">Unión</label>
+                  <select
+                    id="union"
+                    value={isOtherUnion ? OTHER_UNION : union}
+                    onChange={e => setSelectedUnion(e.target.value)}
+                    className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary transition-colors"
+                  >
+                    {unions.length !== 1 && <option value="">Elige la unión</option>}
+                    {unions.map(u => <option key={u} value={u}>{u}</option>)}
+                    {isUniform && <option value={OTHER_UNION}>Otra unión</option>}
+                  </select>
+                </div>
+                {!isOtherUnion && (
+                  <div>
+                    <label htmlFor="association" className="block text-xs font-medium text-[var(--foreground)] mb-2">Asociación o misión</label>
+                    <input
+                      id="association"
+                      list="association-suggestions"
+                      value={selectedAssociation}
+                      onChange={e => setSelectedAssociation(e.target.value)}
+                      maxLength={120}
+                      placeholder="Escríbela"
+                      autoComplete="off"
+                      className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary transition-colors"
+                    />
+                    <datalist id="association-suggestions">
+                      {associations.map(a => <option key={a} value={a} />)}
+                    </datalist>
+                  </div>
+                )}
+                {isOtherUnion && (
+                  <div>
+                    <label htmlFor="other-union" className="block text-xs font-medium text-[var(--foreground)] mb-2">¿Cuál es tu unión?</label>
+                    <input
+                      id="other-union"
+                      value={otherUnion}
+                      onChange={e => setOtherUnion(e.target.value)}
+                      maxLength={120}
+                      placeholder="Ej: Unión Colombiana del Sur"
+                      className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary transition-colors"
+                    />
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1.5">Solo fabricamos insignias de la {unions[0] ?? "Unión Colombiana del Norte"}. Tu uniforme irá sin insignia de unión, sin cambio en el precio.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Detalles plegados: casi nadie los usa y abiertos empujaban el botón de compra fuera de la pantalla */}
+            {!showSpecs ? (
+              <button
+                type="button"
+                onClick={() => setShowSpecs(true)}
+                className="mb-6 self-start inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline underline-offset-4"
+              >
+                <Plus className="w-3.5 h-3.5" /> Añadir detalles a tu pedido (opcional)
+              </button>
+            ) : (
             <div className="mb-6">
+              <label htmlFor="product-specs" className="block text-xs font-medium text-[var(--foreground)] mb-2">
+                Detalles <span className="font-normal text-[var(--muted)]">(opcional)</span>
+              </label>
+              <textarea
+                autoFocus
+                id="product-specs"
+                value={specs}
+                onChange={e => setSpecs(e.target.value)}
+                maxLength={500}
+                rows={2}
+                placeholder="Escribe exactamente lo que necesitas: manga larga, bordados, colores, medidas…"
+                className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl text-sm outline-none focus:border-primary transition-colors resize-none"
+              />
+            </div>
+            )}
+
+            {/* Cantidad y compra fijas abajo mientras se eligen opciones: el botón siempre está a la vista */}
+            <div className="sticky bottom-4 z-10 flex gap-3 mb-8 p-2 -mx-2 rounded-2xl bg-[var(--background)]/90 backdrop-blur-md">
+              <div className="flex items-center border border-[var(--border-color)] rounded-xl p-1 bg-[var(--surface)]">
+                <button onClick={decrement} aria-label="Restar uno" className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"><Minus className="w-4 h-4" /></button>
+                <span className="w-8 text-center text-sm font-medium">{quantity}</span>
+                <button onClick={increment} aria-label="Sumar uno" className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"><Plus className="w-4 h-4" /></button>
+              </div>
+              <Button onClick={handleAddToCart} disabled={isUniform && madeToOrderLeft !== null && quantity > madeToOrderLeft} variant="primary" className="flex-1 py-2 flex justify-center items-center gap-2 rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 text-sm">
+                <ShoppingBag className="w-4 h-4" />
+                <span>Añadir a la bolsa</span>
+              </Button>
+            </div>
+          </AnimateIn>
+
+          {/* Descripción bajo la imagen: la columna de compra queda corta y el botón a la vista sin hacer scroll */}
+          <AnimateIn delay={0.25} className="space-y-4 md:col-start-1 md:row-start-2">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">Descripción</h2>
+            <div className="">
               <p className="text-sm text-[var(--muted)] leading-relaxed whitespace-pre-line">
                 {product.description}
               </p>
             </div>
 
-            {/* Compra por Lote o Unidad */}
-            <div className="mb-6 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl p-1.5 flex">
-              <button 
-                onClick={() => setPurchaseMode("unidad")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all ${purchaseMode === "unidad" ? "bg-[var(--background)] shadow-sm border border-[var(--border-color)] text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
-              >
-                <Tag className="w-3 h-3" /> Por Unidad
-              </button>
-              <button 
-                onClick={() => setPurchaseMode("lote")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all ${purchaseMode === "lote" ? "bg-primary/10 border border-primary/20 text-primary shadow-sm" : "text-[var(--muted)] hover:text-[var(--foreground)]"}`}
-              >
-                <Package className="w-3 h-3" /> Al Mayor (Lote x{lotSize})
-              </button>
-            </div>
+            {isUniform && (
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-[var(--surface)] border border-[var(--border-color)]">
+                <Clock className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                <p className="text-xs text-[var(--muted)] leading-relaxed">
+                  <span className="text-[var(--foreground)] font-medium">Confección {lotMode ? `en lote: ~${LEAD_DAYS.lot}` : `por unidad: ~${LEAD_DAYS.unit}`} días hábiles</span> desde el pago del anticipo.
+                  {lotMode ? "" : ` Pedidos de ${LOT_MIN_UNIFORMS} o más uniformes son lote: ~${LEAD_DAYS.lot} días hábiles.`}
+                </p>
+              </div>
+            )}
 
-            {/* Size Selector (Static for now as size is usually an attribute of the cart, unless product has specific variants) */}
-            <div className="mb-8">
-               <div className="flex justify-between items-center mb-3">
-                <span className="text-xs font-medium text-[var(--foreground)]">Talla</span>
-                <button className="text-[10px] text-[var(--muted)] hover:text-primary transition-colors underline underline-offset-4">Guía de tallas</button>
+            {isUniform && madeToOrderLeft !== null && (
+              <div className={`px-4 py-3 rounded-xl border text-xs ${madeToOrderLeft === 0 || quantity > madeToOrderLeft ? "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400" : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-400"}`}>
+                <span className="font-semibold">Cupo del taller.</span>{" "}
+                {madeToOrderLeft === 0
+                  ? "Los uniformes de este mes están completos. Escríbenos para reservar en el próximo mes."
+                  : quantity > madeToOrderLeft
+                    ? `Este mes solo quedan ${madeToOrderLeft} uniformes; baja la cantidad o escríbenos para el próximo mes.`
+                    : `Quedan ${madeToOrderLeft} uniformes disponibles este mes.`}
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {['XS', 'S', 'M', 'L'].map(size => (
-                  <button 
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`py-2 rounded-lg border text-xs font-medium transition-all ${
-                      selectedSize === size 
-                        ? 'border-primary bg-primary/5 text-primary' 
-                        : 'border-[var(--border-color)] text-[var(--muted)] hover:border-[var(--foreground)] hover:text-[var(--foreground)]'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
 
-            {/* Quantity and Add to Cart */}
-            <div className="flex gap-3 mb-8">
-              <div className="flex items-center border border-[var(--border-color)] rounded-xl p-1 bg-[var(--surface)]">
-                <button onClick={decrement} className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"><Minus className="w-4 h-4" /></button>
-                <span className="w-8 text-center text-sm font-medium">{quantity}</span>
-                <button onClick={increment} className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"><Plus className="w-4 h-4" /></button>
-              </div>
-              <Button onClick={handleAddToCart} variant="primary" className="flex-1 py-2 flex justify-center items-center gap-2 rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 text-sm">
-                <ShoppingBag className="w-4 h-4" />
-                <span>Añadir a la bolsa</span>
-              </Button>
-            </div>
           </AnimateIn>
         </div>
 
