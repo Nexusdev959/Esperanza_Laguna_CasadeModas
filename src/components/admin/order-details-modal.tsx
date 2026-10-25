@@ -123,6 +123,7 @@ export function OrderDetailsModal({
                         <div className="flex justify-between items-start gap-3">
                           <div className="flex flex-col gap-0.5 min-w-0">
                             <span className="text-sm font-medium text-[var(--foreground)]">{item.product?.name || 'Producto'}</span>
+                            {item.option && <span className="text-xs text-[var(--muted)]">{item.product?.optionLabel || 'Opción'}: <span className="text-[var(--foreground)] font-medium">{item.option}</span></span>}
                             {item.size && <span className="text-xs text-[var(--muted)]">Talla: <span className="text-[var(--foreground)]">{item.size}</span></span>}
                             {item.insignias && <span className="text-xs text-[var(--muted)]">Insignias: <span className={`font-medium ${item.insignias === 'COMPLETAS' ? 'text-[var(--foreground)]' : 'text-amber-600 dark:text-amber-400'}`}>{INSIGNIA_LABELS[item.insignias] ?? item.insignias}</span></span>}
                             {item.personalization && <span className="text-xs text-[var(--muted)]">Nombre: <span className="text-[var(--foreground)] font-medium">{item.personalization}</span></span>}

@@ -27,6 +27,8 @@ export default function ProductDetail() {
   // Especificaciones exactas que el cliente pide para este producto
   const [specs, setSpecs] = useState("");
   const [showSpecs, setShowSpecs] = useState(false);
+  // Productos con lista de opciones (ej. clases): unidades por cada una
+  const [optionQty, setOptionQty] = useState<Record<string, number>>({});
   // Insignias del uniforme: las dos piezas vienen con insignias; el cliente puede quitarlas
   const [insigniaBanda, setInsigniaBanda] = useState(true);
   const [insigniaCamisa, setInsigniaCamisa] = useState(true);
@@ -91,6 +93,10 @@ export default function ProductDetail() {
   // Sin insignias no hay insignia de unión que elegir
   const needsUnion = product.requiresUnion && insignias !== "NINGUNA";
   const money = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+  const options: string[] = !isUniform && Array.isArray(product.options) ? product.options : [];
+  const optionLabel: string = product.optionLabel && product.optionLabel !== 'Opción' ? product.optionLabel : 'Opción';
+  const optionUnits = options.reduce((sum, o) => sum + (optionQty[o] ?? 0), 0);
+  const setOption = (o: string, q: number) => setOptionQty((prev) => ({ ...prev, [o]: Math.max(0, Math.min(999, q)) }));
 
   const handleAddToCart = () => {
     if (!lotMode && sizes.length > 0 && !sizes.includes(size)) {
@@ -100,6 +106,10 @@ export default function ProductDetail() {
     const name = personalization.trim();
     if (product.requiresPersonalization && !name) {
       showNotification("Escribe el nombre que llevará la insignia", "error");
+      return;
+    }
+    if (options.length > 0 && optionUnits === 0) {
+      showNotification(`Elige cuántas unidades quieres de cada ${optionLabel.toLowerCase()}`, "error");
       return;
     }
     if (isUniform && !lotMode && wearers.some((w) => w.name.trim().length < 2 || !w.rh)) {
@@ -124,26 +134,38 @@ export default function ProductDetail() {
       details: specs.trim() || undefined,
       insignias,
     };
-    addItem({
-      // Cada combinación de talla, insignias, nombre y unión es una línea distinta del pedido
-      id: [product.id, details.size ?? (lotMode ? "lote" : ""), details.insignias, details.personalization, details.union, details.association, details.details].filter(Boolean).join("|"),
-      productId: product.id,
-      name: product.name,
-      price: unitPrice,
-      quantity,
-      image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/800x1000?text=Sin+Imagen',
-      isUniform,
-      sizes: isUniform ? sizes : undefined,
-      members: isUniform && !lotMode ? wearers.map((w) => ({ name: w.name.trim(), rh: w.rh })) : undefined,
-      ...details,
-    });
+    const image = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/800x1000?text=Sin+Imagen';
+    // Con opciones, cada una con cantidad es una línea propia del pedido (ej. 3 Amigo y 2 Compañero)
+    const lines = options.length > 0
+      ? options.filter((o) => (optionQty[o] ?? 0) > 0).map((o) => ({ option: o, qty: optionQty[o] }))
+      : [{ option: undefined as string | undefined, qty: quantity }];
+    for (const line of lines) {
+      addItem({
+        // Cada combinación de opción, talla, insignias, nombre y unión es una línea distinta del pedido
+        id: [product.id, line.option, details.size ?? (lotMode ? "lote" : ""), details.insignias, details.personalization, details.union, details.association, details.details].filter(Boolean).join("|"),
+        productId: product.id,
+        name: product.name,
+        price: unitPrice,
+        quantity: line.qty,
+        image,
+        isUniform,
+        sizes: isUniform ? sizes : undefined,
+        members: isUniform && !lotMode ? wearers.map((w) => ({ name: w.name.trim(), rh: w.rh })) : undefined,
+        option: line.option,
+        optionLabel: line.option ? optionLabel : undefined,
+        ...details,
+      });
+    }
 
     showNotification(
       lotMode
         ? `Añadiste ${quantity} uniformes. En el carrito completa la lista del club (nombre, RH y talla).`
-        : `Añadido al carrito: ${quantity} unidad(es) de ${product.name}`,
+        : options.length > 0
+          ? `Añadiste ${optionUnits} unidad(es) de ${product.name}`
+          : `Añadido al carrito: ${quantity} unidad(es) de ${product.name}`,
       "success"
     );
+    setOptionQty({});
     setPersonalization("");
     setSpecs("");
     setWearers(Array.from({ length: quantity }, () => ({ name: "", rh: "" })));
@@ -402,6 +424,38 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {options.length > 0 && (
+              <fieldset className="mb-6">
+                <legend className="flex w-full items-baseline justify-between text-xs font-medium text-[var(--foreground)] mb-2">
+                  <span>¿Cuántas de cada {optionLabel.toLowerCase()}?</span>
+                  {optionUnits > 0 && <span className="font-normal text-[var(--muted)]">{optionUnits} en total</span>}
+                </legend>
+                <ul className="divide-y divide-[var(--border-color)] border border-[var(--border-color)] rounded-xl bg-[var(--surface)] overflow-hidden">
+                  {options.map((o) => {
+                    const q = optionQty[o] ?? 0;
+                    return (
+                      <li key={o} className={`flex items-center justify-between gap-3 px-4 py-2 transition-colors ${q > 0 ? 'bg-primary/5' : ''}`}>
+                        <span className={`text-sm ${q > 0 ? 'font-medium text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>{o}</span>
+                        <div className="flex items-center gap-1">
+                          <button type="button" onClick={() => setOption(o, q - 1)} disabled={q === 0} aria-label={`Quitar una de ${o}`} className="p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] disabled:opacity-30"><Minus className="w-3.5 h-3.5" /></button>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min={0}
+                            value={q}
+                            onChange={(e) => setOption(o, Number(e.target.value) || 0)}
+                            aria-label={`Cantidad de ${o}`}
+                            className="w-10 text-center text-sm bg-transparent outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <button type="button" onClick={() => setOption(o, q + 1)} aria-label={`Agregar una de ${o}`} className="p-1.5 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)]"><Plus className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </fieldset>
+            )}
+
             {/* Detalles plegados: casi nadie los usa y abiertos empujaban el botón de compra fuera de la pantalla */}
             {!showSpecs ? (
               <button
@@ -431,14 +485,14 @@ export default function ProductDetail() {
 
             {/* Cantidad y compra fijas abajo mientras se eligen opciones: el botón siempre está a la vista */}
             <div className="sticky bottom-4 z-10 flex gap-3 mb-8 p-2 -mx-2 rounded-2xl bg-[var(--background)]/90 backdrop-blur-md">
-              <div className="flex items-center border border-[var(--border-color)] rounded-xl p-1 bg-[var(--surface)]">
+              {options.length === 0 && <div className="flex items-center border border-[var(--border-color)] rounded-xl p-1 bg-[var(--surface)]">
                 <button onClick={decrement} aria-label="Restar uno" className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"><Minus className="w-4 h-4" /></button>
                 <span className="w-8 text-center text-sm font-medium">{quantity}</span>
                 <button onClick={increment} aria-label="Sumar uno" className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"><Plus className="w-4 h-4" /></button>
-              </div>
+              </div>}
               <Button onClick={handleAddToCart} disabled={isUniform && madeToOrderLeft !== null && quantity > madeToOrderLeft} variant="primary" className="flex-1 py-2 flex justify-center items-center gap-2 rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 text-sm">
                 <ShoppingBag className="w-4 h-4" />
-                <span>Añadir a la bolsa</span>
+                <span>{options.length > 0 && optionUnits > 0 ? `Añadir ${optionUnits} a la bolsa · ${money(optionUnits * unitPrice)}` : 'Añadir a la bolsa'}</span>
               </Button>
             </div>
           </AnimateIn>

@@ -58,8 +58,8 @@ function Catalogue() {
   const q = normalize(query);
   const filteredProducts = products.filter(
     (p) =>
-      (activeCategory === "all" || p.category === activeCategory) &&
-      (!q || normalize(p.name).includes(q) || normalize(p.category).includes(q))
+      (activeCategory === "all" || (p.categories ?? [p.category]).includes(activeCategory)) &&
+      (!q || normalize(p.name).includes(q) || normalize((p.categories ?? [p.category]).join(" ")).includes(q))
   );
 
   return (

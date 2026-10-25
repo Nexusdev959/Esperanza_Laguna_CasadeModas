@@ -1,10 +1,30 @@
 "use client";
 
-import { Tag, Ruler, Box, Clock } from "lucide-react";
+import { useState } from "react";
+import { Tag, Ruler, Box, Clock, ListChecks, X, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PRODUCT_CATEGORIES } from "@/components/product-card";
 
+// Atajos para cargar las clases; el admin puede quitar o agregar las que quiera
+const CLASS_PRESETS = {
+  Conquistadores: ["Amigo", "Compañero", "Explorador", "Orientador", "Viajero", "Guía"],
+  Aventureros: ["Corderitos", "Castorcitos", "Abejitas Laboriosas", "Rayitos de Sol", "Constructores", "Manos Ayudadoras"],
+};
+// Las tallas en su orden natural (la base de datos devuelve las llaves desordenadas)
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "Única"];
+
 export function ProductForm({ formData, setFormData, handleCreate, onCancel }: any) {
+  const [newOption, setNewOption] = useState("");
+  const categories: string[] = formData.categories ?? [];
+  const options: string[] = formData.options ?? [];
+
+  const toggleCategory = (id: string) =>
+    setFormData({ ...formData, categories: categories.includes(id) ? categories.filter((c) => c !== id) : [...categories, id] });
+
+  const addOptions = (values: string[]) => {
+    const clean = values.map((v) => v.trim()).filter(Boolean);
+    setFormData({ ...formData, options: [...new Set([...options, ...clean])] });
+  };
   const handleSizeToggle = (size: keyof typeof formData.sizes) => {
     setFormData((prev: any) => ({
       ...prev,
@@ -89,33 +109,75 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-[var(--border-color)]">
           
           <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Categoría / Familia</label>
-              <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
-                {PRODUCT_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Modalidad de Venta</label>
-              <div className="grid grid-cols-1 gap-2">
-                <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${formData.saleMode === 'unidad' ? 'border-primary bg-primary/5 text-primary' : 'border-[var(--border-color)] text-[var(--foreground)] hover:bg-[var(--background)]'}`}>
-                  <input type="radio" name="saleMode" value="unidad" checked={formData.saleMode === 'unidad'} onChange={() => setFormData({...formData, saleMode: 'unidad'})} className="hidden" />
-                  <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center">{formData.saleMode === 'unidad' && <span className="w-2 h-2 bg-current rounded-full"></span>}</span>
-                  <span className="text-sm font-medium">Por Unidad Individual</span>
-                </label>
-                <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${formData.saleMode === 'uniforme_completo' ? 'border-primary bg-primary/5 text-primary' : 'border-[var(--border-color)] text-[var(--foreground)] hover:bg-[var(--background)]'}`}>
-                  <input type="radio" name="saleMode" value="uniforme_completo" checked={formData.saleMode === 'uniforme_completo'} onChange={() => setFormData({...formData, saleMode: 'uniforme_completo'})} className="hidden" />
-                  <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center">{formData.saleMode === 'uniforme_completo' && <span className="w-2 h-2 bg-current rounded-full"></span>}</span>
-                  <span className="text-sm font-medium">Combo (Uniforme Completo)</span>
-                </label>
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] mb-2">Categorías</legend>
+              <div className="flex flex-wrap gap-2">
+                {PRODUCT_CATEGORIES.map(c => {
+                  const on = categories.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleCategory(c.id)}
+                      aria-pressed={on}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full text-xs font-medium transition-colors ${on ? 'bg-primary text-white border-primary' : 'bg-transparent border-[var(--border-color)] text-[var(--foreground)] hover:border-primary/50'}`}
+                    >
+                      {on && categories[0] === c.id && <Star className="w-3 h-3 fill-current" aria-label="Principal" />}
+                      {c.label}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+              <p className="text-xs text-[var(--muted)]">Elige todas las que apliquen: el producto aparece en cada una. La primera (con estrella) es la que se muestra en la tarjeta.</p>
+            </fieldset>
+            <fieldset className="space-y-3">
+              <legend className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] flex items-center gap-2 mb-2"><ListChecks className="w-4 h-4" /> Opciones que elige el cliente</legend>
+              <p className="text-xs text-[var(--muted)]">Para productos como las insignias de clase: el cliente indica cuántas unidades quiere de cada opción. Déjalo vacío si el producto no tiene opciones.</p>
+              <div className="flex items-center gap-2">
+                <label htmlFor="optionLabel" className="text-xs text-[var(--foreground)] shrink-0">Se llama</label>
+                <input id="optionLabel" value={formData.optionLabel ?? ""} onChange={e => setFormData({...formData, optionLabel: e.target.value})} maxLength={40} placeholder="Clase" className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-lg text-sm outline-none focus:border-primary" />
+              </div>
+              {options.length > 0 && (
+                <ul className="flex flex-wrap gap-2">
+                  {options.map((o) => (
+                    <li key={o} className="inline-flex items-center gap-1 pl-3 pr-1 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                      {o}
+                      <button type="button" onClick={() => setFormData({ ...formData, options: options.filter((x) => x !== o) })} aria-label={`Quitar ${o}`} className="p-0.5 rounded-full hover:bg-primary/20">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex gap-2">
+                <input
+                  value={newOption}
+                  onChange={e => setNewOption(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addOptions([newOption]); setNewOption(""); } }}
+                  maxLength={80}
+                  placeholder="Agregar opción y Enter"
+                  aria-label="Nueva opción"
+                  className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-lg text-sm outline-none focus:border-primary"
+                />
+                <button type="button" onClick={() => { addOptions([newOption]); setNewOption(""); }} className="px-3 py-2 rounded-lg border border-[var(--border-color)] text-sm hover:border-primary/50">Agregar</button>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {Object.entries(CLASS_PRESETS).map(([club, list]) => (
+                  <button key={club} type="button" onClick={() => { addOptions(list); if (!formData.optionLabel) setFormData((prev: any) => ({ ...prev, optionLabel: "Clase" })); }} className="px-2.5 py-1 rounded-full border border-dashed border-[var(--border-color)] text-[var(--muted)] hover:text-primary hover:border-primary/50">
+                    + Clases de {club}
+                  </button>
+                ))}
+                {options.length > 0 && (
+                  <button type="button" onClick={() => setFormData({ ...formData, options: [] })} className="px-2.5 py-1 rounded-full text-[var(--muted)] hover:text-red-500">Quitar todas</button>
+                )}
+              </div>
+            </fieldset>
           </div>
 
           <div className="space-y-4">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] flex items-center gap-2"><Ruler className="w-4 h-4" /> Variaciones de Talla</label>
             <div className="grid grid-cols-3 gap-3">
-              {(Object.keys(formData.sizes) as Array<keyof typeof formData.sizes>).map(size => (
+              {(SIZE_ORDER.filter(sz => sz in formData.sizes) as Array<keyof typeof formData.sizes>).map(size => (
                 <button
                   key={String(size)}
                   type="button"

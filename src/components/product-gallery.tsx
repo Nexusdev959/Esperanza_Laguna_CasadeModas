@@ -45,7 +45,7 @@ export function ProductGallery() {
   };
 
   const currentProducts = allProducts.filter(p => 
-    (activeCategory === "Todos" || p.category === activeCategory) && p.isPublished !== false
+    (activeCategory === "Todos" || (p.categories?.length ? p.categories : [p.category]).includes(activeCategory)) && p.isPublished !== false
   );
 
   return (

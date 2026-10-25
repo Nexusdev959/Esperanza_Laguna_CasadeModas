@@ -93,7 +93,7 @@ export function Cart() {
       const payload = {
         items: items.map(i => ({
           productId: i.productId, quantity: i.quantity, size: i.size, personalization: i.personalization,
-          union: i.union, association: i.association, insignias: i.insignias, details: i.details,
+          union: i.union, association: i.association, insignias: i.insignias, details: i.details, option: i.option,
           members: i.isUniform ? i.members?.map((m) => ({ name: m.name.trim(), rh: m.rh, size: i.size ?? m.size })) : undefined,
         })),
         clubName: isLot ? clubName.trim() : undefined,

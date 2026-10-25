@@ -18,6 +18,9 @@ export default function AdminProducts() {
     name: '',
     description: '',
     category: 'Conquistadores',
+    categories: ['Conquistadores'] as string[],
+    options: [] as string[],
+    optionLabel: '',
     audience: ['Unisex'], 
     price: '',
     saleMode: 'unidad',
@@ -60,7 +63,14 @@ export default function AdminProducts() {
       const data = new FormData();
       data.append('name', formData.name);
       data.append('description', formData.description);
-      data.append('category', formData.category);
+      if (formData.categories.length === 0) {
+        showNotification("Elige al menos una categoría", "error");
+        return;
+      }
+      data.append('category', formData.categories[0]);
+      data.append('categories', JSON.stringify(formData.categories));
+      data.append('options', JSON.stringify(formData.options));
+      data.append('optionLabel', formData.optionLabel.trim() || (formData.options.length ? 'Clase' : 'Opción'));
       data.append('price', formData.price);
       data.append('saleMode', formData.saleMode);
       data.append('isPublished', String(formData.isPublished));
@@ -100,7 +110,7 @@ export default function AdminProducts() {
       
       // Limpiar form
       setFormData({
-        name: '', description: '', category: 'Conquistadores', audience: ['Unisex'], price: '', saleMode: 'unidad',
+        name: '', description: '', category: 'Conquistadores', categories: ['Conquistadores'], options: [], optionLabel: '', audience: ['Unisex'], price: '', saleMode: 'unidad',
         isPublished: true, productionType: 'stock', estimatedDays: '7', requiresPersonalization: false, requiresUnion: false, isUniform: false, noInsigniaDiscount: '',
         images: [],
         sizes: { 
@@ -161,6 +171,9 @@ export default function AdminProducts() {
             name: product.name,
             description: product.description || '',
             category: product.category,
+            categories: product.categories?.length ? product.categories : [product.category],
+            options: product.options ?? [],
+            optionLabel: product.optionLabel && product.optionLabel !== 'Opción' ? product.optionLabel : '',
             audience: product.audience || ['Unisex'],
             price: product.price.toString(),
             isPublished: product.isPublished,

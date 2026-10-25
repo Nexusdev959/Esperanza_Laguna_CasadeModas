@@ -37,7 +37,7 @@ export function ProductTable({ products, onEdit, onDelete }: { products: any[], 
                   <span className="font-medium block">{product.name}</span>
                   <span className="text-[10px] uppercase font-bold text-primary tracking-wider">{product.audience?.join(', ')}</span>
                 </td>
-                <td className="px-6 py-4 text-[var(--muted)]">{product.category}</td>
+                <td className="px-6 py-4 text-[var(--muted)]">{(product.categories?.length ? product.categories : [product.category]).join(", ")}{product.options?.length ? <span className="block text-xs text-primary">{product.options.length} {(product.optionLabel || 'opción').toLowerCase()}{product.options.length === 1 ? '' : 'es'}</span> : null}</td>
                 <td className="px-6 py-4">
                   {product.mode === "uniforme_completo" ? (
                     <span className="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 rounded-md text-xs font-medium border border-purple-200 dark:border-purple-900">Combo completo</span>

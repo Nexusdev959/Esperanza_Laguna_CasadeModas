@@ -10,6 +10,7 @@ export interface Product {
   price: number;
   image: string;
   category?: string;
+  categories?: string[];
   status?: string;
   rating?: number;
   reviewsCount?: number;
@@ -34,6 +35,7 @@ export const toCardProduct = (p: any): Product => ({
   price: p.price,
   image: p.image || p.images?.[0] || FALLBACK_IMAGE,
   category: p.category,
+  categories: p.categories?.length ? p.categories : p.category ? [p.category] : [],
   status: p.status,
   rating: p.ratingAvg,
   reviewsCount: p.reviewsCount,

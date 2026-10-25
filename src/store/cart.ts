@@ -22,6 +22,8 @@ export interface CartItem {
   union?: string;
   association?: string;
   details?: string; // Especificaciones exactas del cliente para esta línea
+  option?: string; // Opción elegida (ej. la clase)
+  optionLabel?: string; // Cómo se llama la opción (ej. "Clase")
   isUniform?: boolean;
   insignias?: InsigniaOption;
   sizes?: string[]; // Tallas del producto, para elegirlas por integrante en un lote
@@ -54,8 +56,9 @@ export const uniformUnits = (items: { isUniform?: boolean | null; quantity: numb
   items.reduce((sum, i) => sum + (i.isUniform ? i.quantity : 0), 0);
 
 // "Talla M · Insignias solo en la banda · Nombre: Orión · Unión: … (Asociación …)" para mostrar lo que se va a confeccionar
-export const itemDetails = (i: { size?: string | null; personalization?: string | null; union?: string | null; association?: string | null; insignias?: string | null; details?: string | null }) =>
+export const itemDetails = (i: { size?: string | null; personalization?: string | null; union?: string | null; association?: string | null; insignias?: string | null; details?: string | null; option?: string | null; optionLabel?: string | null; product?: { optionLabel?: string | null } | null }) =>
   [
+    i.option && `${i.optionLabel || i.product?.optionLabel || 'Opción'}: ${i.option}`,
     i.size && `Talla ${i.size}`,
     i.insignias && i.insignias !== 'COMPLETAS' && INSIGNIA_LABELS[i.insignias],
     i.personalization && `Nombre: ${i.personalization}`,
