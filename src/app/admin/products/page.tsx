@@ -179,11 +179,16 @@ export default function AdminProducts() {
         onDelete={async (id) => {
           if (confirm("¿Estás seguro de eliminar este producto?")) {
             try {
-              await api.delete(`/products/${id}`);
-              showNotification("Producto eliminado", "success");
+              const res = await api.delete(`/products/${id}`);
+              showNotification(
+                res.data?.archived
+                  ? "Producto eliminado del catálogo. Tiene pedidos, así que se conserva en su historial."
+                  : "Producto eliminado",
+                "success"
+              );
               loadProducts();
-            } catch (err) {
-              showNotification("Error al eliminar producto", "error");
+            } catch (err: any) {
+              showNotification(err.response?.data?.error || "Error al eliminar producto", "error");
             }
           }
         }}

@@ -242,7 +242,7 @@ export function ProductForm({ formData, setFormData, handleCreate, onCancel }: a
             <AnimatePresence mode="wait">
               {formData.productionType === 'stock' ? (
                 <motion.div key="stock" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-2">
-                  <p className="text-xs text-[var(--muted)]">El stock se calculará sumando las cantidades que ingresaste en cada talla seleccionada arriba.</p>
+                  <p className="text-xs text-[var(--muted)]">El inventario es la suma de las cantidades de las tallas activas de arriba. Si el producto no tiene tallas, activa «Única» y escribe ahí la cantidad.</p>
                 </motion.div>
               ) : (
                 <motion.div key="encargo" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-2">
