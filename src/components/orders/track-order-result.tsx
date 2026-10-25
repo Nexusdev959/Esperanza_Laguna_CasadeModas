@@ -77,7 +77,7 @@ export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBac
                 Tu pedido ha sido registrado. Para continuar con {data.rawStatus === 'PENDING_ADVANCE' ? 'la confección' : 'el envío'}, debes realizar el pago correspondiente de <strong className="text-[var(--foreground)]">${(parseFloat(data.totalAmount) / 2).toLocaleString('es-CO')} COP</strong>.
               </p>
               <div className="flex flex-col gap-2">
-                <Button onClick={() => window.open(`https://pilypage.com/checkout/${data.id}`, '_blank')} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium">
+                <Button onClick={() => window.open(`/checkout/${data.id}`, '_blank')} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium">
                   Pagar por Wompi
                 </Button>
                 <Button variant="outline" onClick={() => window.open(`https://wa.me/573215028653?text=Hola, quiero reportar el pago de mi pedido ${data.displayId}`, '_blank')} className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-500/10">

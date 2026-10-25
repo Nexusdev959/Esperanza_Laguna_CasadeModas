@@ -2,6 +2,8 @@
 
 import { Building, MapPin, Mail, Phone } from "lucide-react";
 import { AnimateIn } from "@/components/ui/animate-in";
+import useSWR from "swr";
+import { api } from "@/lib/api";
 
 export function QuotePreview({
   clientInfo,
@@ -10,6 +12,9 @@ export function QuotePreview({
   subtotal,
   total
 }: any) {
+  // Datos de la empresa desde Configuración: los mismos que usan los PDF de PQRS y recibos
+  const { data: store } = useSWR("/settings", async (url) => (await api.get(url)).data);
+
   return (
     <div className="lg:col-span-7 xl:col-span-8 flex justify-start md:justify-center print:block print:w-full print:m-0 print:p-0 print:overflow-visible overflow-x-auto pt-4 lg:pt-0 pb-10 custom-scrollbar">
       <AnimateIn delay={0.2} className="w-max flex justify-center print:block print:w-full mx-auto md:mx-0">
@@ -31,9 +36,10 @@ export function QuotePreview({
                 <img src="/logos/log2.png" alt="Esperanza Laguna" className="h-[60px] w-auto object-contain origin-left" />
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-[#78716c] font-sans tracking-wide">NIT: 900.123.456-7 | Régimen Común</p>
-                <p className="text-xs text-[#78716c] flex items-center gap-1"><MapPin className="w-3 h-3" /> Bogotá, Colombia</p>
-                <p className="text-xs text-[#78716c] flex items-center gap-1"><Phone className="w-3 h-3" /> +57 320 123 4567</p>
+                {store?.nit && <p className="text-xs text-[#78716c] font-sans tracking-wide">NIT: {store.nit}</p>}
+                {store?.address && <p className="text-xs text-[#78716c] flex items-center gap-1"><MapPin className="w-3 h-3" /> {store.address}</p>}
+                {store?.phone && <p className="text-xs text-[#78716c] flex items-center gap-1"><Phone className="w-3 h-3" /> {store.phone}</p>}
+                {store?.supportEmail && <p className="text-xs text-[#78716c] flex items-center gap-1"><Mail className="w-3 h-3" /> {store.supportEmail}</p>}
               </div>
             </div>
 

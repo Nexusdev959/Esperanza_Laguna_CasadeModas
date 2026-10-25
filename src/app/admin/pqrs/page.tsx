@@ -41,7 +41,17 @@ export default function AdminPqrsPage() {
     setIsSubmitting(true);
     try {
       const res = await api.put(`/pqrs/${selectedCase.id}/reply`, { replyText });
-      showNotification("Respuesta enviada y PDF generado correctamente", "success");
+      if (res.data.emailSent) {
+        showNotification(`Respuesta enviada a ${res.data.clientEmail} con el PDF adjunto`, "success");
+      } else {
+        // El caso queda resuelto con su PDF, pero el cliente no recibió nada: hay que avisarle por otro medio
+        showNotification(
+          res.data.clientEmail
+            ? `Respuesta guardada, pero el correo a ${res.data.clientEmail} no se pudo enviar. Revisa la configuración de Resend o contacta al cliente por WhatsApp.`
+            : "Respuesta guardada. El caso no tiene correo: contacta al cliente por WhatsApp o teléfono.",
+          "warning"
+        );
+      }
       
       // Update local state
       setCases(cases.map(c => c.id === selectedCase.id ? res.data : c));

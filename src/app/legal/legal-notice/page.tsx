@@ -9,36 +9,40 @@ export default function LegalNotice() {
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           Volver a Inicio
         </Link>
-        <h1 className="text-3xl md:text-4xl font-serif text-[var(--foreground)] mb-6">Aviso Legal (Impressum)</h1>
+        <h1 className="text-3xl md:text-4xl font-serif text-[var(--foreground)] mb-6">Aviso Legal</h1>
         <div className="prose prose-sm md:prose-base dark:prose-invert text-[var(--muted)] space-y-6">
-          <p>Última actualización: Septiembre 2026</p>
-          
+          {/* Quitar este aviso cuando un abogado haya revisado el texto */}
+          <p className="rounded-md border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <strong>Borrador pendiente de revisión legal:</strong> este texto debe ser revisado por un abogado antes de publicarse.
+          </p>
+          <p>Última actualización: Octubre 2026</p>
+
           <p>
-            Para dar cumplimiento a la normativa aplicable en materia de servicios de la sociedad de la información y de comercio electrónico (como la LSSI-CE en España o la directiva de comercio electrónico en la UE), a continuación se indican los datos de información general de este sitio web.
+            En cumplimiento de la Ley 527 de 1999 sobre comercio electrónico y del artículo 50 de la Ley 1480 de 2011 (Estatuto del Consumidor), informamos los datos de quien ofrece los productos en este sitio web.
           </p>
 
           <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">1. Datos del Titular</h2>
           <ul className="list-none pl-0 mt-2 space-y-1">
-            <li><strong>Nombre / Razón Social:</strong> Pilypage S.A.C.</li>
-            <li><strong>Domicilio Social:</strong> [Calle Ejemplo 123, Ciudad, País, Código Postal]</li>
-            <li><strong>Identificación Fiscal / RUC / NIF:</strong> [Número de Identificación Fiscal]</li>
-            <li><strong>Teléfono:</strong> [+00 123 456 789]</li>
-            <li><strong>Correo Electrónico:</strong> legal@pilypage.com</li>
+            <li><strong>Nombre comercial:</strong> Esperanza Laguna Casa de Modas</li>
+            <li><strong>Dirección:</strong> Calle 32B 85-24, Medellín, Antioquia, Colombia</li>
+            <li><strong>NIT:</strong> 33283538-4</li>
+            <li><strong>Teléfono:</strong> 3215028653</li>
+            <li><strong>Correo Electrónico:</strong> cdmodaslaguna@gmail.com</li>
           </ul>
 
-          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">2. Propiedad Intelectual e Industrial</h2>
+          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">2. Propiedad Intelectual</h2>
           <p>
-            El diseño del portal y sus códigos fuente, así como los logos, marcas y demás signos distintivos que aparecen en el mismo pertenecen a Pilypage S.A.C. (o en su caso, contamos con la debida autorización de uso por parte de la Iglesia Adventista del Séptimo Día para productos oficiales) y están protegidos por los correspondientes derechos de propiedad intelectual e industrial.
+            El diseño del sitio, sus textos, fotografías y códigos fuente pertenecen a Esperanza Laguna Casa de Modas. Los nombres, logos e insignias de los clubes de Conquistadores, Aventureros y Guías Mayores pertenecen a la Iglesia Adventista del Séptimo Día y se usan únicamente para identificar los productos. Está prohibido reproducir el contenido del sitio sin autorización.
           </p>
 
-          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">3. Responsabilidad de los Contenidos</h2>
+          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">3. Enlaces a Otros Sitios</h2>
           <p>
-            Pilypage S.A.C. no se hace responsable de la legalidad de otros sitios web de terceros desde los que pueda accederse al portal. Tampoco respondemos por la legalidad de otros sitios web de terceros que pudieran estar vinculados o enlazados desde este portal.
+            Este sitio puede contener enlaces a sitios de terceros, como la pasarela de pagos o las transportadoras. No somos responsables del contenido ni de las políticas de esos sitios.
           </p>
 
-          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">4. Resolución de Conflictos (Plataforma Europea / Local)</h2>
+          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">4. Atención al Cliente y Resolución de Conflictos</h2>
           <p>
-            Conforme al Art. 14.1 del Reglamento (UE) 524/2013, la Comisión Europea facilita una plataforma de resolución de litigios en línea, la cual se encuentra disponible en el siguiente enlace: <a href="http://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">http://ec.europa.eu/consumers/odr/</a>. Para otras regiones, nos sometemos a los tribunales del domicilio del consumidor.
+            Puede presentar peticiones, quejas y reclamos por el formulario de la página de <Link href="/contact" className="text-primary hover:underline">contacto</Link>, al correo o al teléfono indicados arriba. Si no resolvemos su reclamación, puede acudir a la Superintendencia de Industria y Comercio (<a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.sic.gov.co</a>). Este sitio se rige por las leyes de la República de Colombia.
           </p>
         </div>
       </main>

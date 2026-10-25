@@ -29,7 +29,7 @@ export function PaymentActions({
 
   const getMessageTemplate = (platform: "WA" | "EMAIL") => {
     let text = "";
-    const paymentLink = `https://pilypage.com/checkout/${orderId}?type=${selectedTemplate}`; // URL simulada del frontend
+    const paymentLink = `${window.location.origin}/checkout/${orderId}?type=${selectedTemplate}`;
     
     if (selectedTemplate === "ADVANCE") {
       text = `Hola ${clientName}, somos Pilypage. Tu cotización está lista. Para iniciar la confección de tu pedido, requerimos el pago del 50% de anticipo (${formattedAmount}). Puedes realizar el pago de forma segura aquí: ${paymentLink}`;

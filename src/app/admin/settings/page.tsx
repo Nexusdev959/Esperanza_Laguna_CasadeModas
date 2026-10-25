@@ -10,6 +10,7 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState({
     storeName: "",
     supportEmail: "",
+    nit: "",
     phone: "",
     address: "",
     bannerMessage: "",
@@ -33,6 +34,7 @@ export default function AdminSettings() {
       setSettings({
         storeName: res.data.storeName || "",
         supportEmail: res.data.supportEmail || "",
+        nit: res.data.nit || "",
         phone: res.data.phone || "",
         address: res.data.address || "",
         bannerMessage: res.data.bannerMessage || "",
@@ -114,7 +116,13 @@ export default function AdminSettings() {
                   <input type="text" name="storeName" value={settings.storeName} onChange={handleChange} className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
                 </div>
                 <div className="space-y-2">
+                  <label htmlFor="nit" className="text-xs font-medium text-[var(--foreground)]">NIT</label>
+                  <input id="nit" type="text" name="nit" value={settings.nit} onChange={handleChange} placeholder="Ej. 33283538-4" className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+                  <p className="text-xs text-[var(--muted)]">Aparece en cotizaciones, recibos y respuestas de PQRS.</p>
+                </div>
+                <div className="space-y-2">
                   <label className="text-xs font-medium text-[var(--foreground)]">Correo de Contacto (Soporte)</label>
+                  <p className="text-xs text-[var(--muted)]">Aparece en cotizaciones, recibos y respuestas de PQRS.</p>
                   <input type="email" name="supportEmail" value={settings.supportEmail} onChange={handleChange} className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

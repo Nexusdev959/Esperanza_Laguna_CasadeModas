@@ -11,31 +11,34 @@ export default function CookiePolicy() {
         </Link>
         <h1 className="text-3xl md:text-4xl font-serif text-[var(--foreground)] mb-6">Política de Cookies</h1>
         <div className="prose prose-sm md:prose-base dark:prose-invert text-[var(--muted)] space-y-6">
-          <p>Última actualización: Septiembre 2026</p>
-          
+          {/* Quitar este aviso cuando un abogado haya revisado el texto */}
+          <p className="rounded-md border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <strong>Borrador pendiente de revisión legal:</strong> este texto debe ser revisado por un abogado antes de publicarse.
+          </p>
+          <p>Última actualización: Octubre 2026</p>
+
           <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">1. ¿Qué son las Cookies?</h2>
           <p>
-            Las cookies son pequeños archivos de texto que los sitios web que usted visita colocan en su ordenador o dispositivo móvil. Son ampliamente utilizadas para hacer que los sitios web funcionen, o funcionen de manera más eficiente, así como para proporcionar información a los propietarios del sitio.
+            Las cookies y tecnologías similares (como el almacenamiento local del navegador) son pequeños archivos o registros que un sitio web guarda en su computador o celular para poder funcionar y recordar información entre una visita y otra.
           </p>
 
-          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">2. Cómo Utilizamos las Cookies</h2>
+          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">2. Cookies que Utilizamos</h2>
+          <p>En el sitio de Esperanza Laguna Casa de Modas usamos:</p>
+          <ul className="list-disc pl-5 mt-2 space-y-1">
+            <li><strong>Cookies necesarias:</strong> mantienen su sesión iniciada, protegen el acceso a su cuenta y conservan los productos de su carrito. Sin ellas el sitio no puede funcionar.</li>
+            <li><strong>Cookies de funcionalidad:</strong> recuerdan preferencias como el tema claro u oscuro.</li>
+            <li><strong>Cookies de terceros:</strong> el inicio de sesión con Google y la pasarela de pagos Wompi pueden usar sus propias cookies cuando usted utiliza esos servicios, según sus políticas.</li>
+          </ul>
+          <p>Hoy no usamos cookies publicitarias ni de seguimiento con fines comerciales.</p>
+
+          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">3. Cómo Gestionarlas</h2>
           <p>
-            En Pilypage, utilizamos cookies para los siguientes propósitos:
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li><strong>Cookies Estrictamente Necesarias:</strong> Esenciales para que usted pueda navegar por el sitio web y utilizar sus funciones, como acceder a áreas seguras o mantener los artículos en su carrito de compras.</li>
-              <li><strong>Cookies de Rendimiento y Analíticas:</strong> Nos ayudan a entender cómo interactúan los visitantes con nuestro sitio web al recopilar y reportar información de forma anónima.</li>
-              <li><strong>Cookies de Funcionalidad:</strong> Permiten que el sitio web recuerde las elecciones que usted hace (como su nombre de usuario, idioma o la región en la que se encuentra) y proporcionan características mejoradas y más personales.</li>
-            </ul>
+            Puede bloquear o borrar las cookies desde la configuración de su navegador. Si bloquea las cookies necesarias, es posible que no pueda iniciar sesión ni completar una compra.
           </p>
 
-          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">3. Sus Opciones Respecto a las Cookies</h2>
+          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">4. Datos Personales</h2>
           <p>
-            Usted tiene el derecho de decidir si acepta o rechaza las cookies. Puede configurar las preferencias de su navegador web para rechazar todas o algunas cookies, o para alertarle cuando los sitios web configuren o accedan a cookies. Tenga en cuenta que si desactiva o rechaza las cookies necesarias, es posible que algunas partes de nuestro sitio, como el proceso de compra, no funcionen correctamente.
-          </p>
-
-          <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">4. Consentimiento (Cumplimiento GDPR/CCPA)</h2>
-          <p>
-            De acuerdo con las normativas internacionales, al visitar nuestro sitio por primera vez, se le presentará un banner informativo sobre el uso de cookies, donde podrá otorgar su consentimiento explícito o gestionar sus preferencias de manera detallada.
+            La información personal que se obtenga por medio de cookies se trata conforme a la Ley 1581 de 2012 y a nuestra <Link href="/legal/privacy" className="text-primary hover:underline">Política de Tratamiento de Datos Personales</Link>.
           </p>
         </div>
       </main>
