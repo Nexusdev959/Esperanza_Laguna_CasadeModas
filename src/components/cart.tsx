@@ -14,8 +14,8 @@ import { useCartStore, itemDetails, uniformUnits, LOT_MIN_UNIFORMS, LEAD_DAYS, R
 type DeliveryMethod = "NATIONAL_SHIPPING" | "MEDELLIN_DELIVERY" | "STORE_PICKUP";
 
 const DELIVERY_OPTIONS: { value: DeliveryMethod; label: string; hint: string }[] = [
-  { value: "NATIONAL_SHIPPING", label: "Envío fuera de Medellín", hint: "Por transportadora. El flete se paga aparte al recibir o al despachar." },
-  { value: "MEDELLIN_DELIVERY", label: "Domicilio en Medellín", hint: "No está incluido: lo cobra la plataforma de domicilios según la distancia." },
+  { value: "NATIONAL_SHIPPING", label: "Envío fuera de Medellín", hint: "El envío corre por tu cuenta: el flete se le paga a la transportadora y no está incluido en el total." },
+  { value: "MEDELLIN_DELIVERY", label: "Domicilio en Medellín", hint: "El domicilio corre por tu cuenta: lo cobra la plataforma de domicilios según la distancia." },
   { value: "STORE_PICKUP", label: "Recoger en tienda", hint: "Sin costo. Presentas el código de tu pedido." },
 ];
 

@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import confetti from "canvas-confetti";
-import { CheckCircle2, Package, Scissors, Truck, ClipboardCheck } from "lucide-react";
+import { CheckCircle2, Package, Scissors, Truck, ClipboardCheck, Store, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
+import useSWR from "swr";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 // Tipos de estado del pedido
 export type OrderStatus = 'CONFIRMADO' | 'CONFECCION' | 'CALIDAD' | 'TRANSITO' | 'ENTREGADO';
@@ -15,24 +17,34 @@ export interface OrderTrackData {
   status: OrderStatus;
   rawStatus: string;
   totalAmount: string;
-  isLocal: boolean;
-  courier: string;
-  trackingNumber: string;
-  deliveryInstructions: string;
-  estimatedDate: string;
+  paidAmount: string;
+  deliveryMethod: 'NATIONAL_SHIPPING' | 'MEDELLIN_DELIVERY' | 'STORE_PICKUP' | null;
+  courier: string | null;
+  trackingNumber: string | null;
+  leadBusinessDays: number | null;
 }
 
-const STEPS = [
+const BASE_STEPS = [
   { id: 'CONFIRMADO', label: 'Pedido Confirmado', icon: Package },
   { id: 'CONFECCION', label: 'Corte y Confección', icon: Scissors },
   { id: 'CALIDAD', label: 'Control de Calidad', icon: ClipboardCheck },
-  { id: 'TRANSITO', label: 'En Tránsito', icon: Truck },
-  { id: 'ENTREGADO', label: 'Entregado', icon: CheckCircle2 },
 ];
+
+const money = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
 export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBack: () => void }) {
 
+  const pickup = data.deliveryMethod === 'STORE_PICKUP';
+  // Recoger en tienda no viaja: en vez de "En tránsito" el paso es "Listo para recoger"
+  const STEPS = [
+    ...BASE_STEPS,
+    pickup ? { id: 'TRANSITO', label: 'Listo para recoger', icon: Store } : { id: 'TRANSITO', label: 'En Tránsito', icon: Truck },
+    { id: 'ENTREGADO', label: pickup ? 'Recogido' : 'Entregado', icon: CheckCircle2 },
+  ];
   const currentStepIndex = STEPS.findIndex(s => s.id === data.status);
+  const { data: store } = useSWR(pickup ? "/settings" : null, async (url) => (await api.get(url)).data);
+  // Lo que falta por pagar según los abonos, igual que en el checkout
+  const pending = Math.max(0, (parseFloat(data.totalAmount) || 0) - (parseFloat(data.paidAmount) || 0));
 
   // Confetti effect on delivered
   useEffect(() => {
@@ -64,46 +76,73 @@ export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBac
         <div className="lg:col-span-1 bg-[var(--surface)] border border-[var(--border-color)] rounded-3xl p-6 shadow-sm flex flex-col h-[600px] overflow-y-auto custom-scrollbar">
           <div className="mb-6">
             <h2 className="text-2xl font-serif text-[var(--foreground)] mb-1">Pedido {data.displayId}</h2>
-            <p className="text-sm text-[var(--muted)]">Entrega estimada: {data.estimatedDate}</p>
+            <p className="text-sm text-[var(--muted)]">
+              {data.leadBusinessDays ? `Confección: ~${data.leadBusinessDays} días hábiles desde el anticipo` : "Te avisaremos cuando esté listo"}
+            </p>
           </div>
 
           {/* Pagos Pendientes */}
-          {(data.rawStatus === 'PENDING_ADVANCE' || data.rawStatus === 'PENDING_FINAL_PAY') && (
+          {pending > 0 && data.rawStatus !== 'CANCELLED' && (
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 mb-8">
               <h3 className="text-amber-600 dark:text-amber-400 font-bold mb-2">
-                {data.rawStatus === 'PENDING_ADVANCE' ? 'Abono Inicial Pendiente (50%)' : 'Pago Final Pendiente (50%)'}
+                {(parseFloat(data.paidAmount) || 0) > 0 ? 'Saldo pendiente' : 'Anticipo pendiente'}
               </h3>
               <p className="text-sm text-[var(--muted)] mb-4">
-                Tu pedido ha sido registrado. Para continuar con {data.rawStatus === 'PENDING_ADVANCE' ? 'la confección' : 'el envío'}, debes realizar el pago correspondiente de <strong className="text-[var(--foreground)]">${(parseFloat(data.totalAmount) / 2).toLocaleString('es-CO')} COP</strong>.
+                {(parseFloat(data.paidAmount) || 0) > 0
+                  ? <>Te falta pagar <strong className="text-[var(--foreground)]">{money(pending)}</strong> para completar tu pedido.</>
+                  : <>Para iniciar la confección paga el anticipo del 50% (<strong className="text-[var(--foreground)]">{money(Math.min(pending, (parseFloat(data.totalAmount) || 0) / 2))}</strong>) o el total.</>}
               </p>
-              <div className="flex flex-col gap-2">
-                <Button onClick={() => window.open(`/checkout/${data.id}`, '_blank')} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium">
-                  Pagar por Wompi
-                </Button>
-                <Button variant="outline" onClick={() => window.open(`https://wa.me/573215028653?text=Hola, quiero reportar el pago de mi pedido ${data.displayId}`, '_blank')} className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-500/10">
-                  Reportar Transferencia
-                </Button>
-              </div>
+              <Button onClick={() => window.open(`/checkout/${data.id}`, '_blank')} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium">
+                Pagar o enviar comprobante
+              </Button>
             </div>
           )}
 
           {/* Guía y Logística */}
           <div className="bg-black/5 dark:bg-white/5 rounded-2xl p-5 mb-8 border border-[var(--border-color)]">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-4">Logística</h3>
-            <div className="space-y-4 text-sm">
-              <div>
-                <p className="text-[var(--muted)] text-xs mb-1">Tipo de Envío</p>
-                <p className="font-medium text-[var(--foreground)]">{data.isLocal ? 'Mensajería Local Expresa' : 'Despacho Nacional'}</p>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-4">Entrega</h3>
+            {pickup ? (
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="text-[var(--muted)] text-xs mb-1">Forma de entrega</p>
+                  <p className="font-medium text-[var(--foreground)]">Recoges en tienda</p>
+                </div>
+                {store?.address && (
+                  <div>
+                    <p className="text-[var(--muted)] text-xs mb-1">Dirección</p>
+                    <p className="font-medium text-[var(--foreground)]">{store.address}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[var(--muted)] text-xs mb-1">Código para reclamar</p>
+                  <p className="font-mono font-bold text-primary tracking-widest">{data.displayId}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[var(--muted)] text-xs mb-1">Transportadora</p>
-                <p className="font-medium text-[var(--foreground)]">{data.courier}</p>
+            ) : (
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="text-[var(--muted)] text-xs mb-1">Forma de entrega</p>
+                  <p className="font-medium text-[var(--foreground)]">{data.deliveryMethod === 'MEDELLIN_DELIVERY' ? 'Domicilio en Medellín' : 'Envío nacional por transportadora'}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--muted)] text-xs mb-1">{data.deliveryMethod === 'MEDELLIN_DELIVERY' ? 'Domiciliario' : 'Transportadora'}</p>
+                  <p className="font-medium text-[var(--foreground)]">{data.courier || 'Se asigna al despachar'}</p>
+                </div>
+                <div>
+                  <p className="text-[var(--muted)] text-xs mb-1">Guía de rastreo</p>
+                  <p className="font-mono font-bold text-primary">{data.trackingNumber || 'Se asigna al despachar'}</p>
+                </div>
+                {/* El envío no está incluido en el precio: se recuerda en cada consulta */}
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>
+                    {data.deliveryMethod === 'MEDELLIN_DELIVERY'
+                      ? 'El domicilio corre por tu cuenta: lo cobra la plataforma de domicilios según la distancia.'
+                      : 'El envío corre por tu cuenta: el flete se le paga a la transportadora y no está incluido en el valor del pedido.'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <p className="text-[var(--muted)] text-xs mb-1">Guía de Rastreo</p>
-                <p className="font-mono font-bold text-primary">{data.trackingNumber}</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Timeline de Producción */}
@@ -155,9 +194,11 @@ export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBac
                 <ClipboardCheck className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-serif text-lg text-[var(--foreground)] mb-2">Instrucciones de Recepción y Envío</h3>
+                <h3 className="font-serif text-lg text-[var(--foreground)] mb-2">{pickup ? 'Cómo recoger tu pedido' : 'Instrucciones de recepción'}</h3>
                 <p className="text-sm text-[var(--muted)] leading-relaxed">
-                  {data.deliveryInstructions || "Por favor verifica que el paquete esté sellado con la cinta de seguridad oficial de Pilypage. Si el paquete presenta alteraciones, no lo recibas y contáctanos inmediatamente a soporte."}
+                  {pickup
+                    ? `Te avisaremos cuando esté listo. Acércate${store?.address ? ` a ${store.address}` : ' a la tienda'} y presenta el código ${data.displayId} junto con el nombre o el teléfono con que hiciste el pedido. Si no puedes ir, quien lo recoja debe llevar esos mismos datos.`
+                    : 'Al recibir, verifica que el paquete esté sellado y en buen estado. Si presenta alteraciones, no lo recibas y escríbenos de inmediato a soporte. Recuerda que el costo del envío corre por tu cuenta.'}
                 </p>
               </div>
             </div>

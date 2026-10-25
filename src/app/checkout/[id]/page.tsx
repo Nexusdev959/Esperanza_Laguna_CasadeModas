@@ -225,10 +225,10 @@ export default function CheckoutPage() {
                 </p>
               )}
               {order.deliveryMethod === 'MEDELLIN_DELIVERY' && (
-                <p className="text-sm text-[var(--muted)]">Domicilio en Medellín: el costo lo cobra la plataforma de domicilios al momento de la entrega y no está incluido en este total.</p>
+                <p className="text-sm text-[var(--muted)]">Domicilio en Medellín: corre por tu cuenta. Lo cobra la plataforma de domicilios al momento de la entrega y no está incluido en este total.</p>
               )}
               {order.deliveryMethod === 'NATIONAL_SHIPPING' && (
-                <p className="text-sm text-[var(--muted)]">Envío por transportadora: el flete no está incluido en este total. Te enviaremos la guía cuando despachemos.</p>
+                <p className="text-sm text-[var(--muted)]">Envío por transportadora: corre por tu cuenta. El flete no está incluido en este total; te enviaremos la guía cuando despachemos.</p>
               )}
               {order.leadBusinessDays && (
                 <p className="text-sm text-[var(--foreground)]">

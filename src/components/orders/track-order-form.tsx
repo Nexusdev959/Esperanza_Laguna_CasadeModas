@@ -26,27 +26,30 @@ export function TrackOrderForm({ onTrackSuccess, initialOrderId }: { onTrackSucc
       
       const order = res.data;
       
+      // Recoger en tienda no pasa por tránsito: "listo" es cuando ya se puede reclamar
+      const pickup = order.deliveryMethod === 'STORE_PICKUP';
       let mappedStatus = 'CONFIRMADO';
       if (order.status === 'IN_CONFECTION') mappedStatus = 'CONFECCION';
-      else if (['QUALITY_CONTROL', 'PENDING_FINAL_PAY', 'READY_TO_SHIP'].includes(order.status)) mappedStatus = 'CALIDAD';
+      else if (['QUALITY_CONTROL', 'PENDING_FINAL_PAY'].includes(order.status)) mappedStatus = 'CALIDAD';
+      else if (order.status === 'READY_TO_SHIP') mappedStatus = pickup ? 'TRANSITO' : 'CALIDAD';
       else if (order.status === 'SHIPPED') mappedStatus = 'TRANSITO';
       else if (order.status === 'DELIVERED') mappedStatus = 'ENTREGADO';
 
-      const mockData = {
-        id: order.id, // Keep full ID for payment links
+      const trackData = {
+        id: order.id, // ID completo para los enlaces de pago
         displayId: order.id.slice(0,8).toUpperCase(),
         status: mappedStatus,
         rawStatus: order.status,
         totalAmount: order.totalAmount,
-        isLocal: true, 
-        courier: order.shippingCarrier || 'Mensajería Express Pilypage',
-        trackingNumber: order.trackingNumber || 'En preparación',
-        deliveryInstructions: '', // la dirección no se expone en el rastreo público
-        estimatedDate: "Próximamente"
+        paidAmount: order.paidAmount,
+        deliveryMethod: order.deliveryMethod ?? null,
+        courier: order.shippingCarrier || null,
+        trackingNumber: order.trackingNumber || null,
+        leadBusinessDays: order.leadBusinessDays ?? null,
       };
 
       if (onTrackSuccess) {
-        onTrackSuccess(mockData);
+        onTrackSuccess(trackData);
       }
     } catch (err: any) {
       setError(err.response?.data?.error || "Pedido no encontrado o la información es incorrecta.");
