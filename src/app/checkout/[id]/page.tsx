@@ -21,7 +21,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [wompiLoading, setWompiLoading] = useState(false);
-  const [paymentType, setPaymentType] = useState<"ADVANCE" | "BALANCE" | "FULL">("ADVANCE");
+  const [paymentType, setPaymentType] = useState<"ADVANCE" | "FULL">("ADVANCE");
   const [paymentMethod, setPaymentMethod] = useState<"WOMPI" | "TRANSFER">("WOMPI");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [uploadingProof, setUploadingProof] = useState(false);
@@ -54,14 +54,8 @@ export default function CheckoutPage() {
         const res = await api.get(`/orders/track/${orderId}`);
         setOrder(res.data);
 
-        // Determinar qué pago le toca por defecto
-        if (res.data.status === 'PENDING_ADVANCE') {
-          setPaymentType("ADVANCE");
-        } else if (res.data.status === 'PENDING_FINAL_PAY') {
-          setPaymentType("BALANCE");
-        } else {
-          setPaymentType("FULL");
-        }
+        // Sin abonos se sugiere el anticipo; con abonos solo queda pagar el saldo (FULL_100 = saldo pendiente en el servidor)
+        setPaymentType((parseFloat(res.data.paidAmount) || 0) > 0 ? "FULL" : "ADVANCE");
       } catch (err: any) {
         setError(err.response?.data?.error || "No se pudo cargar el pedido");
       } finally {
@@ -83,7 +77,7 @@ export default function CheckoutPage() {
       // El backend calcula el monto y lo firma; el widget debe usar exactamente ese monto
       const hashRes = await api.post('/payments/wompi/hash', {
         orderId: order.id,
-        type: paymentType === "ADVANCE" ? "ADVANCE_50" : (paymentType === "BALANCE" ? "BALANCE_50" : "FULL_100")
+        type: paymentType === "ADVANCE" ? "ADVANCE_50" : "FULL_100"
       });
 
       const { reference, signature, amountInCents, publicKey } = hashRes.data;
@@ -128,7 +122,7 @@ export default function CheckoutPage() {
       const formData = new FormData();
       formData.append('orderId', order.id);
       // El servidor registra el monto de este tipo (anticipo, saldo o total), el mismo que se le mostró al cliente
-      formData.append('type', paymentType === "ADVANCE" ? "ADVANCE_50" : (paymentType === "BALANCE" ? "BALANCE_50" : "FULL_100"));
+      formData.append('type', paymentType === "ADVANCE" ? "ADVANCE_50" : "FULL_100");
       formData.append('proof', proofFile);
 
       await api.post('/payments/wompi/proof', formData, {
@@ -164,9 +158,11 @@ export default function CheckoutPage() {
   }
 
   const totalAmount = parseFloat(order.totalAmount);
-  const amountToPay = (paymentType === "ADVANCE" || paymentType === "BALANCE") ? totalAmount / 2 : totalAmount;
   const alreadyPaid = parseFloat(order.paidAmount) || 0;
-  const remaining = totalAmount - alreadyPaid;
+  const remaining = Math.max(0, totalAmount - alreadyPaid);
+  // Mismas cuentas que computeChargeInCents en el servidor: el monto mostrado es el que se cobra
+  const advanceAmount = Math.min(totalAmount / 2, remaining);
+  const amountToPay = paymentType === "ADVANCE" ? advanceAmount : remaining;
 
   return (
     <main className="min-h-screen bg-[var(--background)] pt-24 pb-12 px-6">
@@ -264,10 +260,16 @@ export default function CheckoutPage() {
           <div className="space-y-6">
             <div className="bg-[var(--surface)] border-2 border-primary/20 rounded-3xl p-8 shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)]">
               <h3 className="text-xl font-serif text-[var(--foreground)] mb-2">Completar Pago</h3>
+              {remaining <= 0 ? (
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <p className="text-sm text-[var(--foreground)]">Este pedido ya está pagado en su totalidad. Te avisaremos cuando esté listo.</p>
+                </div>
+              ) : (<>
               <p className="text-sm text-[var(--muted)] mb-6">Selecciona el monto que vas a cancelar ahora mismo para la orden #{order.id.slice(0,8).toUpperCase()}.</p>
 
               <div className="space-y-3 mb-8">
-                {order.status === 'PENDING_ADVANCE' && (
+                {alreadyPaid <= 0 && (
                   <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentType === 'ADVANCE' ? 'border-primary bg-primary/5' : 'border-[var(--border-color)] bg-[var(--background)] opacity-70'}`} onClick={() => setPaymentType('ADVANCE')}>
                     <div className="flex items-center gap-3">
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentType === 'ADVANCE' ? 'border-primary' : 'border-[var(--muted)]'}`}>
@@ -278,39 +280,22 @@ export default function CheckoutPage() {
                         <p className="text-xs text-[var(--muted)]">Para iniciar la confección</p>
                       </div>
                     </div>
-                    <span className="font-bold text-primary">{(totalAmount / 2).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                    <span className="font-bold text-primary">{advanceAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
                   </label>
                 )}
 
-                {order.status === 'PENDING_FINAL_PAY' && (
-                  <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentType === 'BALANCE' ? 'border-primary bg-primary/5' : 'border-[var(--border-color)] bg-[var(--background)] opacity-70'}`} onClick={() => setPaymentType('BALANCE')}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentType === 'BALANCE' ? 'border-primary' : 'border-[var(--muted)]'}`}>
-                        {paymentType === 'BALANCE' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
-                      </div>
-                      <div>
-                        <p className="font-medium text-[var(--foreground)] text-sm">Saldo Restante (50%)</p>
-                        <p className="text-xs text-[var(--muted)]">Para habilitar el envío</p>
-                      </div>
+                <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentType !== 'ADVANCE' ? 'border-primary bg-primary/5' : 'border-[var(--border-color)] bg-[var(--background)] opacity-70'}`} onClick={() => setPaymentType('FULL')}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentType !== 'ADVANCE' ? 'border-primary' : 'border-[var(--muted)]'}`}>
+                      {paymentType !== 'ADVANCE' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
                     </div>
-                    <span className="font-bold text-primary">{(totalAmount / 2).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
-                  </label>
-                )}
-
-                {(order.status === 'PENDING_ADVANCE' || order.status === 'PENDING_FINAL_PAY') && (
-                  <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentType === 'FULL' ? 'border-primary bg-primary/5' : 'border-[var(--border-color)] bg-[var(--background)] opacity-70'}`} onClick={() => setPaymentType('FULL')}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentType === 'FULL' ? 'border-primary' : 'border-[var(--muted)]'}`}>
-                        {paymentType === 'FULL' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
-                      </div>
-                      <div>
-                        <p className="font-medium text-[var(--foreground)] text-sm">Pago Total (100%)</p>
-                        <p className="text-xs text-[var(--muted)]">Pagar todo de una vez</p>
-                      </div>
+                    <div>
+                      <p className="font-medium text-[var(--foreground)] text-sm">{alreadyPaid > 0 ? "Saldo pendiente" : "Pago Total (100%)"}</p>
+                      <p className="text-xs text-[var(--muted)]">{alreadyPaid > 0 ? "Lo que falta después de tus abonos" : "Pagar todo de una vez"}</p>
                     </div>
-                    <span className="font-bold text-primary">{totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
-                  </label>
-                )}
+                  </div>
+                  <span className="font-bold text-primary">{remaining.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                </label>
               </div>
 
               {/* Selector de Método de Pago */}
@@ -381,6 +366,7 @@ export default function CheckoutPage() {
                   </p>
                 </div>
               )}
+              </>)}
             </div>
           </div>
 
