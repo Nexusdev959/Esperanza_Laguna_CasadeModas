@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ROTACION, easeOut } from "../config";
 import { distanciaCircular, normalizar } from "../lib/frames";
 import { useAnimacion } from "./useAnimacion";
@@ -7,29 +7,22 @@ import { useArrastre } from "./useArrastre";
 interface Opciones {
   total: number;
   frameInicial: number;
-  /** Giro lento de bienvenida hasta que el usuario toca algo. */
-  autoGiro: boolean;
   reducido: boolean;
+  conInercia: boolean;
   /** Mientras devuelva true (p. ej. pellizco de zoom) el arrastre no gira. */
   bloqueado: () => boolean;
   /** Se llama cuando el giro queda quieto, con el frame final. */
   alDetenerse?: (frame: number) => void;
 }
 
-/** Giro de la secuencia: arrastre con inercia, giro automático y animación hacia un frame. */
-export function useRotacion({ total, frameInicial, autoGiro, reducido, bloqueado, alDetenerse }: Opciones) {
+/** Giro de la secuencia: solo manual (arrastre con inercia, teclado, botones) y animación hacia un frame. */
+export function useRotacion({ total, frameInicial, reducido, conInercia, bloqueado, alDetenerse }: Opciones) {
   const [frame, setFrame] = useState(frameInicial);
   const frameRef = useRef(frameInicial);
   const [interactuado, setInteractuado] = useState(false);
   const { animar, detener } = useAnimacion();
   const mover = useCallback((f: number) => setFrame((frameRef.current = f)), []);
   const interrumpir = useCallback(() => (setInteractuado(true), detener()), [detener]);
-
-  useEffect(() => {
-    if (!autoGiro || reducido || interactuado) return;
-    const propio = animar((dt) => (mover(frameRef.current + (dt / 1000 / ROTACION.segundosPorVuelta) * total), true));
-    return () => detener(propio);
-  }, [autoGiro, reducido, interactuado, animar, detener, mover, total]);
 
   const irA = useCallback(
     (destino: number, alTerminar?: () => void) => {
@@ -52,7 +45,7 @@ export function useRotacion({ total, frameInicial, autoGiro, reducido, bloqueado
 
   const girar = useCallback((pasos: number) => irA(normalizar(Math.round(frameRef.current) + pasos, total)), [irA, total]);
   const asentar = useCallback(() => irA(normalizar(Math.round(frameRef.current), total)), [irA, total]);
-  const handlers = useArrastre({ total, frameRef, mover, interrumpir, animar, reducido, bloqueado, asentar });
+  const handlers = useArrastre({ total, frameRef, mover, interrumpir, animar, reducido, conInercia, bloqueado, asentar });
 
-  return { frame, handlers, irA, girar, interrumpir };
+  return { frame, handlers, irA, girar, interrumpir, interactuado };
 }

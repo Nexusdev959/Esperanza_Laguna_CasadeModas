@@ -13,25 +13,25 @@ export interface OpcionesVisor {
   piezas: Pieza[];
   piezaActiva: Pieza | null;
   vista: Vista;
-  autoGiro: boolean;
   onVista: (vista: Vista) => void;
 }
 
 /** Une giro, zoom, carga y hotspots del visor de secuencia. */
-export function useVisorSecuencia({ visor, piezas, piezaActiva, vista, autoGiro, onVista }: OpcionesVisor) {
+export function useVisorSecuencia({ visor, piezas, piezaActiva, vista, onVista }: OpcionesVisor) {
   const escenario = useRef<HTMLDivElement>(null);
   const reducido = useMovimientoReducido();
   const { zoom, enfocar, cambiar, restablecer, pellizcando } = useZoom(escenario);
   const { frames: total, frameFrente, frameEspalda } = visor;
   const [frameInicial] = useState(() => (piezaActiva && mejorFrame(piezaActiva.tramos, total)) ?? frameDeVista(vista, frameFrente, total, frameEspalda));
   const alDetenerse = useCallback((f: number) => onVista(vistaDeFrame(f, frameFrente, total, frameEspalda)), [onVista, frameFrente, total, frameEspalda]);
-  const rot = useRotacion({ total, frameInicial, autoGiro: autoGiro && !piezaActiva, reducido, bloqueado: pellizcando, alDetenerse });
+  const pocasVistas = total <= VISTAS.maxFramesConFundido;
+  const rot = useRotacion({ total, frameInicial, reducido, conInercia: !pocasVistas, bloqueado: pellizcando, alDetenerse });
   const ancho = useAnchoEscenario(escenario);
   const grande = ancho * window.devicePixelRatio > ANCHO_BAJA;
-  const m = mezcla(rot.frame, total, total <= VISTAS.maxFramesConFundido ? VISTAS.anchoFundido : 0);
+  const m = mezcla(rot.frame, total, pocasVistas ? VISTAS.anchoFundido : 0);
   const frame = m.t >= 0.5 ? m.b : m.a;
   const carga = useCargaFrames(visor.carpeta, total, frame, grande || zoom.nivel > ZOOM.umbralAlta);
-  const lienzo = { base: carga.imagenDe(m.a), siguiente: carga.imagenDe(m.b), mezcla: m.t };
+  const lienzo = { base: carga.imagenDe(m.a), siguiente: carga.imagenDe(m.b), mezcla: m.t, efectoGiro: pocasVistas };
 
   useEnfocarPieza(piezaActiva, total, rot.irA, enfocar, restablecer, escenario);
 
@@ -43,7 +43,7 @@ export function useVisorSecuencia({ visor, piezas, piezaActiva, vista, autoGiro,
   const teclado = useTecladoVisor(rot.girar, cambiar, restablecer);
 
   const etiquetasAfuera = ancho >= HOTSPOTS.anchoEtiquetasAfuera;
-  return { escenario, zoom, cambiar, restablecer, girar: rot.girar, gestos: rot.handlers, lienzo, progreso: carga.progreso, visibles, etiquetasAfuera, verVista, teclado, frame };
+  return { escenario, zoom, cambiar, restablecer, girar: rot.girar, gestos: rot.handlers, lienzo, progreso: carga.progreso, visibles, etiquetasAfuera, verVista, teclado, frame, interactuado: rot.interactuado };
 }
 
 /** Al elegir una pieza: girar a su mejor ángulo y acercar un poco sobre ella. */

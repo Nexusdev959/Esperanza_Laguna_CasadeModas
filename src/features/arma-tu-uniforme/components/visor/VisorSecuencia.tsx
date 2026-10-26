@@ -1,5 +1,6 @@
 "use client";
 
+import { MoveHorizontal } from "lucide-react";
 import { ZOOM } from "../../config";
 import { useVisorSecuencia, type OpcionesVisor } from "../../hooks/useVisorSecuencia";
 import { CapaHotspots } from "../hotspots/CapaHotspots";
@@ -18,7 +19,7 @@ const CAPA = "absolute inset-0 transition-transform duration-300 ease-out motion
 
 /** Visor de fotos en secuencia: escenario con el frame actual, hotspots y controles. */
 export function VisorSecuencia({ onSeleccionar, ...opciones }: Props) {
-  const { escenario, zoom, cambiar, restablecer, girar, gestos, lienzo, progreso, visibles, etiquetasAfuera, verVista, teclado, frame } = useVisorSecuencia(opciones);
+  const { escenario, zoom, cambiar, restablecer, girar, gestos, lienzo, progreso, visibles, etiquetasAfuera, verVista, teclado, frame, interactuado } = useVisorSecuencia(opciones);
   const escala = { transform: `scale(${zoom.nivel})`, transformOrigin: `${zoom.x}% ${zoom.y}%` };
   return (
     <div className="flex h-full flex-col gap-4">
@@ -46,6 +47,13 @@ export function VisorSecuencia({ onSeleccionar, ...opciones }: Props) {
           <CapaHotspots visibles={visibles} zoom={zoom.nivel} activa={opciones.piezaActiva?.id ?? null} afuera={etiquetasAfuera} onSeleccionar={onSeleccionar} />
         </div>
       </div>
+      <p
+        aria-hidden
+        className={`-my-1 inline-flex items-center justify-center gap-2 font-sans text-[11px] tracking-[0.08em] text-foreground/45 transition-opacity duration-500 ${interactuado ? "opacity-0" : "opacity-100"}`}
+      >
+        <MoveHorizontal className="h-3.5 w-3.5" />
+        Arrastra para girar
+      </p>
       <ControlesVisor
         vista={opciones.vista}
         onGirar={girar}

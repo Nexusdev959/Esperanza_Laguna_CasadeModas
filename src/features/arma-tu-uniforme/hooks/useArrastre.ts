@@ -8,18 +8,21 @@ interface Opciones {
   interrumpir: () => void;
   animar: (paso: (dt: number) => boolean) => number;
   reducido: boolean;
+  /** Con pocas fotos no hay inercia: al soltar se queda en la más cercana. */
+  conInercia: boolean;
   bloqueado: () => boolean;
   /** Al terminar, lleva el giro a la foto entera más cercana (sin quedar a medio fundido). */
   asentar: () => void;
 }
 
 /** Arrastre horizontal → frames, y al soltar sigue girando con inercia hasta frenar. */
-export function useArrastre({ total, frameRef, mover, interrumpir, animar, reducido, bloqueado, asentar }: Opciones) {
+export function useArrastre({ total, frameRef, mover, interrumpir, animar, reducido, conInercia, bloqueado, asentar }: Opciones) {
   const arrastre = useRef<{ x: number; t: number; v: number } | null>(null);
 
   const inercia = useCallback(
     (velocidad: number) => {
-      let v = reducido ? 0 : velocidad;
+      const tope = ROTACION.velocidadMaxima * total;
+      let v = reducido || !conInercia ? 0 : Math.max(-tope, Math.min(tope, velocidad));
       animar((dt) => {
         v *= Math.exp(-ROTACION.friccion * dt);
         if (Math.abs(v) < ROTACION.velocidadMinima * total) {
@@ -30,7 +33,7 @@ export function useArrastre({ total, frameRef, mover, interrumpir, animar, reduc
         return true;
       });
     },
-    [animar, mover, reducido, asentar, frameRef, total]
+    [animar, mover, reducido, conInercia, asentar, frameRef, total]
   );
 
   return {

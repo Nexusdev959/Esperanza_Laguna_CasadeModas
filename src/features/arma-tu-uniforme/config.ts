@@ -16,8 +16,8 @@ export const ROTACION = {
   friccion: 0.004,
   /** Velocidad mínima (vueltas/ms) para seguir girando. */
   velocidadMinima: 0.00004,
-  /** Giro automático inicial: segundos por vuelta. */
-  segundosPorVuelta: 9,
+  /** Tope de la velocidad al soltar (vueltas/ms): un tirón fuerte no da varias vueltas. */
+  velocidadMaxima: 0.0015,
   /** Duración del giro hacia un frame elegido (ms). */
   duracionIrA: 650,
 } as const;
@@ -28,6 +28,10 @@ export const VISTAS = {
   maxFramesConFundido: 12,
   /** Ancho del fundido como fracción del paso entre dos fotos. */
   anchoFundido: 0.6,
+  /** Efecto de giro durante el fundido: cuánto se comprime en horizontal la foto que sale/entra… */
+  compresion: 0.16,
+  /** …y cuánto se corre hacia el lado del giro (fracción del ancho). */
+  desplazamiento: 0.035,
 } as const;
 
 export const ZOOM = {

@@ -15,7 +15,6 @@ interface Props {
   uniforme: Uniforme;
   piezaActiva: Pieza | null;
   vista: Vista;
-  autoGiro: boolean;
   onSeleccionar: (id: string) => void;
   onVista: (vista: Vista) => void;
 }

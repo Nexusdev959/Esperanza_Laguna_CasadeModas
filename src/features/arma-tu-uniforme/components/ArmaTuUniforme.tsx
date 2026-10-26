@@ -27,7 +27,7 @@ export function ArmaTuUniforme({ inicial }: { inicial: EstadoUrl }) {
       <SelectoresUniforme seleccion={seleccion} estado={estado} />
 
       {seleccion.uniforme ? (
-        <MesaUniforme uniforme={seleccion.uniforme} vista={estado.vista} autoGiro={seleccion.autoGiro} activa={activa} armado={armado} onAgregar={tienda.agregar} onVista={alVista} />
+        <MesaUniforme uniforme={seleccion.uniforme} vista={estado.vista} activa={activa} armado={armado} onAgregar={tienda.agregar} onVista={alVista} />
       ) : (
         <p className="py-24 text-center font-sans text-sm text-foreground/55">Este uniforme estará disponible muy pronto.</p>
       )}
