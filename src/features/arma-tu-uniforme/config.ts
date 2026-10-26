@@ -53,6 +53,8 @@ export const HOTSPOTS = {
   fundidoMinimo: 0.45,
   /** Con el escenario más angosto que esto (px), las etiquetas salen hacia el centro para no cortarse. */
   anchoEtiquetasAfuera: 420,
+  /** Al marcar en el admin: fotos de distancia que aún cuentan como el mismo tramo. */
+  saltoMaximoEnTramo: (total: number) => (total <= 12 ? 1 : 3),
   /** Margen (%) dentro del escenario: un punto que el zoom deja más afuera se oculta. */
   margen: 3,
 } as const;

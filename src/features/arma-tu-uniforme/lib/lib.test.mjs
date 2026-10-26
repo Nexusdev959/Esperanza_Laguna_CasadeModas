@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { normalizar, frameDibujado, distanciaCircular, frameDeVista, vistaDeFrame, ordenDeCarga, mezcla } from "./frames.ts";
-import { posicionEnTramo, posicionHotspot, mejorFrame } from "./hotspots.ts";
+import { posicionEnTramo, posicionHotspot, mejorFrame, tramosDesdePuntos, puntosDeTramos } from "./hotspots.ts";
 import { leerEstado, escribirEstado } from "./url-state.ts";
 
 test("frames: normaliza, redondea y toma el camino corto", () => {
@@ -59,6 +59,17 @@ test("hotspots: se desvanece al salir del tramo y elige el mejor frame", () => {
   assert.equal(posicionEnTramo([{ frame: 2, x: 10, y: 10 }], 2.5, 4, 0.45), null);
   assert.equal(mejorFrame([tramo, [{ frame: 10, x: 1, y: 1 }]], 36), 0);
   assert.equal(mejorFrame([], 36), null);
+});
+
+test("hotspots: arma tramos desde los puntos marcados en el admin", () => {
+  const p = (frame) => ({ frame, x: frame, y: 1 });
+  // 36 fotos: 33, 35, 1 y 3 son un tramo que cruza el 0; 18 queda aparte
+  assert.deepEqual(tramosDesdePuntos([p(1), p(18), p(3), p(33), p(35)], 36, 3), [[p(33), p(35), p(1), p(3)], [p(18)]]);
+  // 4 fotos: solo vecinas inmediatas
+  assert.deepEqual(tramosDesdePuntos([p(0), p(1), p(3)], 4, 1), [[p(3), p(0), p(1)]]);
+  assert.deepEqual(tramosDesdePuntos([p(0), p(2)], 4, 1), [[p(0)], [p(2)]]);
+  assert.deepEqual(tramosDesdePuntos([], 4, 1), []);
+  assert.equal(puntosDeTramos([[p(1)], [p(2), p(3)]]).length, 3);
 });
 
 const programas = [

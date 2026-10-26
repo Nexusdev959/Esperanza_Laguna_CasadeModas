@@ -1,7 +1,7 @@
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { useNotification } from "@/components/ui/notification-provider";
-import { agregarAlCarrito, cargarProductos, faltantes, guardarParaCotizar, type LineaUniforme } from "../lib/tienda";
+import { agregarAlCarrito, cargarProductos, faltantes, guardarParaCotizar, listarProductos, type LineaUniforme } from "../lib/tienda";
 import type { Pieza } from "../types";
 
 const SIN_PRODUCTOS: Record<string, never> = {};
@@ -11,6 +11,12 @@ export function useProductosPiezas(piezas: Pieza[]) {
   const ids = piezas.map((p) => p.productoId).filter((id): id is string => !!id);
   const { data } = useSWR(ids.length ? ["arma-tu-uniforme", ...ids] : null, () => cargarProductos(ids));
   return data ?? SIN_PRODUCTOS;
+}
+
+/** Lista de productos de la tienda (admin: enlazar piezas). */
+export function useListaProductos() {
+  const { data } = useSWR("arma-tu-uniforme-productos", listarProductos);
+  return data ?? [];
 }
 
 /** Acciones de compra con sus avisos; la conexión real vive en lib/tienda.ts. */

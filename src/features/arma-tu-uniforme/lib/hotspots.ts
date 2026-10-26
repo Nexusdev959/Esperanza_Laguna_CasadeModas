@@ -56,3 +56,28 @@ export const mejorFrame = (tramos: TramoHotspot[], total: number) => {
   if (!largo) return null;
   return mod(largo[0].frame + Math.round(largoTramo(largo, total) / 2), total);
 };
+
+/** Todos los puntos de una pieza, sin importar el tramo (para editarlos foto por foto). */
+export const puntosDeTramos = (tramos: TramoHotspot[]) => tramos.flat();
+
+/**
+ * Arma los tramos a partir de los puntos marcados: puntos con a lo sumo `maxSalto` fotos de
+ * distancia van en el mismo tramo (también pasando de la última foto a la primera).
+ */
+export const tramosDesdePuntos = (puntos: PuntoHotspot[], total: number, maxSalto: number): TramoHotspot[] => {
+  const orden = [...puntos].sort((a, b) => a.frame - b.frame);
+  if (orden.length === 0) return [];
+  const tramos: TramoHotspot[] = [[orden[0]]];
+  for (const p of orden.slice(1)) {
+    const actual = tramos[tramos.length - 1];
+    if (p.frame - actual[actual.length - 1].frame <= maxSalto) actual.push(p);
+    else tramos.push([p]);
+  }
+  const primero = tramos[0];
+  const ultimo = tramos[tramos.length - 1];
+  if (tramos.length > 1 && primero[0].frame + total - ultimo[ultimo.length - 1].frame <= maxSalto) {
+    tramos[0] = [...ultimo, ...primero];
+    tramos.pop();
+  }
+  return tramos;
+};

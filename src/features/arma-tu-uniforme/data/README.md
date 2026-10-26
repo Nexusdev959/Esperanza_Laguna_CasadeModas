@@ -1,5 +1,7 @@
 # Cargar un uniforme en «Arma tu uniforme»
 
+> **Piezas desde el admin:** en *Panel de Control → Arma tu uniforme* se agregan, editan, ordenan y quitan las piezas (textos, foto de detalle, producto y el punto en cada foto) sin tocar código. Mientras un uniforme no tenga piezas guardadas, el visor usa las de su archivo en esta carpeta; con «Copiar las piezas de ejemplo» se pasan al admin para editarlas. Las fotos del giro y los uniformes nuevos todavía se agregan como se explica abajo.
+
 Cada uniforme es un archivo `.ts` en esta carpeta, más sus fotos en `public/uniformes/`. No hay que tocar código del visor.
 
 ## 1. Fotografiar

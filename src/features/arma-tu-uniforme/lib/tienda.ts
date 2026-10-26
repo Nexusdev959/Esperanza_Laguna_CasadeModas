@@ -52,6 +52,12 @@ export const cargarProductos = async (ids: string[]) => {
   return Object.fromEntries(ids.map((id, i) => [id, productos[i]])) as Record<string, ProductoPieza | null>;
 };
 
+/** Todos los productos, para elegir en el admin a cuál corresponde cada pieza. */
+export const listarProductos = async () => {
+  const { data } = await api.get<ProductoApi[]>("/products");
+  return data.map((p) => ({ id: String(p.id), nombre: p.name.trim(), precio: Number(p.price) || 0 }));
+};
+
 export const formatoPrecio = (n: number) =>
   n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
 
