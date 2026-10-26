@@ -51,3 +51,6 @@ package-lock.json
 !.dev.vars.example
 
 !.env.example
+
+# Fotos originales de uniformes (pesadas; las publicadas están en public/uniformes)
+/fotos-originales/
