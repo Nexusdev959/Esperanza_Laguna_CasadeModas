@@ -67,15 +67,15 @@ export function OrderDetailsModal({
     }
     // El enlace va al final: WhatsApp le arma la tarjeta con la imagen del sitio
     const msg = [
-      `Hola ${order.user?.name || order.contactName || ''} 👋`,
+      `Hola ${order.user?.name || order.contactName || ''}`,
       ``,
-      `🚚 *¡Tu pedido va en camino!*`,
+      `*¡Tu pedido va en camino!*`,
       ``,
-      `🧾 *Pedido:* #${order.id.slice(0, 8).toUpperCase()}`,
-      `📦 *Transportadora:* ${shippingCarrier}`,
-      `🔢 *Guía / conductor:* ${trackingNumber}`,
+      `*Pedido:* #${order.id.slice(0, 8).toUpperCase()}`,
+      `*Transportadora:* ${shippingCarrier}`,
+      `*Guía / conductor:* ${trackingNumber}`,
       ``,
-      `Rastrea tu pedido aquí 👇`,
+      `Rastrea tu pedido aquí:`,
       `${window.location.origin}/track-order`,
       ``,
       `_¡Gracias por tu compra! · Esperanza Laguna_`,

@@ -38,24 +38,24 @@ export function PaymentActions({ orderId, clientName, clientPhone, clientEmail, 
 
   // Formato de WhatsApp (*negrita*, _cursiva_); el enlace al final hace que WhatsApp muestre la tarjeta con imagen
   const message = [
-    `Hola ${clientName} 👋`,
+    `Hola ${clientName}`,
     ``,
     ...(pending <= 0
       ? [
-          `✅ *¡Tu pedido está pagado y listo!*`,
+          `*¡Tu pedido está pagado y listo!*`,
           ``,
-          `🧾 *Pedido:* #${code}`,
+          `*Pedido:* #${code}`,
           deliveryMethod === "STORE_PICKUP"
-            ? `🏬 Puedes recogerlo en tienda presentando el código *${code}*.`
-            : `🚚 Te enviaremos la guía apenas lo despachemos.`,
+            ? `Puedes recogerlo en tienda presentando el código *${code}*.`
+            : `Te enviaremos la guía apenas lo despachemos.`,
         ]
       : [
-          mode === "ADVANCE" ? `✂️ *Iniciemos la confección de tu pedido*` : `🎉 *¡Tu pedido está casi listo!*`,
+          mode === "ADVANCE" ? `*Iniciemos la confección de tu pedido*` : `*¡Tu pedido está casi listo!*`,
           ``,
-          `🧾 *Pedido:* #${code}`,
-          `💰 *${mode === "ADVANCE" ? "Anticipo (50%)" : "Saldo pendiente"}:* ${money(amountDue)}`,
+          `*Pedido:* #${code}`,
+          `*${mode === "ADVANCE" ? "Anticipo (50%)" : "Saldo pendiente"}:* ${money(amountDue)}`,
           ``,
-          `Paga de forma segura aquí 👇`,
+          `Paga de forma segura aquí:`,
           paymentLink,
         ]),
     ``,
