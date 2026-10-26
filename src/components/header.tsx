@@ -233,6 +233,7 @@ export function Header() {
               width={47}
               height={56}
               loading="eager"
+              style={{ width: "auto" }}
               className={`w-auto object-contain transition-[height,transform] duration-300 motion-reduce:transition-none group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(212,175,55,0.3)] ${scrolled ? "h-10" : "h-12 sm:h-14"}`}
             />
 
@@ -244,6 +245,7 @@ export function Header() {
                 width={106}
                 height={36}
                 loading="eager"
+                style={{ width: "auto" }}
                 className={`w-auto object-contain dark:hidden transition-[height] duration-300 motion-reduce:transition-none ${scrolled ? "h-7" : "h-8 sm:h-9"}`}
               />
               <Image
@@ -252,6 +254,7 @@ export function Header() {
                 width={106}
                 height={36}
                 loading="eager"
+                style={{ width: "auto" }}
                 className={`w-auto object-contain hidden dark:block drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)] transition-[height] duration-300 motion-reduce:transition-none ${scrolled ? "h-7" : "h-8 sm:h-9"}`}
               />
             </div>
