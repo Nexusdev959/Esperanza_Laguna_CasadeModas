@@ -25,3 +25,11 @@ export const PROGRAMAS: Programa[] = [
 
 export const buscarUniforme = (programa: ProgramaId, variante: VarianteId) =>
   UNIFORMES.find((u) => u.programa === programa && u.variante === variante) ?? null;
+
+/** Primera variante del programa que ya tiene uniforme cargado (o la primera, si ninguna). */
+export const varianteDisponible = (programa: ProgramaId) => {
+  const p = PROGRAMAS.find((x) => x.id === programa);
+  return (p?.variantes.find((v) => buscarUniforme(programa, v.id)) ?? p?.variantes[0])?.id ?? "nino";
+};
+
+export const programaDisponible = (programa: ProgramaId) => UNIFORMES.some((u) => u.programa === programa);

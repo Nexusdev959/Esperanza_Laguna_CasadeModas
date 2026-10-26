@@ -36,11 +36,24 @@ export const ZOOM = {
 export const HOTSPOTS = {
   /** Frames de desvanecido en los bordes de cada tramo. */
   fundido: 1.2,
+  /** Con el escenario más angosto que esto (px), las etiquetas salen hacia el centro para no cortarse. */
+  anchoEtiquetasAfuera: 420,
+  /** Margen (%) dentro del escenario: un punto que el zoom deja más afuera se oculta. */
+  margen: 3,
 } as const;
 
 /** Curva de la marca para giros y transiciones (ease-out suave). */
 export const EASING = [0.22, 1, 0.36, 1] as const;
 export const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+/** Resorte de las pastillas deslizantes (el mismo de la navbar). */
+export const RESORTE = { type: "spring", stiffness: 380, damping: 30 } as const;
+
+/** Desde aquí el detalle va en columna lateral; debajo, en hoja inferior. */
+export const MEDIA_ESCRITORIO = "(min-width: 1024px)";
+
+/** Hoja inferior en móvil: cuánto hay que arrastrarla hacia abajo para cerrarla (px). */
+export const UMBRAL_CIERRE_HOJA = 120;
 
 export const TRANSICION = {
   /** Fundido al cambiar de uniforme (s). */
