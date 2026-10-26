@@ -25,12 +25,19 @@ export function LienzoFrame({ base, siguiente, mezcla }: Props) {
       c.width = fondo.naturalWidth;
       c.height = fondo.naturalHeight;
     }
-    ctx.globalAlpha = 1;
-    ctx.drawImage(fondo, 0, 0, c.width, c.height);
+    // Se limpia siempre: con fotos de fondo transparente las siluetas se acumularían
+    ctx.clearRect(0, 0, c.width, c.height);
     if (siguiente && mezcla > 0 && mezcla < 1) {
+      // (1−t)·A + t·B exacto, también con transparencia: "lighter" suma los colores premultiplicados
+      ctx.globalAlpha = 1 - mezcla;
+      ctx.drawImage(fondo, 0, 0, c.width, c.height);
+      ctx.globalCompositeOperation = "lighter";
       ctx.globalAlpha = mezcla;
       ctx.drawImage(siguiente, 0, 0, c.width, c.height);
+      ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 1;
+    } else {
+      ctx.drawImage(fondo, 0, 0, c.width, c.height);
     }
   }, [base, siguiente, mezcla]);
 

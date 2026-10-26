@@ -34,6 +34,8 @@ export function VisorSecuencia({ onSeleccionar, ...opciones }: Props) {
       >
         <div className="absolute inset-0 overflow-hidden rounded-[2rem] bg-[#f4f6f4]">
           <div className={CAPA} style={escala}>
+            {/* Sombra de piso: con fotos sin fondo el uniforme no queda flotando */}
+            <div aria-hidden className="absolute bottom-[3.5%] left-1/2 h-[3%] w-[42%] -translate-x-1/2 rounded-[50%] bg-[#1b1e1c]/15 blur-md" />
             <LienzoFrame {...lienzo} />
             {EDITOR && <EditorHotspots frame={frame} />}
           </div>
