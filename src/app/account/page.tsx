@@ -9,6 +9,7 @@ import { PanelUserProvider, usePanelUser } from "@/components/panel/panel-user";
 import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
 import { itemDetails } from "@/store/cart";
+import { cldImage } from "@/lib/cloudinary";
 
 export default function AccountPage() {
   // Cualquier usuario con sesión; el provider valida el token contra el backend antes de mostrar nada
@@ -208,7 +209,7 @@ function AccountPanel() {
                         {order.items?.map((item: any) => (
                           <div key={item.id} className="flex items-center space-x-4 pt-2">
                             <div className="w-16 h-20 bg-[var(--background)] rounded-lg overflow-hidden border border-[var(--border-color)]">
-                               <img src={item.product?.images?.[0] || "https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=200&q=80"} alt={item.product?.name || 'Producto'} className="w-full h-full object-cover" />
+                               <img src={cldImage(item.product?.images?.[0] || "https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=200&q=80", 200)} alt={item.product?.name || 'Producto'} className="w-full h-full object-cover" />
                             </div>
                             <div>
                               <h4 className="text-sm font-medium text-[var(--foreground)]">{item.product?.name || 'Producto Desconocido'}</h4>

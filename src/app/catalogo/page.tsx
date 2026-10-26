@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import useSWR from "swr";
 import { useRouter, useSearchParams } from "next/navigation";
-import { api } from "@/lib/api";
+import { fetcher } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArchiveX, X } from "lucide-react";
 import { ProductCard, Product, toCardProduct, PRODUCT_CATEGORIES } from "@/components/product-card";
@@ -10,6 +11,9 @@ import { ProductCard, Product, toCardProduct, PRODUCT_CATEGORIES } from "@/compo
 const CATEGORIES = [{ id: "all", label: "Colección Completa" }, ...PRODUCT_CATEGORIES];
 
 // Sin tildes ni mayúsculas: "insignia" encuentra "Insígnia" y viceversa
+// Tarjetas que se pintan de entrada y por cada tramo de scroll: el DOM no crece con el catálogo
+const PAGE = 12;
+
 const normalize = (s = "") => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 // useSearchParams exige Suspense para que el build pueda prerenderizar la página
@@ -27,9 +31,13 @@ function Catalogue() {
   const query = (searchParams.get("q") || "").trim();
   const [activeCategory, setActiveCategory] = useState("all");
 
-  const [products, setProducts] = useState<Product[]>([]);
   // Mientras carga no se muestra "Colección en Preparación": parecería una tienda vacía
-  const [loaded, setLoaded] = useState(false);
+  const { data, error } = useSWR("/products", fetcher);
+  if (error) console.error("Error cargando el catálogo", error);
+  const loaded = data !== undefined || !!error;
+  const products: Product[] = (data ?? []).map(toCardProduct);
+  const [visible, setVisible] = useState(PAGE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Enlaces como /catalogo?categoria=Insignias%20y%20Parches abren la categoría ya filtrada
   const categoryFromUrl = searchParams.get("categoria");
@@ -37,12 +45,8 @@ function Catalogue() {
     if (categoryFromUrl && CATEGORIES.some((c) => c.id === categoryFromUrl)) setActiveCategory(categoryFromUrl);
   }, [categoryFromUrl]);
 
-  useEffect(() => {
-    api.get('/products')
-      .then((res) => setProducts((res.data || []).map(toCardProduct)))
-      .catch((err) => console.error('Error cargando el catálogo', err))
-      .finally(() => setLoaded(true));
-  }, []);
+  // Otro filtro o búsqueda vuelve a empezar por el primer tramo
+  useEffect(() => setVisible(PAGE), [activeCategory, query]);
 
   // En móvil la barra se desplaza: la categoría activa (p. ej. llegada desde el hero) siempre queda a la vista
   useEffect(() => {
@@ -61,6 +65,15 @@ function Catalogue() {
       (activeCategory === "all" || (p.categories ?? [p.category]).includes(activeCategory)) &&
       (!q || normalize(p.name).includes(q) || normalize((p.categories ?? [p.category]).join(" ")).includes(q))
   );
+
+  const hasMore = visible < filteredProducts.length;
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && setVisible((v) => v + PAGE), { rootMargin: "600px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, visible]);
 
   return (
     <main className="min-h-screen bg-[#f4f7f5] dark:bg-[#050807] pt-40 pb-24 text-stone-900 dark:text-white overflow-hidden selection:bg-[#2ec4a6]/30 transition-colors duration-700">
@@ -160,12 +173,12 @@ function Catalogue() {
               transition={{ duration: 0.5 }}
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10"
             >
-              {filteredProducts.map((product, index) => (
+              {filteredProducts.slice(0, visible).map((product, index) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.6, delay: (index % PAGE) * 0.05, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <ProductCard product={product} />
                 </motion.div>
@@ -206,6 +219,7 @@ function Catalogue() {
           )}
         </AnimatePresence>
         )}
+        {hasMore && <div ref={sentinelRef} className="h-px" aria-hidden />}
       </section>
       
     </main>

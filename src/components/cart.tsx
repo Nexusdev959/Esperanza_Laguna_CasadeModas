@@ -10,6 +10,7 @@ import { useNotification } from "@/components/ui/notification-provider";
 import { useRouter } from "next/navigation";
 
 import { useCartStore, itemDetails, uniformUnits, LOT_MIN_UNIFORMS, LEAD_DAYS, RH_OPTIONS, INSIGNIA_LABELS, addBusinessDays } from "@/store/cart";
+import { cldImage } from "@/lib/cloudinary";
 
 type DeliveryMethod = "NATIONAL_SHIPPING" | "MEDELLIN_DELIVERY" | "STORE_PICKUP";
 
@@ -199,7 +200,7 @@ export function Cart() {
                       <div key={item.id} className="flex gap-4 p-4 rounded-2xl bg-[var(--background)] border border-[var(--border-color)] shadow-sm group">
                         {/* Image */}
                         <div className="w-20 h-24 rounded-xl overflow-hidden bg-[var(--surface)] shrink-0">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <img src={cldImage(item.image, 200)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         </div>
                         
                         {/* Details */}

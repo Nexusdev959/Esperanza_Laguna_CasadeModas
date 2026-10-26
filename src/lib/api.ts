@@ -39,3 +39,6 @@ api.interceptors.response.use((response) => response, (error) => {
   }
   return Promise.reject(error);
 });
+
+// Fetcher de SWR: la misma clave en varios componentes comparte una sola petición y su caché
+export const fetcher = (url: string) => api.get(url).then((res) => res.data);

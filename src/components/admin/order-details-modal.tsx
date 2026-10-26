@@ -65,7 +65,21 @@ export function OrderDetailsModal({
       showNotification('El cliente no tiene teléfono registrado', 'error');
       return;
     }
-    const msg = `Hola ${order.user?.name || order.contactName || ''}, te informamos que tu pedido de Esperanza Laguna ha sido despachado 🚚.\n\n*Medio de envío:* ${shippingCarrier}\n*Guía o Datos del conductor:* ${trackingNumber}\n\n¡Muchas gracias por tu compra!`;
+    // El enlace va al final: WhatsApp le arma la tarjeta con la imagen del sitio
+    const msg = [
+      `Hola ${order.user?.name || order.contactName || ''} 👋`,
+      ``,
+      `🚚 *¡Tu pedido va en camino!*`,
+      ``,
+      `🧾 *Pedido:* #${order.id.slice(0, 8).toUpperCase()}`,
+      `📦 *Transportadora:* ${shippingCarrier}`,
+      `🔢 *Guía / conductor:* ${trackingNumber}`,
+      ``,
+      `Rastrea tu pedido aquí 👇`,
+      `${window.location.origin}/track-order`,
+      ``,
+      `_¡Gracias por tu compra! · Esperanza Laguna_`,
+    ].join('\n');
     window.open(`https://wa.me/${phone.length === 10 ? `57${phone}` : phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

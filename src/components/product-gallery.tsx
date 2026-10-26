@@ -1,38 +1,25 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import useSWR from "swr";
 import { ProductCard, toCardProduct, PRODUCT_CATEGORIES } from "./product-card";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "@/lib/api";
+import { fetcher } from "@/lib/api";
 
 const CATEGORIES = [{ id: "Todos", label: "Colección Completa" }, ...PRODUCT_CATEGORIES];
 
-const FALLBACK_PRODUCTS: any[] = [];
+// Es una vitrina del inicio: el catálogo completo está en /catalogo
+const MAX_ITEMS = 12;
 
 export function ProductGallery() {
   const [activeCategory, setActiveCategory] = useState("Todos");
-  const [allProducts, setAllProducts] = useState<any[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    api.get('/products')
-      .then(res => {
-        if (res.data && res.data.length > 0) {
-          setAllProducts(res.data);
-        } else {
-          setAllProducts(FALLBACK_PRODUCTS);
-        }
-      })
-      .catch((err) => {
-        console.error("Error cargando productos, usando fallback", err);
-        setAllProducts(FALLBACK_PRODUCTS);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
+  // Misma clave que el hero y el catálogo: SWR hace una sola petición
+  const { data, error } = useSWR("/products", fetcher);
+  if (error) console.error("Error cargando productos", error);
+  const isLoading = data === undefined && !error;
+  const allProducts: any[] = data ?? [];
 
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -44,9 +31,9 @@ export function ProductGallery() {
     }
   };
 
-  const currentProducts = allProducts.filter(p => 
-    (activeCategory === "Todos" || (p.categories?.length ? p.categories : [p.category]).includes(activeCategory)) && p.isPublished !== false
-  );
+  const currentProducts = allProducts
+    .filter((p: any) => (activeCategory === "Todos" || (p.categories?.length ? p.categories : [p.category]).includes(activeCategory)) && p.isPublished !== false)
+    .slice(0, MAX_ITEMS);
 
   return (
     <div className="w-full relative text-stone-900 dark:text-white transition-colors duration-500">

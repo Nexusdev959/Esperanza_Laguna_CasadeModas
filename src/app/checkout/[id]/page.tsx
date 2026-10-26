@@ -6,6 +6,7 @@ import { CheckCircle2, ChevronLeft, CreditCard, Loader2, Package, ShieldCheck } 
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useNotification } from "@/components/ui/notification-provider";
+import { cldImage } from "@/lib/cloudinary";
 
 declare global {
   interface Window {
@@ -183,7 +184,7 @@ export default function CheckoutPage() {
                   <div key={item.id} className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 bg-[var(--background)] rounded-lg overflow-hidden border border-[var(--border-color)]">
-                        <img src={item.product?.images?.[0] || 'https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=100&q=80'} className="w-full h-full object-cover" alt="Producto"/>
+                        <img src={cldImage(item.product?.images?.[0] || 'https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=100&q=80', 200)} className="w-full h-full object-cover" alt="Producto"/>
                       </div>
                       <div>
                         <p className="font-medium text-[var(--foreground)] text-sm">{item.product?.name || 'Producto'}</p>

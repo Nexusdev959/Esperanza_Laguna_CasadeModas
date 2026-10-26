@@ -65,6 +65,19 @@ export default function AdminPqrsPage() {
     }
   };
 
+  const handleResend = async () => {
+    setIsSubmitting(true);
+    try {
+      const { data } = await api.post(`/pqrs/${selectedCase.id}/resend`);
+      if (data.emailSent) showNotification(`Respuesta reenviada a ${data.clientEmail}`, "success");
+      else showNotification(data.clientEmail ? `No se pudo enviar el correo a ${data.clientEmail}` : "El caso no tiene correo: contacta al cliente por WhatsApp o teléfono.", "warning");
+    } catch (error: any) {
+      showNotification(error.response?.data?.error || "Error al reenviar la respuesta", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const badges: any = {
       'OPEN': <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 rounded-full text-xs font-medium">Abierto</span>,
@@ -225,6 +238,15 @@ export default function AdminPqrsPage() {
                           <FileText className="w-4 h-4" /> Ver PDF de Respuesta Oficial
                         </a>
                       </div>
+                    )}
+                    {selectedCase.replyText && (
+                      <button
+                        onClick={handleResend}
+                        disabled={isSubmitting}
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-emerald-500/40 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+                      >
+                        <Send className="w-4 h-4" /> Reenviar al cliente por correo
+                      </button>
                     )}
                   </div>
                 ) : (

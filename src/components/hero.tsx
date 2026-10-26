@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import useSWR from "swr";
 import Link from "next/link";
 import { motion, AnimatePresence, useInView, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Pause, Play } from "lucide-react";
 import { HeroCanvasBackground } from "@/components/ui/hero-canvas-background";
-import { api } from "@/lib/api";
+import { fetcher } from "@/lib/api";
+import { cldImage } from "@/lib/cloudinary";
 
 // Diapositivas: cada una dice qué se vende y lleva a su categoría. Sin afirmaciones sobre telas que no estén verificadas.
 const QUOTE_CTA = { label: "Cotizar para mi club", link: "/quotes" };
@@ -68,7 +70,18 @@ export function HeroCinematic() {
   const [step, setStep] = useState(0);
   const [userPaused, setUserPaused] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [garments, setGarments] = useState<HeroGarment[]>([]);
+  // Misma clave que la galería del inicio: una sola petición; sin catálogo el hero se ve como siempre, solo sin prendas
+  const { data } = useSWR("/products", fetcher);
+  // Prendas reales del catálogo, en orden aleatorio por visita
+  const garments = useMemo<HeroGarment[]>(
+    () =>
+      ((data as any[]) || [])
+        .filter((p) => p.isPublished !== false)
+        .map((p) => ({ id: p.id, name: p.name, price: Number(p.price) || 0, image: p.image || p.images?.[0] }))
+        .filter((p) => p.image)
+        .sort(() => Math.random() - 0.5),
+    [data]
+  );
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef);
   const reduceMotion = useReducedMotion();
@@ -78,20 +91,6 @@ export function HeroCinematic() {
   const slide = HERO_SLIDES[currentSlide];
   const hasGarments = garments.length > 0;
   const deck = DECK.slice(0, Math.min(DECK.length, garments.length));
-
-  // Prendas reales del catálogo, en orden aleatorio por visita
-  useEffect(() => {
-    api
-      .get("/products")
-      .then((res) => {
-        const list: HeroGarment[] = (res.data || [])
-          .filter((p: any) => p.isPublished !== false)
-          .map((p: any) => ({ id: p.id, name: p.name, price: Number(p.price) || 0, image: p.image || p.images?.[0] }))
-          .filter((p: HeroGarment) => p.image);
-        setGarments(list.sort(() => Math.random() - 0.5));
-      })
-      .catch(() => setGarments([])); // sin catálogo el hero se ve como siempre, solo sin prendas
-  }, []);
 
   // Timeout por escena: un clic manual reinicia el conteo completo
   useEffect(() => {
@@ -219,7 +218,7 @@ export function HeroCinematic() {
                     >
                       {/* Zoom editorial lento mientras la prenda está al frente */}
                       <motion.img
-                        src={g.image}
+                        src={cldImage(g.image, 720)}
                         alt={front ? g.name : ""}
                         initial={false}
                         animate={{ scale: front && !reduceMotion ? 1 : 1.12 }}

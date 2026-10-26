@@ -46,7 +46,16 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const handleResend = async (id: string) => {
+    try {
+      const { data } = await api.post(`/payments/wompi/${id}/resend-receipt`);
+      alert(data.emailSent ? `Recibo reenviado a ${data.clientEmail}` : data.clientEmail ? `No se pudo enviar el correo a ${data.clientEmail}` : 'El pedido no tiene correo registrado');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Error al reenviar el recibo');
+    }
+  };
+
+  const getStatusBadge =(status: string) => {
     switch (status) {
       case 'APPROVED': return <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-xs font-medium border border-emerald-500/20 flex items-center gap-1"><CheckCircle2 className="w-3 h-3"/> Aprobado</span>;
       case 'PENDING': return <span className="px-2.5 py-1 bg-amber-500/10 text-amber-600 rounded-full text-xs font-medium border border-amber-500/20 flex items-center gap-1"><Clock className="w-3 h-3"/> Pendiente</span>;
@@ -113,11 +122,14 @@ export default function AdminPaymentsPage() {
                     {new Date(payment.createdAt).toLocaleString('es-CO')}
                   </td>
                   <td className="px-6 py-4">
-                    {payment.status === 'PENDING' && payment.paymentMethod === 'MANUAL' && (
+                    {payment.status === 'PENDING' && payment.attachmentUrl && (
                       <div className="flex gap-2">
                         <button onClick={() => handleApprove(payment.id)} className="text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded">Aprobar</button>
                         <button onClick={() => handleReject(payment.id)} className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Rechazar</button>
                       </div>
+                    )}
+                    {payment.status === 'APPROVED' && (
+                      <button onClick={() => handleResend(payment.id)} className="text-xs border border-[var(--border-color)] hover:bg-[var(--foreground)] hover:text-[var(--background)] px-2 py-1 rounded">Reenviar recibo</button>
                     )}
                   </td>
                 </tr>

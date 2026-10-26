@@ -11,6 +11,7 @@ import { api } from "@/lib/api";
 import useSWR, { useSWRConfig } from "swr";
 import { useCartStore, InsigniaOption, ClubMember, LOT_MIN_UNIFORMS, LEAD_DAYS, RH_OPTIONS } from "@/store/cart";
 import { toCardProduct } from "@/components/product-card";
+import { cldImage } from "@/lib/cloudinary";
 
 // Valor del selector para quien no es de la Unión Colombiana del Norte
 const OTHER_UNION = "__otra__";
@@ -230,7 +231,7 @@ export default function ProductDetail() {
           <AnimateIn delay={0.1} className="space-y-4 md:col-start-1 md:row-start-1">
             <div className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-2xl border border-[var(--border-color)]">
               <img 
-                src={mainImage} 
+                src={cldImage(mainImage, 1200)} 
                 alt={product.name} 
                 className="w-full h-full object-cover"
               />
@@ -240,7 +241,7 @@ export default function ProductDetail() {
                 {detailImages.map((img: string, index: number) => (
                   <div key={index} className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-xl border border-[var(--border-color)]">
                     <img 
-                      src={img} 
+                      src={cldImage(img, 640)} loading="lazy" 
                       alt={`Detalle ${index + 1}`} 
                       className="w-full h-full object-cover"
                     />

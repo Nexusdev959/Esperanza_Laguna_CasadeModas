@@ -36,13 +36,31 @@ export function PaymentActions({ orderId, clientName, clientPhone, clientEmail, 
   const paymentLink = typeof window !== "undefined" ? `${window.location.origin}/checkout/${orderId}` : "";
   const wa = whatsappNumber(clientPhone);
 
-  const message = pending <= 0
-    ? deliveryMethod === "STORE_PICKUP"
-      ? `Hola ${clientName}, tu pedido #${code} de Esperanza Laguna está pagado y listo. Puedes recogerlo en tienda presentando el código ${code}.`
-      : `Hola ${clientName}, tu pedido #${code} de Esperanza Laguna está pagado y listo. Te avisaremos con la guía cuando lo despachemos.`
-    : mode === "ADVANCE"
-      ? `Hola ${clientName}, somos Esperanza Laguna. Para iniciar la confección de tu pedido #${code} necesitamos el anticipo del 50% (${money(amountDue)}). Puedes pagar aquí: ${paymentLink}`
-      : `Hola ${clientName}, tu pedido #${code} de Esperanza Laguna está casi listo. Tienes un saldo pendiente de ${money(amountDue)}. Puedes pagarlo aquí: ${paymentLink}`;
+  // Formato de WhatsApp (*negrita*, _cursiva_); el enlace al final hace que WhatsApp muestre la tarjeta con imagen
+  const message = [
+    `Hola ${clientName} 👋`,
+    ``,
+    ...(pending <= 0
+      ? [
+          `✅ *¡Tu pedido está pagado y listo!*`,
+          ``,
+          `🧾 *Pedido:* #${code}`,
+          deliveryMethod === "STORE_PICKUP"
+            ? `🏬 Puedes recogerlo en tienda presentando el código *${code}*.`
+            : `🚚 Te enviaremos la guía apenas lo despachemos.`,
+        ]
+      : [
+          mode === "ADVANCE" ? `✂️ *Iniciemos la confección de tu pedido*` : `🎉 *¡Tu pedido está casi listo!*`,
+          ``,
+          `🧾 *Pedido:* #${code}`,
+          `💰 *${mode === "ADVANCE" ? "Anticipo (50%)" : "Saldo pendiente"}:* ${money(amountDue)}`,
+          ``,
+          `Paga de forma segura aquí 👇`,
+          paymentLink,
+        ]),
+    ``,
+    `_Esperanza Laguna · Casa de Modas_`,
+  ].join("\n");
 
   const waLink = wa ? `https://wa.me/${wa}?text=${encodeURIComponent(message)}` : null;
   const mailLink = clientEmail

@@ -9,8 +9,17 @@ import { GoogleProvider } from "@/components/ui/google-provider";
 import { GeistSans } from "geist/font/sans";
 
 export const metadata: Metadata = {
+  // Las vistas previas de enlaces (WhatsApp) necesitan la URL absoluta de la imagen
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://esperanzalaguna.com"),
   title: "Esperanza Laguna",
   description: "Club de Conquistadores, Aventureros y Guías Mayores.",
+  openGraph: {
+    title: "Esperanza Laguna · Casa de Modas",
+    description: "Uniformes para Conquistadores, Aventureros y Guías Mayores. Revisa tu pedido y paga en línea.",
+    siteName: "Esperanza Laguna",
+    locale: "es_CO",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Star, Heart, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { cldImage } from "@/lib/cloudinary";
 
 export interface Product {
   id: number | string;
@@ -87,10 +88,11 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-[4/5] w-full rounded-xl overflow-hidden bg-[#f0f4f2] dark:bg-[#070b09] border border-black/[0.05] dark:border-white/[0.05] transition-colors duration-700">
         <Link href={`/products/${product.id}`} className="block w-full h-full">
           <img
-            src={product.image}
+            src={cldImage(product.image, 640)}
             alt={product.name}
             className="object-cover object-center w-full h-full opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 ease-out will-change-transform mix-blend-multiply dark:mix-blend-normal"
             loading="lazy"
+            decoding="async"
           />
         </Link>
 
