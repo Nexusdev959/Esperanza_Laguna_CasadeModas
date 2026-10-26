@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { cldImage } from "@/lib/cloudinary";
 import { formatoPrecio, type ProductoPieza } from "../../lib/tienda";
 import type { Pieza } from "../../types";
 import { BOTON_LINEA, BOTON_MARCA, ROTULO } from "../estilos";
@@ -31,7 +32,8 @@ export function ContenidoPieza({ pieza, producto, talla, incluida, onTalla, onAl
     <article className="flex flex-col gap-5">
       <div className="relative aspect-[16/9] lg:aspect-[4/3] overflow-hidden rounded-2xl bg-[#f4f6f4]">
         {pieza.imagenDetalle ? (
-          <Image src={pieza.imagenDetalle} alt={`Detalle: ${pieza.nombre}`} fill sizes="(min-width: 1024px) 360px, 90vw" className="object-cover" />
+          // Cloudinary ya entrega el tamaño y formato justos: sin pasar por el optimizador de Next
+          <Image src={cldImage(pieza.imagenDetalle, 800) ?? pieza.imagenDetalle} alt={`Detalle: ${pieza.nombre}`} fill unoptimized className="object-cover" />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center font-sans text-xs text-[#64748b]">Foto de detalle por confirmar</span>
         )}

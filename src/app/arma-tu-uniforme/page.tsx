@@ -1,5 +1,6 @@
 import { ArmaTuUniforme } from "@/features/arma-tu-uniforme/components/ArmaTuUniforme";
 import { PROGRAMAS } from "@/features/arma-tu-uniforme/data";
+import { cargarPiezas, claveUniforme } from "@/features/arma-tu-uniforme/lib/contenido";
 import { leerEstado } from "@/features/arma-tu-uniforme/lib/url-state";
 import { generarMetadata } from "./metadata";
 
@@ -9,6 +10,9 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export default async function ArmaTuUniformePage({ searchParams }: Props) {
   const inicial = leerEstado(await searchParams, PROGRAMAS);
+  // Las piezas editadas en el admin van en el HTML inicial (buscadores y sin parpadeo)
+  const clave = claveUniforme(inicial);
+  const piezasIniciales = { clave, piezas: await cargarPiezas(clave) };
   return (
     <main className="container mx-auto max-w-7xl px-4 pt-36 sm:pt-40">
       <header className="mb-10 text-center">
@@ -18,7 +22,7 @@ export default async function ArmaTuUniformePage({ searchParams }: Props) {
         </h1>
         <p className="mt-3 font-sans text-sm text-foreground/60">Gira el uniforme y toca cada pieza para conocerla.</p>
       </header>
-      <ArmaTuUniforme inicial={inicial} />
+      <ArmaTuUniforme inicial={inicial} piezasIniciales={piezasIniciales} />
     </main>
   );
 }

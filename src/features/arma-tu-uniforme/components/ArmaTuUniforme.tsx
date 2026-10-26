@@ -3,6 +3,8 @@
 import { useCallback } from "react";
 import { useEstadoUrl } from "../hooks/useEstadoUrl";
 import { usePiezaActiva } from "../hooks/usePiezaActiva";
+import { usePiezasUniforme } from "../hooks/usePiezasUniforme";
+import type { PiezaGuardada } from "../lib/contenido";
 import { useSeleccionUniforme } from "../hooks/useSeleccionUniforme";
 import { useAccionesTienda, useProductosPiezas } from "../hooks/useTienda";
 import { useUniformeArmado } from "../hooks/useUniformeArmado";
@@ -12,10 +14,11 @@ import { ResumenUniforme } from "./resumen/ResumenUniforme";
 import { SelectoresUniforme } from "./seleccion/SelectoresUniforme";
 
 /** Compone la experiencia: selectores, lista, visor, detalle y resumen de compra. */
-export function ArmaTuUniforme({ inicial }: { inicial: EstadoUrl }) {
+export function ArmaTuUniforme({ inicial, piezasIniciales }: { inicial: EstadoUrl; piezasIniciales: { clave: string; piezas: PiezaGuardada[] } }) {
   const { estado, actualizar } = useEstadoUrl(inicial);
   const seleccion = useSeleccionUniforme(estado, actualizar);
-  const piezas = seleccion.uniforme?.piezas ?? [];
+  const uniforme = usePiezasUniforme(seleccion.uniforme, piezasIniciales);
+  const piezas = uniforme?.piezas ?? [];
   const activa = usePiezaActiva(piezas, estado, actualizar);
   const productos = useProductosPiezas(piezas);
   const armado = useUniformeArmado(piezas, productos);
@@ -26,13 +29,13 @@ export function ArmaTuUniforme({ inicial }: { inicial: EstadoUrl }) {
     <div className="flex flex-col gap-10 pb-40">
       <SelectoresUniforme seleccion={seleccion} estado={estado} />
 
-      {seleccion.uniforme ? (
-        <MesaUniforme uniforme={seleccion.uniforme} vista={estado.vista} activa={activa} armado={armado} onAgregar={tienda.agregar} onVista={alVista} />
+      {uniforme ? (
+        <MesaUniforme uniforme={uniforme} vista={estado.vista} activa={activa} armado={armado} onAgregar={tienda.agregar} onVista={alVista} />
       ) : (
         <p className="py-24 text-center font-sans text-sm text-foreground/55">Este uniforme estará disponible muy pronto.</p>
       )}
 
-      {seleccion.uniforme && (
+      {uniforme && (
         <ResumenUniforme
           elegidas={armado.elegidas}
           totalPiezas={piezas.length}
