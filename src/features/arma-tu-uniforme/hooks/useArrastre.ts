@@ -2,17 +2,19 @@ import { useCallback, useRef } from "react";
 import { ROTACION } from "../config";
 
 interface Opciones {
+  total: number;
   frameRef: React.RefObject<number>;
   mover: (frame: number) => void;
   interrumpir: () => void;
   animar: (paso: (dt: number) => boolean) => number;
   reducido: boolean;
   bloqueado: () => boolean;
-  alDetenerse?: (frame: number) => void;
+  /** Al terminar, lleva el giro a la foto entera más cercana (sin quedar a medio fundido). */
+  asentar: () => void;
 }
 
 /** Arrastre horizontal → frames, y al soltar sigue girando con inercia hasta frenar. */
-export function useArrastre({ frameRef, mover, interrumpir, animar, reducido, bloqueado, alDetenerse }: Opciones) {
+export function useArrastre({ total, frameRef, mover, interrumpir, animar, reducido, bloqueado, asentar }: Opciones) {
   const arrastre = useRef<{ x: number; t: number; v: number } | null>(null);
 
   const inercia = useCallback(
@@ -20,15 +22,15 @@ export function useArrastre({ frameRef, mover, interrumpir, animar, reducido, bl
       let v = reducido ? 0 : velocidad;
       animar((dt) => {
         v *= Math.exp(-ROTACION.friccion * dt);
-        if (Math.abs(v) < ROTACION.velocidadMinima) {
-          alDetenerse?.(frameRef.current);
+        if (Math.abs(v) < ROTACION.velocidadMinima * total) {
+          asentar();
           return false;
         }
         mover(frameRef.current + v * dt);
         return true;
       });
     },
-    [animar, mover, reducido, alDetenerse, frameRef]
+    [animar, mover, reducido, asentar, frameRef, total]
   );
 
   return {
@@ -41,7 +43,7 @@ export function useArrastre({ frameRef, mover, interrumpir, animar, reducido, bl
     onPointerMove: (e: React.PointerEvent) => {
       const a = arrastre.current;
       if (!a || !e.isPrimary || bloqueado()) return;
-      const df = (e.clientX - a.x) / ROTACION.pxPorFrame;
+      const df = ((e.clientX - a.x) / ROTACION.pxPorVuelta) * total;
       arrastre.current = { x: e.clientX, t: e.timeStamp, v: df / Math.max(1, e.timeStamp - a.t) };
       mover(frameRef.current + df);
     },
@@ -51,7 +53,7 @@ export function useArrastre({ frameRef, mover, interrumpir, animar, reducido, bl
       if (!a) return;
       // Si el dedo se quedó quieto antes de soltar, no hay inercia
       if (e.timeStamp - a.t < 80) inercia(a.v);
-      else alDetenerse?.(frameRef.current);
+      else asentar();
     },
   };
 }

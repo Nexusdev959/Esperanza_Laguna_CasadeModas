@@ -27,9 +27,9 @@ export function useRotacion({ total, frameInicial, autoGiro, reducido, bloqueado
 
   useEffect(() => {
     if (!autoGiro || reducido || interactuado) return;
-    const propio = animar((dt) => (mover(frameRef.current + (dt / 1000) * ROTACION.autoFps), true));
+    const propio = animar((dt) => (mover(frameRef.current + (dt / 1000 / ROTACION.segundosPorVuelta) * total), true));
     return () => detener(propio);
-  }, [autoGiro, reducido, interactuado, animar, detener, mover]);
+  }, [autoGiro, reducido, interactuado, animar, detener, mover, total]);
 
   const irA = useCallback(
     (destino: number, alTerminar?: () => void) => {
@@ -51,7 +51,8 @@ export function useRotacion({ total, frameInicial, autoGiro, reducido, bloqueado
   );
 
   const girar = useCallback((pasos: number) => irA(normalizar(Math.round(frameRef.current) + pasos, total)), [irA, total]);
-  const handlers = useArrastre({ frameRef, mover, interrumpir, animar, reducido, bloqueado, alDetenerse });
+  const asentar = useCallback(() => irA(normalizar(Math.round(frameRef.current), total)), [irA, total]);
+  const handlers = useArrastre({ total, frameRef, mover, interrumpir, animar, reducido, bloqueado, asentar });
 
   return { frame, handlers, irA, girar, interrumpir };
 }

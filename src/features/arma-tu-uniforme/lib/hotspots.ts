@@ -20,19 +20,25 @@ const interpolar = (a: PuntoHotspot, b: PuntoHotspot, t: number) => ({
   y: a.y + (b.y - a.y) * t,
 });
 
+/** Posición dentro del tramo; fuera de él, la del extremo más cercano mientras se desvanece. */
 export const posicionEnTramo = (tramo: TramoHotspot, frame: number, total: number, fundido: number): PosicionHotspot | null => {
   if (tramo.length === 0) return null;
   const largo = largoTramo(tramo, total);
   const actual = desplazamiento(tramo, frame, total);
-  if (actual > largo) return null;
-  const opacidad = fundido > 0 ? Math.min(1, actual / fundido, (largo - actual) / fundido) : 1;
-  if (tramo.length === 1) return { ...tramo[0], opacidad };
+  if (actual > largo) {
+    const pasado = actual - largo;
+    const antes = total - actual;
+    const distancia = Math.min(pasado, antes);
+    if (distancia >= fundido) return null;
+    const extremo = pasado <= antes ? tramo[tramo.length - 1] : tramo[0];
+    return { x: extremo.x, y: extremo.y, opacidad: 1 - distancia / fundido };
+  }
   for (let i = 0; i < tramo.length - 1; i++) {
     const a = desplazamiento(tramo, tramo[i].frame, total);
     const b = desplazamiento(tramo, tramo[i + 1].frame, total);
-    if (actual <= b) return { ...interpolar(tramo[i], tramo[i + 1], b === a ? 0 : (actual - a) / (b - a)), opacidad };
+    if (actual <= b) return { ...interpolar(tramo[i], tramo[i + 1], b === a ? 0 : (actual - a) / (b - a)), opacidad: 1 };
   }
-  return null;
+  return { x: tramo[0].x, y: tramo[0].y, opacidad: 1 };
 };
 
 /** Primer tramo en el que la pieza se ve en este frame (puede ser continuo, no entero). */

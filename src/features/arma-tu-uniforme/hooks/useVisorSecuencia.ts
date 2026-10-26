@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ANCHO_BAJA, HOTSPOTS, MEDIA_ESCRITORIO, ZOOM } from "../config";
-import { frameDeVista, frameDibujado, vistaDeFrame } from "../lib/frames";
+import { ANCHO_BAJA, HOTSPOTS, MEDIA_ESCRITORIO, VISTAS, ZOOM } from "../config";
+import { frameDeVista, mezcla, vistaDeFrame } from "../lib/frames";
 import { mejorFrame, posicionHotspot } from "../lib/hotspots";
 import type { Pieza, Vista, VisorSecuencia } from "../types";
 import { useCargaFrames } from "./useCargaFrames";
@@ -22,24 +22,28 @@ export function useVisorSecuencia({ visor, piezas, piezaActiva, vista, autoGiro,
   const escenario = useRef<HTMLDivElement>(null);
   const reducido = useMovimientoReducido();
   const { zoom, enfocar, cambiar, restablecer, pellizcando } = useZoom(escenario);
-  const { frames: total, frameFrente } = visor;
-  const [frameInicial] = useState(() => (piezaActiva && mejorFrame(piezaActiva.tramos, total)) ?? frameDeVista(vista, frameFrente, total));
-  const alDetenerse = useCallback((f: number) => onVista(vistaDeFrame(f, frameFrente, total)), [onVista, frameFrente, total]);
+  const { frames: total, frameFrente, frameEspalda } = visor;
+  const [frameInicial] = useState(() => (piezaActiva && mejorFrame(piezaActiva.tramos, total)) ?? frameDeVista(vista, frameFrente, total, frameEspalda));
+  const alDetenerse = useCallback((f: number) => onVista(vistaDeFrame(f, frameFrente, total, frameEspalda)), [onVista, frameFrente, total, frameEspalda]);
   const rot = useRotacion({ total, frameInicial, autoGiro: autoGiro && !piezaActiva, reducido, bloqueado: pellizcando, alDetenerse });
   const ancho = useAnchoEscenario(escenario);
   const grande = ancho * window.devicePixelRatio > ANCHO_BAJA;
-  const frame = frameDibujado(rot.frame, total);
+  const m = mezcla(rot.frame, total, total <= VISTAS.maxFramesConFundido ? VISTAS.anchoFundido : 0);
+  const frame = m.t >= 0.5 ? m.b : m.a;
   const carga = useCargaFrames(visor.carpeta, total, frame, grande || zoom.nivel > ZOOM.umbralAlta);
+  const lienzo = { base: carga.imagenDe(m.a), siguiente: carga.imagenDe(m.b), mezcla: m.t };
 
   useEnfocarPieza(piezaActiva, total, rot.irA, enfocar, restablecer, escenario);
 
-  const visibles = useMemo(() => hotspotsEnCuadro(piezas, rot.frame, total, zoom), [piezas, rot.frame, total, zoom]);
+  // Los puntos siguen a la foto que se ve (frame entero + fundido), no al giro continuo
+  const frameVisual = m.a + m.t;
+  const visibles = useMemo(() => hotspotsEnCuadro(piezas, frameVisual, total, zoom), [piezas, frameVisual, total, zoom]);
 
-  const verVista = (v: Vista) => (restablecer(), rot.irA(frameDeVista(v, frameFrente, total)));
+  const verVista = (v: Vista) => (restablecer(), rot.irA(frameDeVista(v, frameFrente, total, frameEspalda)));
   const teclado = useTecladoVisor(rot.girar, cambiar, restablecer);
 
   const etiquetasAfuera = ancho >= HOTSPOTS.anchoEtiquetasAfuera;
-  return { escenario, zoom, cambiar, restablecer, girar: rot.girar, gestos: rot.handlers, carga, visibles, etiquetasAfuera, verVista, teclado, frame };
+  return { escenario, zoom, cambiar, restablecer, girar: rot.girar, gestos: rot.handlers, lienzo, progreso: carga.progreso, visibles, etiquetasAfuera, verVista, teclado, frame };
 }
 
 /** Al elegir una pieza: girar a su mejor ángulo y acercar un poco sobre ella. */
@@ -89,7 +93,7 @@ function hotspotsEnCuadro(piezas: Pieza[], frame: number, total: number, zoom: E
     return visto >= HOTSPOTS.margen && visto <= 100 - HOTSPOTS.margen;
   };
   return piezas.flatMap((pieza) => {
-    const pos = posicionHotspot(pieza.tramos, frame, total, HOTSPOTS.fundido);
+    const pos = posicionHotspot(pieza.tramos, frame, total, Math.max(HOTSPOTS.fundidoMinimo, (total * HOTSPOTS.fundidoGrados) / 360));
     return pos && enCuadro(pos.x, zoom.x) && enCuadro(pos.y, zoom.y) ? [{ pieza, ...pos }] : [];
   });
 }

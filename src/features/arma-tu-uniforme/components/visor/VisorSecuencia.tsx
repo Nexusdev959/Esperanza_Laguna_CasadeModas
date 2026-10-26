@@ -18,7 +18,7 @@ const CAPA = "absolute inset-0 transition-transform duration-300 ease-out motion
 
 /** Visor de fotos en secuencia: escenario con el frame actual, hotspots y controles. */
 export function VisorSecuencia({ onSeleccionar, ...opciones }: Props) {
-  const { escenario, zoom, cambiar, restablecer, girar, gestos, carga, visibles, etiquetasAfuera, verVista, teclado, frame } = useVisorSecuencia(opciones);
+  const { escenario, zoom, cambiar, restablecer, girar, gestos, lienzo, progreso, visibles, etiquetasAfuera, verVista, teclado, frame } = useVisorSecuencia(opciones);
   const escala = { transform: `scale(${zoom.nivel})`, transformOrigin: `${zoom.x}% ${zoom.y}%` };
   return (
     <div className="flex h-full flex-col gap-4">
@@ -34,10 +34,10 @@ export function VisorSecuencia({ onSeleccionar, ...opciones }: Props) {
       >
         <div className="absolute inset-0 overflow-hidden rounded-[2rem] bg-[#f4f6f4]">
           <div className={CAPA} style={escala}>
-            <LienzoFrame imagen={carga.imagen} />
+            <LienzoFrame {...lienzo} />
             {EDITOR && <EditorHotspots frame={frame} />}
           </div>
-          <BarraCarga progreso={carga.progreso} />
+          <BarraCarga progreso={progreso} />
         </div>
         {/* Misma escala que el lienzo pero sin recorte: las etiquetas pueden salir del escenario */}
         <div className={`${CAPA} pointer-events-none`} style={escala}>

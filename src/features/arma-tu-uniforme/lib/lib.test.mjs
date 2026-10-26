@@ -1,7 +1,7 @@
 // Pruebas de la lógica pura del visor: npm test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalizar, frameDibujado, distanciaCircular, frameDeVista, vistaDeFrame, ordenDeCarga } from "./frames.ts";
+import { normalizar, frameDibujado, distanciaCircular, frameDeVista, vistaDeFrame, ordenDeCarga, mezcla } from "./frames.ts";
 import { posicionEnTramo, posicionHotspot, mejorFrame } from "./hotspots.ts";
 import { leerEstado, escribirEstado } from "./url-state.ts";
 
@@ -14,6 +14,18 @@ test("frames: normaliza, redondea y toma el camino corto", () => {
   assert.equal(frameDeVista("espalda", 0, 36), 18);
   assert.equal(vistaDeFrame(30, 0, 36), "frente");
   assert.equal(vistaDeFrame(16, 0, 36), "espalda");
+  // 4 fotos con la espalda en la última (frente, tres cuartos, perfil, espalda)
+  assert.equal(frameDeVista("espalda", 0, 4, 3), 3);
+  assert.equal(vistaDeFrame(1, 0, 4, 3), "frente");
+  assert.equal(vistaDeFrame(2, 0, 4, 3), "espalda");
+});
+
+test("frames: con pocas fotos cada una se sostiene y se funde cerca del medio", () => {
+  assert.deepEqual(mezcla(1.1, 4, 0.6), { a: 1, b: 2, t: 0 });
+  assert.deepEqual(mezcla(1.5, 4, 0.6), { a: 1, b: 2, t: 0.5 });
+  assert.deepEqual(mezcla(3.9, 4, 0.6), { a: 3, b: 0, t: 1 });
+  assert.equal(mezcla(10.4, 36, 0).t, 0);
+  assert.equal(mezcla(10.6, 36, 0).t, 1);
 });
 
 test("frames: el orden de carga cubre todo desde el actual hacia afuera", () => {
@@ -36,10 +48,15 @@ test("hotspots: interpola dentro de un tramo que cruza el frame 0", () => {
   assert.equal(posicionEnTramo(tramo, 10, 36, 0), null);
 });
 
-test("hotspots: se desvanece en los bordes y elige el mejor frame", () => {
-  assert.equal(posicionEnTramo(tramo, 33, 36, 1).opacidad, 0);
-  assert.equal(posicionHotspot([tramo], 33, 36, 1), null);
+test("hotspots: se desvanece al salir del tramo y elige el mejor frame", () => {
+  assert.equal(posicionEnTramo(tramo, 33, 36, 1).opacidad, 1);
+  assert.deepEqual(posicionEnTramo(tramo, 3.5, 36, 1), { x: 60, y: 40, opacidad: 0.5 });
+  assert.deepEqual(posicionEnTramo(tramo, 32.5, 36, 1), { x: 40, y: 30, opacidad: 0.5 });
+  assert.equal(posicionHotspot([tramo], 5, 36, 1), null);
   assert.equal(posicionHotspot([tramo], 70, 36, 1).x, 45);
+  // Un tramo de un solo punto se ve en su foto y se apaga antes de la vecina
+  assert.equal(posicionEnTramo([{ frame: 2, x: 10, y: 10 }], 2, 4, 0.45).opacidad, 1);
+  assert.equal(posicionEnTramo([{ frame: 2, x: 10, y: 10 }], 2.5, 4, 0.45), null);
   assert.equal(mejorFrame([tramo, [{ frame: 10, x: 1, y: 1 }]], 36), 0);
   assert.equal(mejorFrame([], 36), null);
 });

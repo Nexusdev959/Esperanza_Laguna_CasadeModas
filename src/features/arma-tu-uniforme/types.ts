@@ -35,6 +35,8 @@ export interface VisorSecuencia {
   carpeta: string;
   frames: number;
   frameFrente: number;
+  /** Foto de espalda; si falta, la que está a media vuelta del frente. */
+  frameEspalda?: number;
 }
 
 export interface VisorModelo3D {

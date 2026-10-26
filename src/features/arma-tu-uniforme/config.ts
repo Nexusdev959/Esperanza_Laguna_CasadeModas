@@ -8,17 +8,26 @@ export const rutaFrame = (carpeta: string, resolucion: Resolucion, i: number) =>
 /** Ancho de los frames en baja: si el visor se ve más grande que esto, se cargan los de alta. */
 export const ANCHO_BAJA = 480;
 
+// El giro se mide por vuelta completa: se siente igual con 4 fotos que con 36
 export const ROTACION = {
-  /** Píxeles de arrastre por frame. */
-  pxPorFrame: 9,
+  /** Píxeles de arrastre para dar una vuelta completa. */
+  pxPorVuelta: 324,
   /** Fricción de la inercia por milisegundo (0–1, más alto = frena antes). */
   friccion: 0.004,
-  /** Velocidad mínima (frames/ms) para seguir girando. */
-  velocidadMinima: 0.0015,
-  /** Giro automático inicial, en frames por segundo. */
-  autoFps: 4,
+  /** Velocidad mínima (vueltas/ms) para seguir girando. */
+  velocidadMinima: 0.00004,
+  /** Giro automático inicial: segundos por vuelta. */
+  segundosPorVuelta: 9,
   /** Duración del giro hacia un frame elegido (ms). */
   duracionIrA: 650,
+} as const;
+
+/** Con pocas fotos (p. ej. 4 vistas) cada una se sostiene y se funde con la siguiente cerca del medio. */
+export const VISTAS = {
+  /** Hasta cuántos frames se usa el fundido entre fotos. */
+  maxFramesConFundido: 12,
+  /** Ancho del fundido como fracción del paso entre dos fotos. */
+  anchoFundido: 0.6,
 } as const;
 
 export const ZOOM = {
@@ -34,8 +43,10 @@ export const ZOOM = {
 } as const;
 
 export const HOTSPOTS = {
-  /** Frames de desvanecido en los bordes de cada tramo. */
-  fundido: 1.2,
+  /** Desvanecido al salir de un tramo, en grados de giro… */
+  fundidoGrados: 12,
+  /** …pero nunca menos de esta fracción de frame (para pocas vistas). */
+  fundidoMinimo: 0.45,
   /** Con el escenario más angosto que esto (px), las etiquetas salen hacia el centro para no cortarse. */
   anchoEtiquetasAfuera: 420,
   /** Margen (%) dentro del escenario: un punto que el zoom deja más afuera se oculta. */

@@ -48,8 +48,8 @@ export function useCargaFrames(carpeta: string, total: number, frameActual: numb
   }, [alta, listaBaja, cargar]);
 
   return {
-    /** La mejor imagen disponible para el frame actual, o null si aún no llega ninguna. */
-    imagen: imagenes.alta[frameActual] ?? imagenes.baja[frameActual] ?? null,
+    /** La mejor imagen disponible para un frame, o null si aún no llega ninguna. */
+    imagenDe: (i: number) => imagenes.alta[i] ?? imagenes.baja[i] ?? null,
     progreso: Math.min(1, bajas / total),
   };
 }

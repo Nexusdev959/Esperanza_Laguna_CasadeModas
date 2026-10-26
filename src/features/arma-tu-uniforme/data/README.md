@@ -11,6 +11,10 @@ Cada uniforme es un archivo `.ts` en esta carpeta, más sus fotos en `public/uni
 - **36 fotos, una cada 10°**, girando la base siempre en el mismo sentido. La foto 00 es de frente y la 18 de espalda.
 - Encuadre vertical 3:4, dejando aire arriba y abajo.
 
+### Con pocas fotos (p. ej. 4 vistas)
+
+También sirve con 4 fotos (frente, tres cuartos, perfil, espalda, en el orden del giro). Con 12 fotos o menos el visor sostiene cada una y la funde con la siguiente al girar. Se ponen `frames: 4` y, si la espalda no está justo a media vuelta, `frameEspalda` con su número (ver `conquistadores-nina.ts`).
+
 ## 2. Exportar
 
 Nombres numerados con dos dígitos (`00.webp` … `35.webp`) en dos resoluciones:
