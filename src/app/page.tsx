@@ -1,16 +1,10 @@
 import Link from "next/link";
-import { Flag, Truck, ShieldCheck, Users, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { HeroCinematic } from "@/components/hero";
 import { ProductGallery } from "@/components/product-gallery";
 import { AnimateIn } from "@/components/ui/animate-in";
-
-// Solo promesas que el negocio ya cumple (ver /legal/shipping y el pago con Wompi): nada inventado
-const TRUST = [
-  { icon: Flag, title: "Hecho en Colombia", text: "Confección nacional" },
-  { icon: Truck, title: "Envíos a toda Colombia", text: "Por transportadora" },
-  { icon: ShieldCheck, title: "Pago seguro", text: "En línea con Wompi" },
-  { icon: Users, title: "Pedidos para tu club", text: "Cotiza por cantidad" },
-];
+import { TrustBar } from "@/components/trust-bar";
+import { PromotionsSection } from "@/components/promotions";
 
 export default function Home() {
   return (
@@ -20,19 +14,10 @@ export default function Home() {
         <HeroCinematic />
 
         {/* Barra de confianza: responde las dudas que frenan la compra antes de ver productos */}
-        <section aria-label="Por qué comprar con nosotros" className="container mx-auto px-4 pt-6 relative z-20">
-          <ul className="grid grid-cols-2 lg:grid-cols-4 gap-3 rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] backdrop-blur-md p-4">
-            {TRUST.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex items-center gap-3">
-                <Icon className="w-5 h-5 shrink-0 text-[#1c785f] dark:text-[#d4af37]" aria-hidden="true" />
-                <div className="font-sans leading-tight">
-                  <p className="text-sm font-semibold text-[var(--foreground)]">{title}</p>
-                  <p className="text-xs text-[var(--muted)]">{text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <TrustBar />
+
+        {/* Promociones activas del inventario: lo primero que se ve después de la confianza */}
+        <PromotionsSection />
 
         {/* Galería Dinámica por Categorías */}
         <section className="py-16 px-4 container mx-auto overflow-hidden">

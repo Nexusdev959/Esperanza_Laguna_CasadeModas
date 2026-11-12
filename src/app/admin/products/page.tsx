@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProductForm } from "@/components/admin/product-form";
 import { ProductTable } from "@/components/admin/product-table";
+import { PromoModal } from "@/components/admin/promo-modal";
 import { useNotification } from "@/components/ui/notification-provider";
 import { api } from "@/lib/api";
 
@@ -41,6 +42,8 @@ export default function AdminProducts() {
       Única: { active: false, qty: '' } 
     }
   });
+
+  const [promoProduct, setPromoProduct] = useState<any>(null);
 
   const loadProducts = async () => {
     try {
@@ -162,8 +165,13 @@ export default function AdminProducts() {
         )}
       </AnimatePresence>
 
+      {promoProduct && (
+        <PromoModal product={promoProduct} onClose={() => setPromoProduct(null)} onSaved={() => { setPromoProduct(null); loadProducts(); }} />
+      )}
+
       <ProductTable 
         products={products} 
+        onPromo={setPromoProduct}
         onEdit={(product) => {
           setEditingId(product.id);
           setFormData({

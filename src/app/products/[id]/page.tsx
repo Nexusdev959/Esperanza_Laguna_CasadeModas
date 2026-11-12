@@ -1,5 +1,6 @@
 "use client";
 
+import { salePrice } from "@/lib/price";
 import { ShoppingBag, Plus, Minus, ArrowLeft, Star, Loader2, Check, Clock, Users, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/components/whatsapp-button";
 import { useState, useEffect, useRef } from "react";
@@ -102,7 +103,8 @@ export default function ProductDetail() {
   const insignias: InsigniaOption | undefined = !isUniform ? undefined
     : insigniaBanda && insigniaCamisa ? "COMPLETAS" : insigniaBanda ? "SOLO_BANDA" : insigniaCamisa ? "SOLO_CAMISA" : "NINGUNA";
   const discount = Number(product.noInsigniaDiscount) || 0;
-  const unitPrice = insignias === "NINGUNA" ? Math.max(0, product.price - discount) : product.price;
+  const basePrice = salePrice(product); // Con promoción vigente, el precio de promoción (igual que cobra el servidor)
+  const unitPrice = insignias === "NINGUNA" ? Math.max(0, basePrice - discount) : basePrice;
   // Sin insignias no hay insignia de unión que elegir
   const needsUnion = product.requiresUnion && insignias !== "NINGUNA";
   const money = (n: number) => n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -277,7 +279,8 @@ export default function ProductDetail() {
               <h1 className="text-2xl md:text-3xl font-serif text-[var(--foreground)] mb-2">{product.name}</h1>
               <div className="flex items-baseline gap-3">
                 <p className="text-xl text-[var(--foreground)] font-medium">{money(unitPrice)}</p>
-                {unitPrice !== product.price && <p className="text-sm text-[var(--muted)] line-through">{money(product.price)}</p>}
+                {unitPrice !== Number(product.price) && <p className="text-sm text-[var(--muted)] line-through">{money(Number(product.price))}</p>}
+                {basePrice < Number(product.price) && <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#d4af37]/15 text-[#a8862a] dark:text-[#e9cf7a]">{product.promoTitle || "Promoción"}</span>}
               </div>
               {isUniform && <p className="text-xs text-[var(--muted)] mt-1">{insignias === "NINGUNA" ? "Precio sin insignias" : "Incluye insignias en banda y camisa"}</p>}
             </div>

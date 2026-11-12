@@ -1,8 +1,8 @@
 "use client";
 
-import { Search, Edit2, Trash2, Clock } from "lucide-react";
+import { Search, Edit2, Trash2, Clock, BadgePercent } from "lucide-react";
 
-export function ProductTable({ products, onEdit, onDelete }: { products: any[], onEdit?: (p: any) => void, onDelete?: (id: string) => void }) {
+export function ProductTable({ products, onEdit, onDelete, onPromo }: { products: any[], onEdit?: (p: any) => void, onDelete?: (id: string) => void, onPromo?: (p: any) => void }) {
   return (
     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden">
       <div className="p-4 border-b border-[var(--border-color)] flex items-center gap-4">
@@ -68,8 +68,10 @@ export function ProductTable({ products, onEdit, onDelete }: { products: any[], 
                   ) : (
                     <span className="px-2 py-1 bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-400 rounded-md text-xs font-medium border border-stone-200 dark:border-stone-700">Oculto</span>
                   )}
+                  {product.promoActive && <span className="mt-1 block w-fit px-2 py-1 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-md text-xs font-medium border border-amber-200 dark:border-amber-900">En promoción</span>}
                 </td>
                 <td className="px-6 py-4 text-right whitespace-nowrap">
+                  <button onClick={() => onPromo?.(product)} title="Promoción" aria-label={`Promoción de ${product.name}`} className={`p-2 transition-colors ${product.promoActive ? 'text-amber-500' : 'text-[var(--muted)]'} hover:text-amber-500`}><BadgePercent className="w-4 h-4" /></button>
                   <button onClick={() => onEdit?.(product)} className="p-2 text-[var(--muted)] hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
                   <button onClick={() => onDelete?.(product.id)} className="p-2 text-[var(--muted)] hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </td>
