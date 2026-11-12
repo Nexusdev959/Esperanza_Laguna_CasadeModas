@@ -5,6 +5,7 @@ import { cldImage } from "@/lib/cloudinary";
 import { formatoPrecio, type ProductoPieza } from "../../lib/tienda";
 import type { Pieza } from "../../types";
 import { BOTON_LINEA, BOTON_MARCA, ROTULO } from "../estilos";
+import { textoPublico } from "../../config";
 import { SelectorTalla } from "./SelectorTalla";
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 }
 
 function Seccion({ titulo, texto }: { titulo: string; texto: string }) {
+  if (!textoPublico(texto)) return null;
   return (
     <div className="border-t border-foreground/[0.08] pt-3">
       <h4 className={ROTULO}>{titulo}</h4>
@@ -35,15 +37,15 @@ export function ContenidoPieza({ pieza, producto, talla, incluida, onTalla, onAl
           // Cloudinary ya entrega el tamaño y formato justos: sin pasar por el optimizador de Next
           <Image src={cldImage(pieza.imagenDetalle, 800) ?? pieza.imagenDetalle} alt={`Detalle: ${pieza.nombre}`} fill unoptimized className="object-cover" />
         ) : (
-          <span className="absolute inset-0 flex items-center justify-center font-sans text-xs text-[#64748b]">Foto de detalle por confirmar</span>
+          <span className="absolute inset-0 flex items-center justify-center font-sans text-xs text-[#64748b]">{pieza.nombre}</span>
         )}
       </div>
 
       <header>
         <h3 className="font-sans text-2xl font-semibold tracking-tight text-foreground">{pieza.nombre}</h3>
-        <p className="mt-1 font-sans text-sm text-foreground/60">{pieza.descripcion}</p>
+        {textoPublico(pieza.descripcion) && <p className="mt-1 font-sans text-sm text-foreground/60">{pieza.descripcion}</p>}
         <p className="mt-3 font-sans text-lg font-medium text-foreground">
-          {producto ? formatoPrecio(producto.precio) : <span className="text-sm text-foreground/50">Precio por confirmar</span>}
+          {producto ? formatoPrecio(producto.precio) : <span className="text-sm text-foreground/50">Precio a consultar</span>}
         </p>
         {producto && (
           <p className="mt-0.5 font-sans text-xs text-foreground/45">{producto.stock > 0 ? `${producto.stock} disponibles` : "Sin unidades en stock por ahora"}</p>

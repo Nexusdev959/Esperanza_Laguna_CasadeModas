@@ -1,16 +1,18 @@
 "use client";
 
-import { ShoppingBag, Plus, Minus, ArrowLeft, Star, Loader2, Check, Clock, Users } from "lucide-react";
-import { useState } from "react";
+import { ShoppingBag, Plus, Minus, ArrowLeft, Star, Loader2, Check, Clock, Users, MessageCircle } from "lucide-react";
+import { whatsappLink } from "@/components/whatsapp-button";
+import { useState, useEffect, useRef } from "react";
+import { track } from "@/components/analytics";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { useNotification } from "@/components/ui/notification-provider";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { api, fetcher } from "@/lib/api";
 import useSWR, { useSWRConfig } from "swr";
 import { useCartStore, InsigniaOption, ClubMember, LOT_MIN_UNIFORMS, LEAD_DAYS, RH_OPTIONS } from "@/store/cart";
-import { toCardProduct } from "@/components/product-card";
+import { toCardProduct, ProductCard, relatedProducts } from "@/components/product-card";
 import { cldImage } from "@/lib/cloudinary";
 
 // Valor del selector para quien no es de la Unión Colombiana del Norte
@@ -20,6 +22,9 @@ export default function ProductDetail() {
   const params = useParams();
   const id = params.id as string;
   const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState(0);
+  // Misma clave que catálogo e inicio: SWR reutiliza la lista ya cargada
+  const { data: allProducts } = useSWR("/products", fetcher);
   const [selectedSize, setSelectedSize] = useState("");
   const [personalization, setPersonalization] = useState("");
   const [selectedUnion, setSelectedUnion] = useState("");
@@ -51,6 +56,13 @@ export default function ProductDetail() {
   });
   // La lista de uniones vive en la configuración de la tienda (por ahora solo la Unión Colombiana del Norte)
   const { data: settings } = useSWR("/settings", async (url) => (await api.get(url)).data);
+  // Una vista por producto: SWR revalida al volver a la pestaña y no debe contarse otra vez
+  const viewedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!product || viewedRef.current === product.id) return;
+    viewedRef.current = product.id;
+    track("view_item", [{ id: product.id, name: product.name, price: Number(product.price) }]);
+  }, [product]);
   const unions: string[] = settings?.unions ?? [];
   const associations: string[] = settings?.associations ?? [];
   // null = sin límite configurado; el servidor vuelve a comprobarlo al crear el pedido
@@ -166,6 +178,7 @@ export default function ProductDetail() {
           : `Añadido al carrito: ${quantity} unidad(es) de ${product.name}`,
       "success"
     );
+    track("add_to_cart", lines.map((l) => ({ id: product.id, name: product.name, price: unitPrice, quantity: l.qty })));
     setOptionQty({});
     setPersonalization("");
     setSpecs("");
@@ -214,8 +227,8 @@ export default function ProductDetail() {
     ? product.images 
     : ['https://via.placeholder.com/800x1000?text=Sin+Imagen'];
   
-  const mainImage = images[0];
-  const detailImages = images.slice(1, 3); // Get up to 2 extra images
+  const mainImage = images[Math.min(activeImage, images.length - 1)];
+  const related = relatedProducts(allProducts ?? [], [product], [product.id], 4).map(toCardProduct);
 
   return (
     <>
@@ -236,16 +249,20 @@ export default function ProductDetail() {
                 className="w-full h-full object-cover"
               />
             </div>
-            {detailImages.length > 0 && (
-              <div className="grid grid-cols-2 gap-4">
-                {detailImages.map((img: string, index: number) => (
-                  <div key={index} className="aspect-[4/5] bg-[var(--surface)] overflow-hidden rounded-xl border border-[var(--border-color)]">
-                    <img 
-                      src={cldImage(img, 640)} loading="lazy" 
-                      alt={`Detalle ${index + 1}`} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+            {/* Todas las fotos como miniaturas: tocar una la pone en grande */}
+            {images.length > 1 && (
+              <div className="grid grid-cols-5 gap-2">
+                {images.map((img: string, index: number) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setActiveImage(index)}
+                    aria-label={`Ver foto ${index + 1}`}
+                    aria-pressed={mainImage === img}
+                    className={`aspect-square bg-[var(--surface)] overflow-hidden rounded-lg border-2 transition-colors ${mainImage === img ? "border-primary" : "border-[var(--border-color)] hover:border-primary/50"}`}
+                  >
+                    <img src={cldImage(img, 200)} loading="lazy" alt="" className="w-full h-full object-cover" />
+                  </button>
                 ))}
               </div>
             )}
@@ -496,6 +513,17 @@ export default function ProductDetail() {
                 <span>{options.length > 0 && optionUnits > 0 ? `Añadir ${optionUnits} a la bolsa · ${money(optionUnits * unitPrice)}` : 'Añadir a la bolsa'}</span>
               </Button>
             </div>
+            {/* Muchos clientes prefieren cerrar la compra hablando: mismo producto, por WhatsApp */}
+            <a
+              href={whatsappLink(settings?.phone, `Hola, me interesa "${product.name}" (${money(unitPrice)}). ¿Me ayudan con el pedido?`)}
+              onClick={() => track("generate_lead", [{ id: product.id, name: product.name, price: unitPrice }], { method: "whatsapp_producto" })}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="-mt-6 mb-8 flex items-center justify-center gap-2 rounded-xl border border-[#25D366]/50 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[#25D366]/10 transition-colors"
+            >
+              <MessageCircle className="w-4 h-4 text-[#25D366]" aria-hidden="true" />
+              Pedir por WhatsApp
+            </a>
           </AnimateIn>
 
           {/* Descripción bajo la imagen: la columna de compra queda corta y el botón a la vista sin hacer scroll */}
@@ -619,6 +647,14 @@ export default function ProductDetail() {
           </div>
         </AnimateIn>
 
+        {related.length > 0 && (
+          <section aria-labelledby="related-title" className="mt-16">
+            <h2 id="related-title" className="text-xl md:text-2xl font-serif text-[var(--foreground)] mb-6">Completa tu uniforme</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {related.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </section>
+        )}
       </main>
     </>
   );

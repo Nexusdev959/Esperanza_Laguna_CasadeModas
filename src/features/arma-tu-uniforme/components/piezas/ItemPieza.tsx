@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import { FOCO } from "../estilos";
+import { textoPublico } from "../../config";
 
 interface Props {
   indice: number;
@@ -28,7 +29,7 @@ export function ItemPieza({ indice, nombre, descripcion, activa, incluida, onSel
         <span className={`block font-sans text-sm transition-colors ${activa ? "font-semibold text-foreground" : "text-foreground/75 group-hover:text-foreground"}`}>
           {nombre}
         </span>
-        <span className="mt-0.5 block truncate font-sans text-xs text-foreground/45">{descripcion}</span>
+        {textoPublico(descripcion) && <span className="mt-0.5 block truncate font-sans text-xs text-foreground/45">{descripcion}</span>}
       </span>
       {incluida && (
         <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#1c785f] text-white dark:bg-[#d4af37] dark:text-[#0b1410]" aria-label="En tu uniforme">

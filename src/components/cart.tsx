@@ -5,7 +5,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { Button } from "./ui/button";
-import { api } from "@/lib/api";
+import { api, fetcher } from "@/lib/api";
+import useSWR from "swr";
+import Link from "next/link";
+import { relatedProducts } from "@/components/product-card";
+import { track } from "@/components/analytics";
 import { useNotification } from "@/components/ui/notification-provider";
 import { useRouter } from "next/navigation";
 
@@ -24,6 +28,11 @@ export function Cart() {
   const [isOpen, setIsOpen] = useState(false);
   const { items, removeItem, updateQuantity, updateMember, clubName, setClubName, clearCart, getTotal } = useCartStore();
   const [mounted, setMounted] = useState(false);
+  const { data: allProducts } = useSWR(isOpen ? "/products" : null, fetcher);
+  // "Completa tu pedido": lo que suele faltar (pañoleta, cinturón, insignias) según lo que ya hay en la bolsa
+  const allList: { id: string; name: string; price: number; image?: string; images?: string[]; category?: string; categories?: string[]; isPublished?: boolean; stock?: number }[] = allProducts ?? [];
+  const inCart = items.map((i) => i.productId);
+  const suggestions = relatedProducts(allList, allList.filter((p) => inCart.includes(p.id)), inCart, 3);
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [notes, setNotes] = useState("");
@@ -106,6 +115,7 @@ export function Cart() {
         notes: notes.trim() || undefined
       };
       const res = await api.post('/orders/quote', payload);
+      track("begin_checkout", items.map((i) => ({ id: i.productId, name: i.name, price: i.price, quantity: i.quantity })));
       showNotification(`Pedido generado con éxito. Redirigiendo a los detalles...`, 'success');
       clearCart();
       setNotes("");
@@ -406,6 +416,30 @@ export function Cart() {
                         />
                       </div>
                     </div>
+
+                    {suggestions.length > 0 && (
+                      <div className="mt-6">
+                        <p className="text-sm font-medium text-[var(--foreground)] mb-3">Completa tu pedido</p>
+                        <ul className="space-y-2">
+                          {suggestions.map((p) => (
+                            <li key={p.id}>
+                              <Link
+                                href={`/products/${p.id}`}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-3 p-2 rounded-xl border border-[var(--border-color)] hover:border-primary/50 transition-colors"
+                              >
+                                <img src={cldImage(p.image || p.images?.[0], 120)} alt="" className="w-12 h-12 rounded-lg object-cover bg-[var(--surface)]" />
+                                <span className="flex-1 min-w-0">
+                                  <span className="block text-sm text-[var(--foreground)] truncate">{p.name}</span>
+                                  <span className="block text-xs text-[var(--muted)]">{Number(p.price).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</span>
+                                </span>
+                                <span className="text-xs font-medium text-primary shrink-0">Ver</span>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     </>
                   )}
                 </div>

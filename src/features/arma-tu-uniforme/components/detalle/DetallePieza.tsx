@@ -5,6 +5,7 @@ import type { useUniformeArmado } from "../../hooks/useUniformeArmado";
 import type { LineaUniforme } from "../../lib/tienda";
 import type { Uniforme } from "../../types";
 import { ROTULO } from "../estilos";
+import { textoPublico } from "../../config";
 import { ContenidoPieza } from "./ContenidoPieza";
 import { NavegacionPiezas } from "./NavegacionPiezas";
 import { PanelDetalle } from "./PanelDetalle";
@@ -22,7 +23,7 @@ function IntroUniforme({ uniforme }: { uniforme: Uniforme }) {
     <div className="flex flex-col gap-3 border-t border-foreground/[0.08] pt-4">
       <p className={ROTULO}>El uniforme</p>
       <h2 className="font-sans text-xl font-semibold tracking-tight text-foreground">{uniforme.nombre}</h2>
-      <p className="font-sans text-sm leading-relaxed text-foreground/60">{uniforme.descripcion}</p>
+      {textoPublico(uniforme.descripcion) && <p className="font-sans text-sm leading-relaxed text-foreground/60">{uniforme.descripcion}</p>}
       <p className="font-sans text-sm text-foreground/50">Toca un punto sobre el uniforme o elige una pieza de la lista para ver su detalle.</p>
     </div>
   );

@@ -1,7 +1,7 @@
 import type { Pieza, Uniforme } from "../types";
 
 // Datos de ejemplo: frames de muestra generados y textos por confirmar. Ver README.md.
-const POR_CONFIRMAR = "[Contenido por confirmar]";
+import { POR_CONFIRMAR } from "../config";
 
 const frente = (y: number) => [[
   { frame: 29, x: 40.7, y }, { frame: 31, x: 40.9, y }, { frame: 33, x: 43.1, y }, { frame: 35, x: 47.4, y },

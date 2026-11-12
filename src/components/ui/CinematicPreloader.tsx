@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 
 // Solo se muestra en la carga inicial del sitio; las navegaciones internas no recargan la página
+const SEEN_KEY = "el_preloader_seen";
+const MAX_MS = 1200;
 export interface CinematicPreloaderProps {
   monogramSrc?: string;
   textLogoSrc?: string;
@@ -16,7 +18,7 @@ export interface CinematicPreloaderProps {
 export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
   monogramSrc = "/logos/log1.png",
   textLogoSrc = "/logos/log3.png",
-  minDurationMs = 1400,
+  minDurationMs = 700,
   onComplete,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -35,25 +37,27 @@ export const CinematicPreloader: React.FC<CinematicPreloaderProps> = ({
     ? "/logos/log2.png"
     : textLogoSrc;
 
+  // Ventas: el cliente debe ver producto cuanto antes. Solo una vez por sesión, sin esperar las imágenes
+  // (window.load tardaba 4–7 s en móvil) y con tope duro de MAX_MS pase lo que pase.
   useEffect(() => {
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem(SEEN_KEY) === "1";
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {}
+    const hide = () => setIsVisible(false);
+    if (seen) {
+      const now = setTimeout(hide, 0);
+      return () => clearTimeout(now);
+    }
+
     const startTime = Date.now();
-
-    const handleReady = () => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, minDurationMs - elapsed);
-
-      setTimeout(() => {
-        setIsVisible(false);
-      }, remaining);
-    };
-
+    const cap = setTimeout(hide, MAX_MS);
     const fontsPromise = document.fonts ? document.fonts.ready : Promise.resolve();
-    const loadPromise =
-      document.readyState === "complete"
-        ? Promise.resolve()
-        : new Promise((resolve) => window.addEventListener("load", resolve, { once: true }));
-
-    Promise.all([fontsPromise, loadPromise]).then(handleReady);
+    fontsPromise.then(() => {
+      setTimeout(hide, Math.max(0, minDurationMs - (Date.now() - startTime)));
+    });
+    return () => clearTimeout(cap);
   }, [minDurationMs]);
 
   const cinematicEase = [0.16, 1, 0.3, 1] as const;

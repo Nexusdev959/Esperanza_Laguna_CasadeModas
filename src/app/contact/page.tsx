@@ -1,5 +1,6 @@
 "use client";
 
+import { whatsappLink } from "@/components/whatsapp-button";
 import { ArrowLeft, Headphones, Mail, MessageCircle, MapPin, Paperclip, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { AnimateIn } from "@/components/ui/animate-in";
@@ -86,7 +87,7 @@ export default function Contact() {
 
             {/* Canales de Atención Superiores */}
             <div className="grid grid-cols-3 gap-3 md:gap-6 mb-10 md:mb-12 relative z-10">
-              <a href={`https://wa.me/${settings?.phone?.replace(/\D/g, '') || ''}`} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center text-center gap-2 md:gap-4 p-4 md:p-8 rounded-2xl md:rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
+              <a href={whatsappLink(settings?.phone, "Hola, necesito ayuda con un pedido.")} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center text-center gap-2 md:gap-4 p-4 md:p-8 rounded-2xl md:rounded-3xl bg-white/40 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/40 border border-black/5 dark:border-white/5 hover:border-[#1c785f]/20 dark:hover:border-[#d4af37]/20 transition-all duration-300 shadow-sm hover:shadow-md">
                 <div className="bg-[#1c785f]/10 dark:bg-[#d4af37]/10 p-3 md:p-5 rounded-full text-[#1c785f] dark:text-[#d4af37] group-hover:scale-110 transition-transform duration-300">
                   <MessageCircle className="w-5 h-5 md:w-8 md:h-8" />
                 </div>

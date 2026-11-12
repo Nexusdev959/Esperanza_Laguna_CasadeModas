@@ -26,5 +26,16 @@
   "vars": {
     "NEXT_PUBLIC_API_URL": "https://api.esperanzalaguna.com/api/v1",
     "VITE_API_URL": "https://api.esperanzalaguna.com/api/v1"
+  },
+  // Vistas previas de ramas (wrangler preview). No hay API de pruebas: apuntan a la de producción,
+  // así que un pago hecho en una vista previa es real.
+  "previews": {
+    "vars": {
+      "NEXT_PUBLIC_API_URL": "https://api.esperanzalaguna.com/api/v1",
+      "VITE_API_URL": "https://api.esperanzalaguna.com/api/v1"
+    },
+    "images": {
+      "binding": "IMAGES"
+    }
   }
 }

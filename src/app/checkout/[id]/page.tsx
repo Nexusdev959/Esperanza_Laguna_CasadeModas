@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { CheckCircle2, ChevronLeft, CreditCard, Loader2, Package, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
+import { track } from "@/components/analytics";
 import { Button } from "@/components/ui/button";
 import { useNotification } from "@/components/ui/notification-provider";
 import { cldImage } from "@/lib/cloudinary";
@@ -96,6 +97,8 @@ export default function CheckoutPage() {
       checkout.open((result: any) => {
         const transaction = result.transaction;
         if (transaction.status === 'APPROVED') {
+          // El valor es lo cobrado en esta transacción (anticipo, saldo o total)
+          track("purchase", [], { value: transaction.amountInCents / 100, transaction_id: transaction.id });
           showNotification('¡Pago aprobado exitosamente! Tu pedido comenzará a procesarse.', 'success');
           window.location.href = `/track-order?ref=${order.id}`;
         } else if (transaction.status === 'DECLINED') {

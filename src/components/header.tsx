@@ -21,6 +21,7 @@ const SERVICE_GROUPS = [
     title: "Antes de comprar",
     links: [
       { path: "/arma-tu-uniforme", label: "Arma tu uniforme", description: "Explora cada pieza y su uso reglamentario" },
+      { path: "/clubes", label: "Para directores de club", description: "Cómo funciona un pedido de club" },
       { path: "/quotes", label: "Cotiza para tu club", description: "Pedidos por cantidad, con tallas" },
     ],
   },

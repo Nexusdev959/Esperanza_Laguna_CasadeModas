@@ -59,6 +59,30 @@ export function OrderDetailsModal({
     }
   };
 
+  // Reseñas reales = confianza para el próximo cliente. El backend solo acepta reseñas de pedidos enviados o entregados
+  const canAskReview = order.status === 'SHIPPED' || order.status === 'DELIVERED';
+  const handleAskReviewWhatsApp = () => {
+    const phone = (order.contactPhone || order.user?.phone)?.replace(/\D/g, '') || "";
+    if (!phone) {
+      showNotification('El cliente no tiene teléfono registrado', 'error');
+      return;
+    }
+    const productId = order.items?.[0]?.productId || order.items?.[0]?.product?.id;
+    const msg = [
+      `Hola ${order.user?.name || order.contactName || ''}`,
+      ``,
+      `¿Cómo te llegó tu pedido *#${order.id.slice(0, 8).toUpperCase()}*? Tu opinión ayuda a otros clubes a elegir.`,
+      ``,
+      `Califícanos aquí (inicia sesión con tu cuenta):`,
+      productId ? `${window.location.origin}/products/${productId}` : `${window.location.origin}/catalogo`,
+      ``,
+      `Y si nos envías una foto de tu club con los uniformes, nos encantaría compartirla 📸`,
+      ``,
+      `_Esperanza Laguna · Casa de Modas_`,
+    ].join('\n');
+    window.open(`https://wa.me/${phone.length === 10 ? `57${phone}` : phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
   const handleSendShippingWhatsApp = () => {
     const phone = (order.contactPhone || order.user?.phone)?.replace(/\D/g, '') || "";
     if (!phone) {
@@ -119,6 +143,11 @@ export function OrderDetailsModal({
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Club:</span> {order.clubName || order.user?.club || 'Sin club'}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Fecha:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Estado Actual:</span> {order.status}</p>
+                    {canAskReview && (
+                      <button type="button" onClick={handleAskReviewWhatsApp} className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#25D366]/50 text-xs font-medium text-[var(--foreground)] hover:bg-[#25D366]/10 transition-colors">
+                        <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" /> Pedir reseña por WhatsApp
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -82,3 +82,8 @@ export const TRANSICION = {
 
 /** Llave de localStorage que lee /quotes (la misma que usa el carrito). */
 export const LLAVE_COTIZACION = "pilypage_quote_items";
+
+/** Marcador de los textos aún sin redactar: el cliente nunca debe verlo. */
+export const POR_CONFIRMAR = "[Contenido por confirmar]";
+/** Texto apto para mostrar al público: vacío si sigue siendo el marcador (también si quedó guardado así desde el admin). */
+export const textoPublico = (t?: string | null) => (t && t.trim() !== POR_CONFIRMAR ? t : "");

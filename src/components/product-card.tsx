@@ -16,6 +16,7 @@ export interface Product {
   rating?: number;
   reviewsCount?: number;
   sizes?: string[];
+  stock?: number;
 }
 
 // Única fuente de categorías: el admin las asigna y la tienda filtra por el mismo valor
@@ -25,7 +26,37 @@ export const PRODUCT_CATEGORIES = [
   { id: 'Moda Damas', label: 'Moda para Damas' },
   { id: 'Moda Caballeros', label: 'Moda para Caballeros' },
   { id: 'Insignias y Parches', label: 'Insignias y Parches' },
+  // Combos con descuento (ej. "Kit investidura Conquistador"): se crean en el admin como un producto más
+  { id: 'Kits', label: 'Kits y combos' },
 ];
+
+/** Solo las categorías con algún producto: una pestaña vacía hace pensar que la tienda está abandonada.
+ *  Mientras no hay productos (cargando) se muestran todas para que la barra no salte. */
+export const withProducts = <C extends { id: string }>(
+  categories: C[],
+  products: { category?: string; categories?: string[] }[],
+  allId: string
+) =>
+  products.length === 0
+    ? categories
+    : categories.filter((c) => c.id === allId || products.some((p) => (p.categories?.length ? p.categories : [p.category]).includes(c.id)));
+
+const catsOf = (p: { category?: string; categories?: string[] }) => (p.categories?.length ? p.categories : p.category ? [p.category] : []);
+
+/** Venta cruzada: productos publicados que comparten categoría con `base`, sin los excluidos; primero los que tienen stock. */
+export const relatedProducts = <T extends { id: string | number; category?: string; categories?: string[]; isPublished?: boolean; stock?: number }>(
+  all: T[],
+  base: { category?: string; categories?: string[] }[],
+  excludeIds: (string | number)[],
+  limit: number
+) => {
+  const wanted = new Set(base.flatMap(catsOf));
+  const skip = new Set(excludeIds.map(String));
+  return all
+    .filter((p) => p.isPublished !== false && !skip.has(String(p.id)) && catsOf(p).some((c) => wanted.has(c)))
+    .sort((a, b) => Number(b.stock !== 0) - Number(a.stock !== 0))
+    .slice(0, limit);
+};
 
 const FALLBACK_IMAGE = 'https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg';
 
@@ -40,6 +71,7 @@ export const toCardProduct = (p: any): Product => ({
   status: p.status,
   rating: p.ratingAvg,
   reviewsCount: p.reviewsCount,
+  stock: typeof p.stock === 'number' ? p.stock : undefined,
   sizes: Array.isArray(p.sizes)
     ? p.sizes.map((s: any) => (typeof s === 'string' ? s : s?.size ?? s?.name)).filter(Boolean)
     : p.sizes && typeof p.sizes === 'object'
@@ -102,7 +134,7 @@ export function ProductCard({ product }: { product: Product }) {
         {/* ================= BADGES SUPERIORES ================= */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-20 pointer-events-none">
           <span className="px-2.5 py-1 rounded-full text-[10px] font-sans font-semibold tracking-wider uppercase bg-white/90 dark:bg-[#090d0b]/90 backdrop-blur-md text-[#1c785f] dark:text-[#2ec4a6] border border-[#2ec4a6]/30 shadow-md transition-colors duration-700">
-            {product.status || "NUEVO"}
+            {product.stock === 0 ? "AGOTADO" : product.status || "NUEVO"}
           </span>
 
           {/* Botón Favorito Interactivo */}
