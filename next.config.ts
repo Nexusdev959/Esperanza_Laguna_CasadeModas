@@ -14,11 +14,11 @@ const apiOrigin = new URL(process.env.NEXT_PUBLIC_API_URL || "https://api.espera
 const CSP = [
   "default-src 'self'",
   // 'unsafe-inline': Next inyecta scripts en línea para hidratar; el resto de orígenes es explícito
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://checkout.wompi.co https://accounts.google.com/gsi/client https://www.googletagmanager.com https://connect.facebook.net`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://checkout.wompi.co https://accounts.google.com/gsi/client https://www.googletagmanager.com https://connect.facebook.net https://static.cloudflareinsights.com`,
   "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
   "img-src 'self' data: blob: https://res.cloudinary.com https://images.pexels.com https://images.unsplash.com https://via.placeholder.com https://ui-avatars.com https://*.googleusercontent.com https://www.googletagmanager.com https://*.google-analytics.com https://www.facebook.com",
   "font-src 'self' data:",
-  `connect-src 'self' ${apiOrigin} ${apiOrigin.replace(/^http/, "ws")} https://*.wompi.co https://accounts.google.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.facebook.com https://connect.facebook.net`,
+  `connect-src 'self' ${apiOrigin} ${apiOrigin.replace(/^http/, "ws")} https://*.wompi.co https://accounts.google.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.facebook.com https://connect.facebook.net https://cloudflareinsights.com`,
   "frame-src https://checkout.wompi.co https://*.wompi.co https://accounts.google.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
