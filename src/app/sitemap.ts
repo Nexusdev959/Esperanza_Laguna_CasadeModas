@@ -1,9 +1,13 @@
 import type { MetadataRoute } from "next";
+import { API_URL } from "@/lib/api";
 
-// shortcut: solo páginas fijas, sin productos (vienen de la API), agregarlos si el SEO por producto importa
+const SITE = "https://esperanzalaguna.com";
+
 const pages = [
   "",
   "/catalogo",
+  "/clubes",
+  "/arma-tu-uniforme",
   "/quotes",
   "/track-order",
   "/contact",
@@ -15,6 +19,19 @@ const pages = [
   "/legal/legal-notice",
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  return pages.map((path) => ({ url: `https://esperanzalaguna.com${path}` }));
+// Cada producto con su propia URL: es lo que la gente busca en Google ("cinta de nombre conquistadores")
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  let products: { id: string; updatedAt?: string; isPublished?: boolean }[] = [];
+  try {
+    const res = await fetch(`${API_URL}/products`);
+    if (res.ok) products = await res.json();
+  } catch {
+    // Si la API no responde, el sitemap sale igual con las páginas fijas
+  }
+  return [
+    ...pages.map((path) => ({ url: `${SITE}${path}` })),
+    ...products
+      .filter((p) => p.isPublished !== false)
+      .map((p) => ({ url: `${SITE}/products/${p.id}`, lastModified: p.updatedAt })),
+  ];
 }

@@ -1,8 +1,14 @@
 "use client";
 
-import { Printer, Download, Plus, Trash2, User, FileText } from "lucide-react";
+import { Printer, Download, Plus, Trash2, User, FileText, MessageCircle } from "lucide-react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/api";
+import { whatsappLink, useStorePhone } from "@/components/whatsapp-button";
+import { track } from "@/components/analytics";
 import { AnimateIn } from "@/components/ui/animate-in";
 import { motion, AnimatePresence } from "framer-motion";
+
+type QuoteItem = { id: number; description: string; quantity: number; unitPrice: number };
 
 export function QuoteEditor({ 
   clientInfo, 
@@ -15,8 +21,10 @@ export function QuoteEditor({
   isGenerating 
 }: any) {
   
-  const addItem = () => {
-    setItems([...items, { id: Date.now(), description: "", quantity: 1, unitPrice: 0 }]);
+  const addItem = (preset?: { description: string; unitPrice: number }) => {
+    // Id siguiente al mayor: único y sin depender del reloj
+    const id = (items as QuoteItem[]).reduce((max, i) => Math.max(max, i.id), 0) + 1;
+    setItems([...items, { id, description: "", quantity: 1, unitPrice: 0, ...preset }]);
   };
 
   const updateItem = (id: number, field: string, value: string | number) => {
@@ -27,6 +35,26 @@ export function QuoteEditor({
     setItems(items.filter((item: any) => item.id !== id));
   };
 
+  // Precios reales del catálogo: el cliente ya no tiene que adivinar ni escribir el valor de cada pieza
+  const { data: catalog } = useSWR("/products", fetcher);
+  const products: { id: string; name: string; price: number; isPublished?: boolean }[] = (catalog ?? []).filter(
+    (p: { isPublished?: boolean }) => p.isPublished !== false
+  );
+  const addFromCatalog = (productId: string) => {
+    const p = products.find((x) => x.id === productId);
+    if (p) addItem({ description: p.name, unitPrice: Number(p.price) || 0 });
+  };
+
+  const phone = useStorePhone();
+  const money = (n: number) => n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+  const quoteItems = items as QuoteItem[];
+  const quoteTotal = quoteItems.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0);
+  const waText = [
+    `Hola, quiero cotizar este pedido${clientInfo.club ? ` para el club ${clientInfo.club}` : ""}:`,
+    ...quoteItems.filter((i) => i.description && i.quantity > 0).map((i) => `• ${i.quantity} x ${i.description} (${money(i.unitPrice)} c/u)`),
+    `Total estimado: ${money(quoteTotal)}`,
+  ].join("\n");
+
   return (
     <div className="lg:col-span-5 xl:col-span-4 space-y-6 print:hidden">
       <AnimateIn>
@@ -34,8 +62,8 @@ export function QuoteEditor({
           
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#1c785f] via-[#2ec4a6] to-[#1c785f] dark:from-[#d4af37] dark:via-[#f5e1a4] dark:to-[#d4af37]"></div>
           
-          <h1 className="text-2xl font-serif text-[#1a2b22] dark:text-[#f0f4f2] mb-1 tracking-tight transition-colors duration-700">Cotizador Inteligente</h1>
-          <p className="text-[13px] text-[#5a6c65] dark:text-[#7a8c85] mb-6 transition-colors duration-700">Generador de última generación</p>
+          <h1 className="text-2xl font-serif text-[#1a2b22] dark:text-[#f0f4f2] mb-1 tracking-tight transition-colors duration-700">Cotiza para tu club</h1>
+          <p className="text-[13px] text-[#5a6c65] dark:text-[#7a8c85] mb-6 transition-colors duration-700">Elige productos del catálogo y ajusta cantidades. Descárgala en PDF o envíala por WhatsApp.</p>
 
           {/* Botones Cinematográficos (Solo Iconos) */}
           <div className="flex gap-4 mb-8">
@@ -115,13 +143,27 @@ export function QuoteEditor({
                 Artículos
               </h3>
               <button 
-                onClick={addItem} 
+                onClick={() => addItem()} 
                 className="text-[11px] text-[#1c785f] dark:text-[#d4af37] hover:text-white dark:hover:text-[#070a09] hover:bg-[#1c785f] dark:hover:bg-[#d4af37] border border-[#1c785f]/20 dark:border-[#d4af37]/20 transition-all duration-300 flex items-center gap-1 font-bold bg-[#1c785f]/5 dark:bg-[#d4af37]/10 px-3 py-1.5 rounded-lg uppercase tracking-wider"
               >
                 <Plus className="w-3 h-3" /> Añadir
               </button>
             </div>
             
+            {products.length > 0 && (
+              <select
+                value=""
+                onChange={(e) => addFromCatalog(e.target.value)}
+                aria-label="Agregar producto del catálogo"
+                className="w-full bg-black/5 dark:bg-[#111916] border border-black/[0.05] dark:border-white/[0.05] rounded-xl px-3 py-2.5 text-[14px] text-[#1a2b22] dark:text-[#f0f4f2] focus:outline-none focus:border-[#1c785f] dark:focus:border-[#d4af37]"
+              >
+                <option value="">+ Agregar del catálogo…</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name} · {money(Number(p.price) || 0)}</option>
+                ))}
+              </select>
+            )}
+
             <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
               <AnimatePresence>
                 {items.map((item: any) => (
@@ -173,6 +215,19 @@ export function QuoteEditor({
                 ))}
               </AnimatePresence>
             </div>
+
+            {items.length > 0 && (
+              <a
+                href={whatsappLink(phone, waText)}
+                onClick={() => track("generate_lead", [], { value: quoteTotal, method: "whatsapp_cotizacion" })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#25D366] hover:bg-[#1ebe5b] text-white text-sm font-semibold py-3 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" aria-hidden="true" />
+                Enviar cotización por WhatsApp
+              </a>
+            )}
           </div>
         </div>
       </AnimateIn>

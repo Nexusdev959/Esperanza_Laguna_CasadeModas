@@ -1,7 +1,7 @@
 import type { Pieza, Uniforme } from "../types";
 
 // 4 fotos reales: 0 frente, 1 tres cuartos, 2 perfil, 3 espalda. Textos por confirmar (ver README.md).
-const POR_CONFIRMAR = "[Contenido por confirmar]";
+import { POR_CONFIRMAR } from "../config";
 
 const pieza = (id: string, nombre: string, puntos: [frame: number, x: number, y: number][]): Pieza => ({
   id,

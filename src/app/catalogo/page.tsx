@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { fetcher } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArchiveX, X } from "lucide-react";
-import { ProductCard, Product, toCardProduct, PRODUCT_CATEGORIES } from "@/components/product-card";
+import { ProductCard, Product, toCardProduct, PRODUCT_CATEGORIES, withProducts } from "@/components/product-card";
 
 const CATEGORIES = [{ id: "all", label: "Colección Completa" }, ...PRODUCT_CATEGORIES];
 
@@ -115,7 +115,7 @@ function Catalogue() {
         >
           {/* mx-auto en vez de justify-center en el padre: con scroll, justify-center dejaba las primeras categorías fuera de alcance */}
           <div className="mx-auto flex items-center gap-1.5 p-1.5 bg-black/5 dark:bg-[#0a0f0d]/80 backdrop-blur-md border border-black/[0.04] dark:border-white/[0.06] rounded-full min-w-max shadow-xl transition-colors duration-700">
-            {CATEGORIES.map((cat) => {
+            {withProducts(CATEGORIES, products, "all").map((cat) => {
               const isActive = activeCategory === cat.id;
               return (
                 <button

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import useSWR from "swr";
-import { ProductCard, toCardProduct, PRODUCT_CATEGORIES } from "./product-card";
+import { ProductCard, toCardProduct, PRODUCT_CATEGORIES, withProducts } from "./product-card";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetcher } from "@/lib/api";
@@ -68,7 +68,7 @@ export function ProductGallery() {
             transition={{ delay: 0.2 }}
             className="flex md:flex-wrap items-center justify-start md:justify-center gap-2 md:gap-3 p-2 rounded-[2rem] bg-black/[0.03] dark:bg-white/[0.03] backdrop-blur-xl border border-black/5 dark:border-white/10 w-[95%] md:w-auto max-w-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
           >
-            {CATEGORIES.map((cat) => {
+            {withProducts(CATEGORIES, allProducts.filter((p: any) => p.isPublished !== false), "Todos").map((cat) => {
               const active = activeCategory === cat.id;
               return (
                 <button

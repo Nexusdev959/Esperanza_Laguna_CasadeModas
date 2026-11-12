@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Globe, Mail, MessageSquare } from "lucide-react";
+import { Mail, MessageSquare, ShieldCheck } from "lucide-react";
+import { whatsappLink, useStorePhone } from "@/components/whatsapp-button";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { api } from "@/lib/api";
@@ -11,6 +12,8 @@ import { isPanelRoute } from "@/components/panel/panel-user";
 export function Footer() {
   const pathname = usePathname();
   const [storeName, setStoreName] = useState("Esperanza Laguna Casa de Modas");
+  const [supportEmail, setSupportEmail] = useState("soporte@esperanzalaguna.com");
+  const phone = useStorePhone();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -20,6 +23,7 @@ export function Footer() {
       .get("/settings")
       .then((res) => {
         if (res.data?.storeName) setStoreName(res.data.storeName);
+        if (res.data?.supportEmail) setSupportEmail(res.data.supportEmail);
       })
       .catch(console.error);
   }, []);
@@ -105,8 +109,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/admin" className={`inline-block transition-all duration-200 hover:translate-x-1 ${isDark ? "hover:text-[#f0f4f2]" : "hover:text-[#0d2a23]"}`}>
-                  Panel de Administrador
+                <Link href="/catalogo" className={`inline-block transition-all duration-200 hover:translate-x-1 ${isDark ? "hover:text-[#f0f4f2]" : "hover:text-[#0d2a23]"}`}>
+                  Catálogo
                 </Link>
               </li>
             </ul>
@@ -173,31 +177,30 @@ export function Footer() {
           {/* Columna 5: Síguenos (Cápsulas de Cristal Líquido) */}
           <div className="space-y-4">
             <h3 className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${isDark ? "text-[#d4af37]" : "text-[#b38f39]"}`}>
-              Síguenos
+              Contáctanos
             </h3>
             <div className="flex items-center space-x-3 pt-1">
               <a
-                href="#"
-                aria-label="Sitio Web"
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 shadow-sm ${isDark ? "bg-white/[0.03] border border-white/[0.08] hover:border-[#2ec4a6]/50 hover:bg-[#2ec4a6]/10 hover:text-[#2ec4a6] text-[#788a83]" : "bg-black/[0.03] border border-stone-200 hover:border-[#2ec4a6]/50 hover:bg-[#2ec4a6]/10 hover:text-[#187563] text-[#5e6e68]"}`}
-              >
-                <Globe className="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                aria-label="Mensaje"
+                href={whatsappLink(phone, "Hola, quiero información sobre sus productos.")}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 shadow-sm ${isDark ? "bg-white/[0.03] border border-white/[0.08] hover:border-[#2ec4a6]/50 hover:bg-[#2ec4a6]/10 hover:text-[#2ec4a6] text-[#788a83]" : "bg-black/[0.03] border border-stone-200 hover:border-[#2ec4a6]/50 hover:bg-[#2ec4a6]/10 hover:text-[#187563] text-[#5e6e68]"}`}
               >
                 <MessageSquare className="w-4 h-4" />
               </a>
               <a
-                href="#"
+                href={`mailto:${supportEmail}`}
                 aria-label="Correo"
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 shadow-sm ${isDark ? "bg-white/[0.03] border border-white/[0.08] hover:border-[#2ec4a6]/50 hover:bg-[#2ec4a6]/10 hover:text-[#2ec4a6] text-[#788a83]" : "bg-black/[0.03] border border-stone-200 hover:border-[#2ec4a6]/50 hover:bg-[#2ec4a6]/10 hover:text-[#187563] text-[#5e6e68]"}`}
               >
                 <Mail className="w-4 h-4" />
               </a>
             </div>
+            <p className="flex items-start gap-2 text-[12px] leading-relaxed">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-[#2ec4a6]" aria-hidden="true" />
+              Pago seguro en línea con Wompi. Envíos a toda Colombia.
+            </p>
           </div>
 
         </div>

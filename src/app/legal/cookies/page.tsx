@@ -15,7 +15,7 @@ export default function CookiePolicy() {
           <p className="rounded-md border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <strong>Borrador pendiente de revisión legal:</strong> este texto debe ser revisado por un abogado antes de publicarse.
           </p>
-          <p>Última actualización: Octubre 2026</p>
+          <p>Última actualización: Noviembre 2026</p>
 
           <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">1. ¿Qué son las Cookies?</h2>
           <p>
@@ -28,8 +28,9 @@ export default function CookiePolicy() {
             <li><strong>Cookies necesarias:</strong> mantienen su sesión iniciada, protegen el acceso a su cuenta y conservan los productos de su carrito. Sin ellas el sitio no puede funcionar.</li>
             <li><strong>Cookies de funcionalidad:</strong> recuerdan preferencias como el tema claro u oscuro.</li>
             <li><strong>Cookies de terceros:</strong> el inicio de sesión con Google y la pasarela de pagos Wompi pueden usar sus propias cookies cuando usted utiliza esos servicios, según sus políticas.</li>
+            <li><strong>Cookies de medición y publicidad (opcionales):</strong> Google Analytics y el píxel de Meta nos ayudan a saber qué productos interesan y a medir nuestros anuncios. Solo se activan si usted las acepta en el aviso de cookies; si las rechaza, no se cargan.</li>
           </ul>
-          <p>Hoy no usamos cookies publicitarias ni de seguimiento con fines comerciales.</p>
+          <p>Puede cambiar su decisión en cualquier momento borrando las cookies y datos del sitio en su navegador: el aviso volverá a aparecer.</p>
 
           <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">3. Cómo Gestionarlas</h2>
           <p>

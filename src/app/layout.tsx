@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Footer } from "@/components/footer";
 import { NotificationProvider } from "@/components/ui/notification-provider";
 import { Header } from "@/components/header";
+import { WhatsAppFloat } from "@/components/whatsapp-button";
+import { Analytics } from "@/components/analytics";
 import { CinematicPreloader } from "@/components/ui/CinematicPreloader";
 import { GoogleProvider } from "@/components/ui/google-provider";
 import { GeistSans } from "geist/font/sans";
@@ -49,6 +51,8 @@ export default function RootLayout({
               <Header />
               {children}
               <Footer />
+              <WhatsAppFloat />
+              <Analytics />
             </GoogleProvider>
           </NotificationProvider>
         </ThemeProvider>
