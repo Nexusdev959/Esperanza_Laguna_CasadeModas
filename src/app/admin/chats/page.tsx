@@ -21,7 +21,9 @@ type Message = {
   createdAt: string;
 };
 type Chat = {
-  phone: string;
+  phone: string; // Clave del chat: teléfono o, si el cliente usa nombre de usuario, su BSUID de WhatsApp ("CO.123...")
+  bsuid?: string | null;
+  username?: string | null;
   name?: string | null;
   status: "OPEN" | "PENDING" | "CLOSED";
   unread: number;
@@ -59,7 +61,11 @@ const DAY = 24 * 3600_000;
 // Meta solo permite texto libre hasta 24 h después del último mensaje del cliente; después, plantilla
 const windowOpen = (c?: Chat | null) => !!c?.lastInboundAt && Date.now() - new Date(c.lastInboundAt).getTime() < DAY;
 const botPaused = (c?: Chat | null) => !!c?.botPausedUntil && new Date(c.botPausedUntil).getTime() > Date.now();
-const displayName = (c: Chat) => c.user?.name || c.name || `+${c.phone}`;
+const hasPhone = (c: Chat) => /^\d{8,15}$/.test(c.phone);
+const displayName = (c: Chat) => c.user?.name || c.name || (c.username && `@${c.username}`) || (hasPhone(c) ? `+${c.phone}` : "Usuario de WhatsApp");
+const contactLine = (c: Chat) => (hasPhone(c) ? `+${c.phone}` : [c.username && `@${c.username}`, "Sin número (usuario de WhatsApp)"].filter(Boolean).join(" · "));
+// El BSUID lleva punto y letras: siempre codificado en la URL
+const chatUrl = (key: string, rest = "") => `/whatsapp/chats/${encodeURIComponent(key)}${rest}`;
 const time = (iso: string) => {
   const d = new Date(iso);
   return Date.now() - d.getTime() < DAY
@@ -82,11 +88,15 @@ export default function AdminChatsPage() {
   const [template, setTemplate] = useState("");
   const [notesDraft, setNotesDraft] = useState<string | null>(null); // null = sin editar, se muestra lo guardado
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // El socket es el aviso principal; el refresco cada 30 s cubre una conexión caída
   const chats = useSWR<Chat[]>(`/whatsapp/chats?status=${filter}`, fetcher, { refreshInterval: 30_000 });
-  const detail = useSWR<ChatDetail>(selected ? `/whatsapp/chats/${selected}` : null, fetcher, { refreshInterval: 30_000 });
+  const detail = useSWR<ChatDetail>(selected ? chatUrl(selected) : null, fetcher, {
+    refreshInterval: 30_000,
+    onError: (e) => console.error("[Chats] No se pudo cargar el chat", selected, e),
+  });
   const templates = useSWR<{ name: string; label: string }[]>("/whatsapp/templates", fetcher);
   const contact = detail.data?.contact;
   const { mutate: refreshChats } = chats;
@@ -107,7 +117,7 @@ export default function AdminChatsPage() {
 
   const patch = async (data: Partial<{ status: Chat["status"]; botPaused: boolean; notes: string }>) => {
     try {
-      await api.patch(`/whatsapp/chats/${selected}`, data);
+      await api.patch(chatUrl(selected!), data);
       detail.mutate();
       chats.mutate();
     } catch (e) {
@@ -120,15 +130,21 @@ export default function AdminChatsPage() {
     const open = windowOpen(contact);
     if (open ? !text.trim() : !template) return;
     setSending(true);
+    setSendError(null);
     try {
-      if (open) await api.post(`/whatsapp/chats/${selected}/messages`, { text: text.trim() });
-      else await api.post(`/whatsapp/chats/${selected}/template`, { name: template });
+      if (open) await api.post(chatUrl(selected, "/messages"), { text: text.trim() });
+      else await api.post(chatUrl(selected, "/template"), { name: template });
       setText("");
       setTemplate("");
       detail.mutate();
       chats.mutate();
     } catch (e) {
-      showNotification(apiError(e, "No se pudo enviar el mensaje"), "error");
+      console.error("[Chats] Envío fallido", e);
+      const msg = apiError(e, "No se pudo enviar el mensaje");
+      setSendError(msg);
+      showNotification(msg, "error");
+      // 409 = se cerró la ventana de 24 h: recargar muestra las plantillas
+      if (isAxiosError(e) && e.response?.status === 409) detail.mutate();
     } finally {
       setSending(false);
     }
@@ -137,7 +153,7 @@ export default function AdminChatsPage() {
   const list = (chats.data ?? []).filter((c) => {
     const q = query.trim().toLowerCase();
     const digits = q.replace(/\D/g, "");
-    return !q || displayName(c).toLowerCase().includes(q) || (!!digits && c.phone.includes(digits));
+    return !q || displayName(c).toLowerCase().includes(q) || (!!digits && hasPhone(c) && c.phone.includes(digits)) || (!!c.username && c.username.toLowerCase().includes(q));
   });
 
   return (
@@ -186,7 +202,7 @@ export default function AdminChatsPage() {
               list.map((c) => (
                 <button
                   key={c.phone}
-                  onClick={() => { setSelected(c.phone); setNotesDraft(null); }}
+                  onClick={() => { setSelected(c.phone); setNotesDraft(null); setSendError(null); }}
                   className={`w-full text-left p-3 rounded-xl border transition-all ${selected === c.phone ? "border-primary bg-primary/5" : "border-transparent hover:bg-[var(--background)]"}`}
                 >
                   <div className="flex justify-between items-center gap-2">
@@ -219,7 +235,12 @@ export default function AdminChatsPage() {
               <p>Selecciona un chat para ver la conversación.</p>
             </div>
           ) : !contact ? (
-            <div className="flex items-center justify-center h-full text-sm text-[var(--muted)]">{detail.error ? "No se pudo cargar el chat." : "Cargando conversación..."}</div>
+            <div className="flex items-center justify-center h-full text-sm text-[var(--muted)]">{detail.error ? (
+              <div className="text-center space-y-2 px-6">
+                <p className="text-[var(--foreground)]">No se pudo abrir este chat: {apiError(detail.error, isAxiosError(detail.error) && !detail.error.response ? "no hay conexión con el servidor" : "error desconocido")}.</p>
+                <button onClick={() => detail.mutate()} className="text-primary underline text-xs">Reintentar</button>
+              </div>
+            ) : "Cargando conversación..."}</div>
           ) : (
             <>
               <div className="p-4 border-b border-[var(--border-color)] flex flex-wrap items-center gap-3">
@@ -228,14 +249,27 @@ export default function AdminChatsPage() {
                 </button>
                 <div className="min-w-[10rem] flex-1">
                   <h2 className="font-semibold text-[var(--foreground)] truncate">{displayName(contact)}</h2>
-                  <p className="text-xs text-[var(--muted)]">+{contact.phone}</p>
+                  <p className="text-xs text-[var(--muted)]">{contactLine(contact)}</p>
                 </div>
-                <button
-                  onClick={() => patch({ botPaused: !botPaused(contact) })}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${botPaused(contact) ? "border-amber-500/40 text-amber-600 bg-amber-500/10" : "border-[var(--border-color)] text-[var(--muted)] hover:text-[var(--foreground)]"}`}
-                >
-                  {botPaused(contact) ? <><BotOff className="w-3.5 h-3.5" /> Bot en pausa</> : <><Bot className="w-3.5 h-3.5" /> Bot activo</>}
-                </button>
+                {botPaused(contact) ? (
+                  <>
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600"><BotOff className="w-3.5 h-3.5" /> Atención humana</span>
+                    <button
+                      onClick={() => patch({ botPaused: false })}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <Bot className="w-3.5 h-3.5" /> Devolver al bot
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => patch({ botPaused: true })}
+                    title="El bot deja de responder mientras atiendes (también se pausa al enviar un mensaje)"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border-color)] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+                  >
+                    <Bot className="w-3.5 h-3.5" /> Bot activo · Pausar
+                  </button>
+                )}
                 <select
                   value={contact.status}
                   onChange={(e) => patch({ status: e.target.value as Chat["status"] })}
@@ -278,6 +312,9 @@ export default function AdminChatsPage() {
               </div>
 
               <div className="p-3 border-t border-[var(--border-color)]">
+                {sendError && (
+                  <p role="alert" className="mb-2 flex items-start gap-1.5 text-xs text-red-600"><AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {sendError}</p>
+                )}
                 {windowOpen(contact) ? (
                   <div className="flex gap-2 items-end">
                     <textarea
@@ -295,7 +332,7 @@ export default function AdminChatsPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-xs text-[var(--muted)]">Pasaron más de 24 h desde el último mensaje del cliente: WhatsApp solo permite escribirle con una plantilla aprobada.</p>
+                    <p role="status" className="text-xs text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2">Pasaron más de 24 h desde el último mensaje del cliente: WhatsApp no permite texto libre, solo plantillas aprobadas. Cuando el cliente vuelva a escribir podrás responderle normalmente.</p>
                     {templates.data?.length ? (
                       <div className="flex gap-2">
                         <select
@@ -330,7 +367,7 @@ export default function AdminChatsPage() {
                   <p className="text-[var(--muted)] break-all">{contact.user.email}</p>
                 </div>
               ) : (
-                <p className="text-sm text-[var(--muted)]">Este número no está vinculado a ninguna cuenta.</p>
+                <p className="text-sm text-[var(--muted)]">{hasPhone(contact) ? "Este número no está vinculado a ninguna cuenta." : "Llegó sin número de teléfono (usa nombre de usuario de WhatsApp): no se puede vincular a una cuenta."}</p>
               )}
             </div>
 
