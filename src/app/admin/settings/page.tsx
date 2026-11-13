@@ -1,7 +1,8 @@
 "use client";
 
-import { Save, Building, Bell, CreditCard, Globe } from "lucide-react";
+import { Save, Building, Bell, CreditCard, Globe, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import { isAxiosError } from "axios";
 import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
 
@@ -22,7 +23,12 @@ export default function AdminSettings() {
     orderNotifications: true,
     madeToOrderMonthlyLimit: "" as string | number,
     bankTransferInfo: "",
-    associationsText: ""
+    associationsText: "",
+    businessHours: "",
+    mapsLink: "",
+    repairPrices: "",
+    appointmentInfo: "",
+    advisorWhatsapp: ""
   });
   const [madeToOrderUsed, setMadeToOrderUsed] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -46,7 +52,12 @@ export default function AdminSettings() {
         orderNotifications: res.data.orderNotifications ?? true,
         madeToOrderMonthlyLimit: res.data.madeToOrderMonthlyLimit ?? "",
         bankTransferInfo: res.data.bankTransferInfo || "",
-        associationsText: (res.data.associations || []).join("\n")
+        associationsText: (res.data.associations || []).join("\n"),
+        businessHours: res.data.businessHours || "",
+        mapsLink: res.data.mapsLink || "",
+        repairPrices: res.data.repairPrices || "",
+        appointmentInfo: res.data.appointmentInfo || "",
+        advisorWhatsapp: res.data.advisorWhatsapp || ""
       });
       setMadeToOrderUsed(res.data.madeToOrderUsed ?? 0);
       setLoading(false);
@@ -68,7 +79,8 @@ export default function AdminSettings() {
       showNotification('Configuración guardada correctamente', 'success');
     } catch (err) {
       console.error(err);
-      showNotification('Error al guardar la configuración', 'error');
+      // El backend explica qué dato no sirve (por ejemplo, un WhatsApp sin indicativo)
+      showNotification(isAxiosError(err) && err.response?.data?.error || 'Error al guardar la configuración', 'error');
     }
     setSaving(false);
   };
@@ -101,6 +113,9 @@ export default function AdminSettings() {
           </button>
           <button onClick={() => setActiveTab('notifications')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left ${activeTab === 'notifications' ? 'bg-primary/10 text-primary' : 'text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]'}`}>
             <Bell className="w-4 h-4" /> Notificaciones del Sistema
+          </button>
+          <button onClick={() => setActiveTab('whatsapp')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left ${activeTab === 'whatsapp' ? 'bg-primary/10 text-primary' : 'text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]'}`}>
+            <MessageCircle className="w-4 h-4" /> Asistente de WhatsApp
           </button>
         </div>
 
@@ -197,6 +212,45 @@ export default function AdminSettings() {
                   <label htmlFor="bankTransferInfo" className="text-xs font-medium text-[var(--foreground)]">Datos para pago por transferencia</label>
                   <textarea id="bankTransferInfo" rows={4} maxLength={500} value={settings.bankTransferInfo} onChange={(e) => setSettings({ ...settings, bankTransferInfo: e.target.value })} placeholder={"Bancolombia Ahorros 000-000000-00\nTitular: Esperanza Laguna\nNequi: 300 000 0000"} className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" />
                   <p className="text-xs text-[var(--muted)]">Es lo que ve el cliente al pagar por transferencia. Si lo dejas vacío, solo se ofrece el pago por Wompi. Revísalo con cuidado: un número equivocado manda el dinero a otra cuenta.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'whatsapp' && (
+            <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-sm p-6 space-y-6 animate-fade-in-up">
+              <div className="border-b border-[var(--border-color)] pb-2">
+                <h2 className="text-lg font-medium text-[var(--foreground)]">Asistente de WhatsApp</h2>
+                <p className="text-xs text-[var(--muted)] mt-1">Lo que el bot responde a los clientes. Los cambios se ven en WhatsApp en menos de un minuto. Si dejas un campo vacío, el bot no muestra esa línea.</p>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="businessHours" className="text-xs font-medium text-[var(--foreground)]">Horario de atención</label>
+                  <textarea id="businessHours" rows={2} maxLength={300} value={settings.businessHours} onChange={(e) => setSettings({ ...settings, businessHours: e.target.value })} placeholder={"Lunes a viernes de 8:00 a. m. a 6:00 p. m.\nSábados de 8:00 a. m. a 1:00 p. m."} className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" />
+                  <p className="text-xs text-[var(--muted)]">Aparece cuando preguntan el horario y cuando piden hablar con una asesora.</p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="mapsLink" className="text-xs font-medium text-[var(--foreground)]">Enlace de Google Maps</label>
+                  <input id="mapsLink" type="url" name="mapsLink" value={settings.mapsLink} onChange={handleChange} placeholder="https://maps.app.goo.gl/..." className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+                  <p className="text-xs text-[var(--muted)]">
+                    La dirección se toma de <button type="button" onClick={() => setActiveTab('general')} className="underline hover:text-[var(--foreground)]">Información General</button>{settings.address ? `: ${settings.address}` : " (aún está vacía)"}. Solo se aceptan enlaces que empiecen por https://.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="repairPrices" className="text-xs font-medium text-[var(--foreground)]">Precios de arreglos y confección a medida</label>
+                  <textarea id="repairPrices" rows={3} maxLength={600} value={settings.repairPrices} onChange={(e) => setSettings({ ...settings, repairPrices: e.target.value })} placeholder={"Ruedos desde $15.000\nConfección a medida: cotización después de la cita"} className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="appointmentInfo" className="text-xs font-medium text-[var(--foreground)]">Cómo agendar una cita</label>
+                  <textarea id="appointmentInfo" rows={3} maxLength={500} value={settings.appointmentInfo} onChange={(e) => setSettings({ ...settings, appointmentInfo: e.target.value })} placeholder="Cuéntanos qué día y hora te queda bien, y una asesora te confirma." className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="advisorWhatsapp" className="text-xs font-medium text-[var(--foreground)]">WhatsApp de la asesora</label>
+                  <input id="advisorWhatsapp" type="tel" name="advisorWhatsapp" value={settings.advisorWhatsapp} onChange={handleChange} placeholder="573001234567" className="w-full px-4 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" />
+                  <p className="text-xs text-[var(--muted)]">
+                    Cuando el cliente toca <span className="font-medium text-[var(--foreground)]">Hablar con asesora</span>, recibe un botón que abre el chat con este número y un mensaje listo con su pedido. Los clientes verán este número.
+                    Si lo dejas vacío, el bot se pausa 12 horas y el cliente queda esperando en el número de la tienda.
+                  </p>
                 </div>
               </div>
             </div>
