@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, DollarSign, Mailbox, Shirt, Ticket } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, DollarSign, Mailbox, Shirt, Ticket, MessagesSquare } from "lucide-react";
 import { PanelSidebar } from "@/components/panel/panel-sidebar";
 
 const ADMIN_LINKS = [
@@ -11,6 +11,7 @@ const ADMIN_LINKS = [
   { href: "/admin/uniformes", icon: Shirt, label: "Arma tu uniforme" },
   { href: "/admin/coupons", icon: Ticket, label: "Cupones" },
   { href: "/admin/payments", icon: DollarSign, label: "Pagos y Transacciones" },
+  { href: "/admin/chats", icon: MessagesSquare, label: "Chats WhatsApp" },
   { href: "/admin/pqrs", icon: Mailbox, label: "Buzón PQRS" },
   // Trabajadores y Clientes: ocultos hasta conectarlos a la API (ver redirects en next.config.ts)
 ];
