@@ -31,6 +31,7 @@ const CSP = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  poweredByHeader: false, // no anunciar el framework (x-powered-by: Next.js)
   // Módulos sin conectar a la API todavía: se ocultan en esta versión. Para activarlos, quitar la ruta de esta lista.
   async redirects() {
     const hidden = [

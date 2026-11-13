@@ -82,7 +82,7 @@ export default function CheckoutPage() {
         type: paymentType === "ADVANCE" ? "ADVANCE_50" : "FULL_100"
       });
 
-      const { reference, signature, amountInCents, publicKey } = hashRes.data;
+      const { reference, signature, amountInCents, publicKey, expirationTime } = hashRes.data;
 
       // Initialize Wompi
       const checkout = new window.WidgetCheckout({
@@ -91,6 +91,8 @@ export default function CheckoutPage() {
         reference,
         publicKey, // la entrega el backend junto con la firma
         signature: { integrity: signature },
+        // Va dentro de la firma: se manda solo si el backend lo firmó (si no, Wompi rechaza la firma)
+        ...(expirationTime && { expirationTime }),
         redirectUrl: `${window.location.origin}/track-order?ref=${order.id}` // Regresa al track después del pago
       });
 
