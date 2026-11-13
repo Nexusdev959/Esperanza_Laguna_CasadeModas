@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { X, ImagePlus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
-import { PromoCard, type PromoProduct } from "@/components/promotions";
+import { PromoSlide, type PromoProduct } from "@/components/promotions";
 
 const input = "w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none";
 
@@ -99,7 +99,7 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
 
             <div>
               <span className="text-sm font-medium text-[var(--foreground)]">Imagen de la promoción (opcional)</span>
-              <p className="text-xs text-[var(--muted)] mb-2">Horizontal o vertical: se publica con su formato. Sin imagen se usa la foto del producto.</p>
+              <p className="text-xs text-[var(--muted)] mb-2">Ideal horizontal (16:9, por ejemplo 1920×1080). Una vertical se muestra completa sobre un fondo difuminado. Sin imagen se usa la foto del producto.</p>
               <div className="flex flex-wrap gap-2">
                 <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-color)] text-sm cursor-pointer hover:bg-[var(--background)]">
                   <ImagePlus className="w-4 h-4" /> {image ? "Cambiar imagen" : "Subir imagen"}
@@ -117,7 +117,7 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">Así se verá en el inicio</p>
-            <div className="max-w-sm mx-auto"><PromoCard product={preview} preview /></div>
+            <div className="overflow-hidden rounded-2xl ring-1 ring-[#d4af37]/30"><PromoSlide product={preview} preview /></div>
           </div>
         </div>
 
