@@ -73,3 +73,48 @@
     display: none;
   }
 }
+
+/* Zona de confianza: carrusel infinito con mini escenas cinematográficas */
+@keyframes trust-marquee { to { transform: translateX(-50%); } }
+@keyframes trust-wave { 0%, 100% { transform: translateY(-2.5px) skewY(-4deg); } 50% { transform: translateY(2.5px) skewY(4deg); } }
+@keyframes trust-shade { 0%, 100% { filter: brightness(0.72); } 50% { filter: brightness(1.18); } }
+@keyframes trust-drive { 0% { transform: translateX(-70px); } 100% { transform: translateX(130px); } }
+@keyframes trust-road { to { background-position: -28px 0; } }
+@keyframes trust-bump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.8px); } }
+@keyframes trust-spin { to { transform: rotate(360deg); } }
+@keyframes trust-beam { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.85; } }
+@keyframes trust-streak { 0% { transform: translateX(0); opacity: 0; } 30% { opacity: 0.7; } 100% { transform: translateX(-40px); opacity: 0; } }
+@keyframes trust-tilt { 0%, 100% { transform: perspective(300px) rotateY(-18deg) rotateX(8deg); } 50% { transform: perspective(300px) rotateY(12deg) rotateX(4deg); } }
+@keyframes trust-sheen { 0%, 40% { transform: translateX(-120%) skewX(-20deg); } 70%, 100% { transform: translateX(220%) skewX(-20deg); } }
+@keyframes trust-glow { 0%, 100% { opacity: 0.35; transform: scale(0.9); } 50% { opacity: 0.9; transform: scale(1.15); } }
+@keyframes trust-check { 0%, 30% { stroke-dashoffset: 20; } 55%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 20; } }
+@keyframes trust-reveal { 0%, 8% { opacity: 0; filter: blur(6px); transform: translateY(6px) scale(0.9); } 28%, 82% { opacity: 1; filter: blur(0); transform: none; } 100% { opacity: 0; filter: blur(6px); transform: translateY(-4px) scale(1.05); } }
+@keyframes trust-spot { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+
+.trust-track { animation: trust-marquee 42s linear infinite; }
+.trust-marquee:hover .trust-track, .trust-marquee:focus-within .trust-track { animation-play-state: paused; }
+.trust-flag-slice { animation: trust-wave 1.8s ease-in-out infinite, trust-shade 1.8s ease-in-out infinite; }
+.trust-truck { animation: trust-drive 3.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; }
+.trust-truck-body { animation: trust-bump 0.3s ease-in-out infinite; }
+.trust-wheel { transform-box: fill-box; transform-origin: center; animation: trust-spin 0.4s linear infinite; }
+.trust-beam { animation: trust-beam 1.2s ease-in-out infinite; }
+.trust-streak { animation: trust-streak 0.9s linear infinite; }
+.trust-road { background: repeating-linear-gradient(90deg, rgba(233,207,122,0.8) 0 12px, transparent 12px 28px); animation: trust-road 0.45s linear infinite; }
+.trust-card3d { animation: trust-tilt 5s ease-in-out infinite; transform-style: preserve-3d; }
+.trust-sheen { animation: trust-sheen 3.2s ease-in-out infinite; }
+.trust-glow { transform-box: fill-box; transform-origin: center; animation: trust-glow 2.4s ease-in-out infinite; }
+.trust-check { stroke-dasharray: 20; animation: trust-check 3.2s ease-in-out infinite; }
+.trust-reveal { animation: trust-reveal 4s ease-in-out infinite; }
+.trust-spot { animation: trust-spot 4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .trust-track { animation: none; flex-wrap: wrap; justify-content: center; width: 100%; }
+  .trust-track [data-copy] { display: none; }
+  .trust-track * { animation: none !important; }
+  .trust-truck { transform: translateX(24px); }
+  .trust-check { stroke-dashoffset: 0; }
+}
+
+/* Promociones: barra que mide el tiempo de cada póster */
+@keyframes promo-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.promo-progress { animation-name: promo-progress; animation-timing-function: linear; animation-fill-mode: forwards; }

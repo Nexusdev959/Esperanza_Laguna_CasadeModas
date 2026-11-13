@@ -4,11 +4,13 @@ import Link from "next/link";
 import { Star, Heart, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { cldImage } from "@/lib/cloudinary";
+import { salePrice } from "@/lib/price";
 
 export interface Product {
   id: number | string;
   name: string;
   price: number;
+  regularPrice?: number; // Precio normal tachado cuando hay promoción
   image: string;
   category?: string;
   categories?: string[];
@@ -64,7 +66,9 @@ const FALLBACK_IMAGE = 'https://images.pexels.com/photos/1055691/pexels-photo-10
 export const toCardProduct = (p: any): Product => ({
   id: p.id,
   name: p.name,
-  price: p.price,
+  price: salePrice(p),
+  // Promoción: el precio normal tachado. Kit: lo que costarían las piezas por separado
+  regularPrice: salePrice(p) < Number(p.price) ? Number(p.price) : Number(p.compareAtPrice) > salePrice(p) ? Number(p.compareAtPrice) : undefined,
   image: p.image || p.images?.[0] || FALLBACK_IMAGE,
   category: p.category,
   categories: p.categories?.length ? p.categories : p.category ? [p.category] : [],
@@ -218,6 +222,11 @@ export function ProductCard({ product }: { product: Product }) {
             <span className="text-[10px] font-mono text-[#7a8c85] dark:text-[#5d6f68] uppercase transition-colors duration-700">
               COP
             </span>
+            {product.regularPrice && (
+              <span className="text-xs text-[#7a8c85] line-through tabular-nums">
+                {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(product.regularPrice)}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1 text-[#1c785f] dark:text-[#2ec4a6]/90 font-medium transition-colors duration-700">

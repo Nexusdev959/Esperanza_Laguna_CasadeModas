@@ -1,3 +1,4 @@
+import { salePrice } from "@/lib/price";
 import type { Metadata } from "next";
 import { API_URL } from "@/lib/api";
 
@@ -11,6 +12,8 @@ type ApiProduct = {
   name: string;
   description?: string;
   price: number;
+  promoActive?: boolean;
+  promoPrice?: number | null;
   stock?: number;
   images?: string[];
   ratingAvg?: number;
@@ -57,7 +60,7 @@ export default async function ProductLayout({ params, children }: Props) {
     brand: { "@type": "Brand", name: "Esperanza Laguna" },
     offers: {
       "@type": "Offer",
-      price: product.price,
+      price: salePrice(product),
       priceCurrency: "COP",
       availability: product.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
       url: `https://esperanzalaguna.com/products/${product.id}`,

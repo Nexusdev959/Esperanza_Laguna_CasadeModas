@@ -31,7 +31,7 @@ export default function ShippingPolicy() {
 
           <h2 className="text-xl font-medium text-[var(--foreground)] mt-8">2. Formas de Entrega</h2>
           <ul className="list-disc pl-5 mt-2 space-y-1">
-            <li><strong>Envío nacional por transportadora:</strong> enviamos a cualquier ciudad o municipio de Colombia. El flete no está incluido en el valor del pedido y depende de la transportadora, el destino y el peso del paquete.</li>
+            <li><strong>Envío nacional por transportadora:</strong> enviamos a cualquier ciudad o municipio de Colombia. El flete no está incluido en el valor del pedido y depende de la transportadora, el destino y el peso del paquete. <strong>Excepción:</strong> en pedidos con 10 o más uniformes completos, el envío nacional por tierra es gratis (lo asume la tienda).</li>
             <li><strong>Domicilio en Medellín:</strong> se entrega por medio de una plataforma de domicilios. El valor del domicilio no está incluido en el pedido y lo cobra aparte la plataforma.</li>
             <li><strong>Recogida en tienda:</strong> sin costo, en la Calle 32B 85-24, Medellín. Para recibir el pedido debe presentar el código del pedido.</li>
           </ul>

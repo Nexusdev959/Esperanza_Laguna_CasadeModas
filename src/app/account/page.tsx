@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { useNotification } from "@/components/ui/notification-provider";
 import { itemDetails } from "@/store/cart";
 import { cldImage } from "@/lib/cloudinary";
+import { addLinesToCart } from "@/lib/reorder";
 
 export default function AccountPage() {
   // Cualquier usuario con sesión; el provider valida el token contra el backend antes de mostrar nada
@@ -221,6 +222,18 @@ function AccountPanel() {
                         ))}
                         
                         <div className="pt-4 border-t border-[var(--border-color)] flex flex-wrap gap-2 justify-end">
+                           <button
+                             onClick={async () => {
+                               // Repite el pedido con los mismos integrantes, tallas y opciones; el precio es el de hoy
+                               const { added, skipped } = await addLinesToCart(order.items.filter((i: any) => !i.isGift));
+                               showNotification(added
+                                 ? skipped ? `Agregamos ${added} producto(s); ${skipped} ya no está(n) disponible(s).` : 'Pedido copiado al carrito. Revisa las tallas antes de comprar.'
+                                 : 'Los productos de este pedido ya no están disponibles.', added ? 'success' : 'error');
+                             }}
+                             className="text-sm border border-primary/30 text-primary px-4 py-2 rounded-xl hover:bg-primary/10 transition-colors font-medium"
+                           >
+                             Volver a pedir
+                           </button>
                            <button onClick={() => window.location.href = `/track-order?ref=${order.id}`} className="text-sm border border-[var(--border-color)] px-4 py-2 rounded-xl text-[var(--foreground)] hover:bg-[var(--background)] transition-colors font-medium">
                              Rastrear Pedido
                            </button>

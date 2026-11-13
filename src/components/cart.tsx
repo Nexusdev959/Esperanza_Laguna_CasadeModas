@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingBag, X, Minus, Plus, Trash2, Users, Clock } from "lucide-react";
+import { ShoppingBag, X, Minus, Plus, Trash2, Users, Clock, Gift, Truck, Tag, TrendingDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
@@ -15,6 +15,18 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore, itemDetails, uniformUnits, LOT_MIN_UNIFORMS, LEAD_DAYS, RH_OPTIONS, INSIGNIA_LABELS, addBusinessDays } from "@/store/cart";
 import { cldImage } from "@/lib/cloudinary";
+import { formatCOP } from "@/lib/price";
+
+// Lo que responde /orders/preview: el servidor aplica las mismas reglas al crear el pedido
+type Preview = {
+  lines: { productId: string; available: boolean; unitPrice: number; regularPrice: number }[];
+  gifts: { productId: string; name: string; image: string | null; quantity: number }[];
+  hints: ({ productId: string; name: string; missing: number } & ({ type: "PRICE"; price: number } | { type: "GIFT"; giftName: string }))[];
+  subtotal: number; discount: number; total: number; couponCode: string | null; couponError: string | null;
+  uniformUnits: number; freeShippingMin: number; freeShipping: boolean;
+};
+// Igual que FREE_SHIPPING_MIN_UNIFORMS del servidor
+const FREE_SHIPPING_MIN = 10;
 
 type DeliveryMethod = "NATIONAL_SHIPPING" | "MEDELLIN_DELIVERY" | "STORE_PICKUP";
 
@@ -43,6 +55,10 @@ export function Cart() {
 
   useEffect(() => {
     setMounted(true);
+    // "Volver a pedir" y "Convertir cotización en pedido" abren el carrito al terminar
+    const open = () => setIsOpen(true);
+    window.addEventListener("open-cart", open);
+    return () => window.removeEventListener("open-cart", open);
   }, []);
 
   // Al abrir se relee la sesión: el login ya no recarga la página, así que el carrito puede venir de antes
@@ -85,6 +101,24 @@ export function Cart() {
 
   const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState("");
+
+  // Precios por mayor, regalos, cupón y flete gratis los calcula el servidor (igual que al crear el pedido)
+  const previewBody = JSON.stringify({
+    items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, insignias: i.insignias })),
+    deliveryMethod, couponCode: coupon || undefined,
+  });
+  const { data: preview } = useSWR<Preview>(
+    isOpen && items.length ? ["/orders/preview", previewBody] : null,
+    ([url, body]: [string, string]) => api.post(url, JSON.parse(body)).then((r) => r.data),
+    { keepPreviousData: true },
+  );
+  const { data: capacity } = useSWR<{ limit: number | null; remaining: number | null }>(isOpen && uniforms > 0 ? "/orders/capacity" : null, fetcher);
+  const total = preview?.total ?? subtotal;
+  const lineFor = (n: number) => (preview?.lines.length === items.length ? preview.lines[n] : undefined);
+  const freeShipping = preview?.freeShipping ?? false;
+  const missingForFreeShipping = Math.max(0, FREE_SHIPPING_MIN - uniforms);
 
   const handleCheckout = async () => {
     try {
@@ -112,7 +146,8 @@ export function Cart() {
         contactName: isLoggedIn ? undefined : contact.name,
         contactPhone: contact.phone,
         contactEmail: isLoggedIn ? undefined : contact.email,
-        notes: notes.trim() || undefined
+        notes: notes.trim() || undefined,
+        couponCode: preview?.couponCode ?? undefined,
       };
       const res = await api.post('/orders/quote', payload);
       track("begin_checkout", items.map((i) => ({ id: i.productId, name: i.name, price: i.price, quantity: i.quantity })));
@@ -134,7 +169,10 @@ export function Cart() {
 
   const generateQuoteDocument = () => {
     // Save items to localstorage so the Quote page can pick them up
-    localStorage.setItem('pilypage_quote_items', JSON.stringify(items));
+    // Con los precios que aplicará el servidor (mayoreo/promoción) y los regalos como líneas en $0
+    const priced = items.map((i, n) => ({ ...i, price: lineFor(n)?.unitPrice ?? i.price }));
+    const gifts = (preview?.gifts ?? []).map((g) => ({ name: `Regalo: ${g.name.trim()}`, quantity: g.quantity, price: 0, isGift: true }));
+    localStorage.setItem('pilypage_quote_items', JSON.stringify([...priced, ...gifts]));
     setIsOpen(false);
     router.push('/quotes');
   };
@@ -206,7 +244,7 @@ export function Cart() {
                     </div>
                   ) : (
                     <>
-                    {items.map(item => (
+                    {items.map((item, n) => (
                       <div key={item.id} className="flex gap-4 p-4 rounded-2xl bg-[var(--background)] border border-[var(--border-color)] shadow-sm group">
                         {/* Image */}
                         <div className="w-20 h-24 rounded-xl overflow-hidden bg-[var(--surface)] shrink-0">
@@ -226,7 +264,12 @@ export function Cart() {
                           </div>
                           
                           <div className="flex items-end justify-between mt-3">
-                            <p className="text-sm font-semibold text-[var(--foreground)]">{item.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
+                            <p className="text-sm font-semibold text-[var(--foreground)]">
+                              {formatCOP(lineFor(n)?.unitPrice ?? item.price)}
+                              {lineFor(n) && lineFor(n)!.unitPrice < lineFor(n)!.regularPrice && (
+                                <span className="ml-1.5 text-xs font-normal text-[var(--muted)] line-through">{formatCOP(lineFor(n)!.regularPrice)}</span>
+                              )}
+                            </p>
                             
                             {/* Quantity Selector */}
                             <div className="flex items-center bg-[var(--surface)] border border-[var(--border-color)] rounded-lg">
@@ -244,6 +287,41 @@ export function Cart() {
                     ))}
                     {/* Dirección y detalles van en el área con scroll: en pantallas bajas no tapan los productos */}
                     <div className="pt-2 space-y-5">
+                      {(preview?.gifts.length || preview?.hints.length || uniforms > 0) ? (
+                        <section aria-label="Beneficios de tu pedido" className="space-y-3 p-4 rounded-2xl border border-[#d4af37]/40 bg-[#d4af37]/5">
+                          {uniforms > 0 && (
+                            <div>
+                              <p className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                                <Truck className="w-4 h-4 text-[#b8912b] shrink-0" />
+                                {missingForFreeShipping === 0 ? "¡Tu envío nacional por tierra es gratis!" : `Te faltan ${missingForFreeShipping} uniforme${missingForFreeShipping === 1 ? "" : "s"} para envío gratis`}
+                              </p>
+                              <div className="mt-2 h-1.5 rounded-full bg-[var(--border-color)] overflow-hidden" role="progressbar" aria-label="Avance hacia el envío gratis" aria-valuemin={0} aria-valuemax={FREE_SHIPPING_MIN} aria-valuenow={Math.min(uniforms, FREE_SHIPPING_MIN)}>
+                                <div className="h-full rounded-full bg-gradient-to-r from-[#d4af37] to-[#1c785f] transition-all duration-700" style={{ width: `${Math.min(100, (uniforms / FREE_SHIPPING_MIN) * 100)}%` }} />
+                              </div>
+                              {missingForFreeShipping === 0 && deliveryMethod !== "NATIONAL_SHIPPING" && (
+                                <p className="mt-1 text-xs text-[var(--muted)]">Aplica cuando eliges envío fuera de Medellín.</p>
+                              )}
+                            </div>
+                          )}
+                          {preview?.hints.map((h) => (
+                            <p key={`${h.productId}-${h.type}`} className="flex items-start gap-2 text-xs text-[var(--foreground)]">
+                              {h.type === "PRICE" ? <TrendingDown className="w-4 h-4 text-[#1c785f] shrink-0" /> : <Gift className="w-4 h-4 text-[#b8912b] shrink-0" />}
+                              <span>Agrega {h.missing} más de <strong>{h.name.trim()}</strong> {h.type === "PRICE" ? `y pagas ${formatCOP(h.price)} c/u` : `y te regalamos ${h.giftName.trim()}`}.</span>
+                            </p>
+                          ))}
+                          {preview?.gifts.map((g) => (
+                            <p key={g.productId} className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                              <Gift className="w-4 h-4 shrink-0" /> Incluye de regalo: {g.quantity} × {g.name.trim()}
+                            </p>
+                          ))}
+                          {capacity?.limit != null && capacity.remaining != null && (
+                            <p className="flex items-center gap-2 text-xs text-[var(--muted)]">
+                              <Clock className="w-4 h-4 shrink-0" />
+                              {capacity.remaining === 0 ? "El cupo de confección de este mes está completo." : `Quedan ${capacity.remaining} cupos de confección este mes.`}
+                            </p>
+                          )}
+                        </section>
+                      ) : null}
                       {uniforms > 0 && (
                         <section aria-labelledby="club-list-title" className="space-y-3 p-4 rounded-2xl border border-primary/30 bg-primary/5">
                           <div className="flex items-start justify-between gap-3">
@@ -331,7 +409,9 @@ export function Cart() {
                             />
                             <span className="flex flex-col">
                               <span className="text-sm text-[var(--foreground)]">{opt.label}</span>
-                              <span className="text-xs text-[var(--muted)]">{opt.hint}</span>
+                              <span className="text-xs text-[var(--muted)]">
+                                {opt.value === "NATIONAL_SHIPPING" && uniforms >= FREE_SHIPPING_MIN ? "Gratis por tierra: con 10 o más uniformes el flete lo asume la tienda." : opt.hint}
+                              </span>
                             </span>
                           </label>
                         ))}
@@ -448,13 +528,41 @@ export function Cart() {
                 {items.length > 0 && (
                   <div className="p-6 border-t border-[var(--border-color)] bg-[var(--background)]/80 backdrop-blur-md shrink-0">
                     <div className="space-y-3 mb-6">
+                      <form
+                        className="flex gap-2"
+                        onSubmit={(e) => { e.preventDefault(); setCoupon(couponInput.trim().toUpperCase()); }}
+                      >
+                        <label className="relative flex-1">
+                          <span className="sr-only">Código de descuento</span>
+                          <Tag className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                          <input
+                            value={couponInput}
+                            onChange={(e) => setCouponInput(e.target.value)}
+                            maxLength={30}
+                            placeholder="Código de descuento"
+                            className="w-full pl-8 pr-2 py-2 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm uppercase outline-none text-[var(--foreground)] focus:border-primary"
+                          />
+                        </label>
+                        {coupon ? (
+                          <button type="button" onClick={() => { setCoupon(""); setCouponInput(""); }} className="px-3 text-xs rounded-xl border border-[var(--border-color)] text-[var(--muted)] hover:text-[var(--foreground)]">Quitar</button>
+                        ) : (
+                          <button type="submit" disabled={!couponInput.trim()} className="px-3 text-xs font-medium rounded-xl border border-primary text-primary disabled:opacity-40">Aplicar</button>
+                        )}
+                      </form>
+                      {coupon && preview?.couponError && <p className="text-xs text-red-500" role="alert">{preview.couponError}</p>}
                       <div className="flex justify-between text-sm text-[var(--muted)]">
                         <span>Subtotal</span>
-                        <span>{subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                        <span>{formatCOP(preview?.subtotal ?? subtotal)}</span>
                       </div>
+                      {!!preview?.discount && (
+                        <div className="flex justify-between text-sm text-emerald-700 dark:text-emerald-400">
+                          <span>Cupón {preview.couponCode}</span>
+                          <span>-{formatCOP(preview.discount)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm text-[var(--muted)]">
                         <span>Envío</span>
-                        <span>{deliveryMethod === "STORE_PICKUP" ? "Sin costo" : "No incluido"}</span>
+                        <span>{deliveryMethod === "STORE_PICKUP" ? "Sin costo" : freeShipping ? "Gratis por tierra" : "No incluido"}</span>
                       </div>
                       {leadDays && (
                         <div className="flex items-start gap-2 text-xs text-[var(--muted)]">
@@ -467,7 +575,7 @@ export function Cart() {
                       )}
                       <div className="border-t border-[var(--border-color)] pt-3 flex justify-between items-center">
                         <span className="font-medium text-[var(--foreground)]">Total</span>
-                        <span className="text-xl font-bold text-[var(--foreground)]">{subtotal.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                        <span className="text-xl font-bold text-[var(--foreground)]">{formatCOP(total)}</span>
                       </div>
                     </div>
                     

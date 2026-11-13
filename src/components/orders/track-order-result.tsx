@@ -19,6 +19,7 @@ export interface OrderTrackData {
   totalAmount: string;
   paidAmount: string;
   deliveryMethod: 'NATIONAL_SHIPPING' | 'MEDELLIN_DELIVERY' | 'STORE_PICKUP' | null;
+  freeShipping?: boolean;
   courier: string | null;
   trackingNumber: string | null;
   leadBusinessDays: number | null;
@@ -138,7 +139,9 @@ export function TrackOrderResult({ data, onBack }: { data: OrderTrackData, onBac
                   <span>
                     {data.deliveryMethod === 'MEDELLIN_DELIVERY'
                       ? 'El domicilio corre por tu cuenta: lo cobra la plataforma de domicilios según la distancia.'
-                      : 'El envío corre por tu cuenta: el flete se le paga a la transportadora y no está incluido en el valor del pedido.'}
+                      : data.freeShipping
+                        ? 'Envío gratis por tierra: con 10 o más uniformes el flete lo asume la tienda.'
+                        : 'El envío corre por tu cuenta: el flete se le paga a la transportadora y no está incluido en el valor del pedido.'}
                   </span>
                 </div>
               </div>

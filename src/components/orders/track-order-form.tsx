@@ -43,6 +43,7 @@ export function TrackOrderForm({ onTrackSuccess, initialOrderId }: { onTrackSucc
         totalAmount: order.totalAmount,
         paidAmount: order.paidAmount,
         deliveryMethod: order.deliveryMethod ?? null,
+        freeShipping: !!order.freeShipping,
         courier: order.shippingCarrier || null,
         trackingNumber: order.trackingNumber || null,
         leadBusinessDays: order.leadBusinessDays ?? null,

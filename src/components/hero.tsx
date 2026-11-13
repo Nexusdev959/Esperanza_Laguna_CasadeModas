@@ -1,5 +1,6 @@
 "use client";
 
+import { salePrice } from "@/lib/price";
 import { useState, useEffect, useRef, useMemo } from "react";
 import useSWR from "swr";
 import Link from "next/link";
@@ -77,7 +78,7 @@ export function HeroCinematic() {
     () =>
       ((data as any[]) || [])
         .filter((p) => p.isPublished !== false)
-        .map((p) => ({ id: p.id, name: p.name, price: Number(p.price) || 0, image: p.image || p.images?.[0] }))
+        .map((p) => ({ id: p.id, name: p.name, price: salePrice(p), image: p.image || p.images?.[0] }))
         .filter((p) => p.image)
         .sort(() => Math.random() - 0.5),
     [data]

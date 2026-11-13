@@ -1,21 +1,29 @@
 "use client";
 
-import { Search, Edit2, Trash2, Clock } from "lucide-react";
+import { Search, Edit2, Trash2, Clock, BadgePercent, Layers } from "lucide-react";
+import { promoLive } from "@/lib/price";
 
-export function ProductTable({ products, onEdit, onDelete }: { products: any[], onEdit?: (p: any) => void, onDelete?: (id: string) => void }) {
+// Etiqueta según las fechas: así el admin ve si la promoción se muestra hoy, todavía no o ya terminó
+const promoBadge = (p: any) => {
+  if (!p.promoActive) return null;
+  if (promoLive(p)) return "En promoción";
+  return p.promoEndsAt && new Date(p.promoEndsAt).getTime() <= Date.now() ? "Promoción vencida" : "Promoción programada";
+};
+
+export function ProductTable({ products, onEdit, onDelete, onPromo, onBulk }: { products: any[], onEdit?: (p: any) => void, onDelete?: (id: string) => void, onPromo?: (p: any) => void, onBulk?: (p: any) => void }) {
   return (
     <div className="bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-sm overflow-hidden">
       <div className="p-4 border-b border-[var(--border-color)] flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre, SKU o categoría..." 
+          <input
+            type="text"
+            placeholder="Buscar por nombre, SKU o categoría..."
             className="w-full pl-10 pr-4 py-2.5 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
           />
         </div>
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="bg-[var(--background)] text-[var(--muted)] text-xs uppercase tracking-wider">
@@ -68,8 +76,12 @@ export function ProductTable({ products, onEdit, onDelete }: { products: any[], 
                   ) : (
                     <span className="px-2 py-1 bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-400 rounded-md text-xs font-medium border border-stone-200 dark:border-stone-700">Oculto</span>
                   )}
+                  {product.bulkTiers?.length > 0 && <span className="mt-1 block w-fit px-2 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-md text-xs font-medium border border-emerald-200 dark:border-emerald-900">Precio por mayor</span>}
+                  {promoBadge(product) && <span className="mt-1 block w-fit px-2 py-1 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 rounded-md text-xs font-medium border border-amber-200 dark:border-amber-900">{promoBadge(product)}</span>}
                 </td>
                 <td className="px-6 py-4 text-right whitespace-nowrap">
+                  <button onClick={() => onBulk?.(product)} title="Beneficios por cantidad" aria-label={`Beneficios por cantidad de ${product.name}`} className={`p-2 transition-colors ${product.bulkTiers?.length ? 'text-primary' : 'text-[var(--muted)]'} hover:text-primary`}><Layers className="w-4 h-4" /></button>
+                  <button onClick={() => onPromo?.(product)} title="Promoción" aria-label={`Promoción de ${product.name}`} className={`p-2 transition-colors ${product.promoActive ? 'text-amber-500' : 'text-[var(--muted)]'} hover:text-amber-500`}><BadgePercent className="w-4 h-4" /></button>
                   <button onClick={() => onEdit?.(product)} className="p-2 text-[var(--muted)] hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
                   <button onClick={() => onDelete?.(product.id)} className="p-2 text-[var(--muted)] hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </td>
