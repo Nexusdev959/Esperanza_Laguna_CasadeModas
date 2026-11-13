@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Settings2 } from "lucide-react";
+import { Search, Filter, Settings2, Trash2 } from "lucide-react";
 import { OrderDetailsModal } from "@/components/admin/order-details-modal";
 import { api } from "@/lib/api";
+import { isAxiosError } from "axios";
 
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
   PENDING_UPLOAD: { label: "Esperando Comprobante", color: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-500 dark:border-gray-900" },
@@ -34,6 +35,17 @@ export default function AdminOrders() {
       console.error("Error al cargar pedidos:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteOrder = async (order: { id: string }) => {
+    const code = order.id.slice(0, 8).toUpperCase();
+    if (!confirm(`¿Eliminar el pedido ${code} con sus pagos y tareas de taller?\n\nÚsalo solo para pedidos de prueba: no se puede deshacer.`)) return;
+    try {
+      await api.delete(`/orders/${order.id}`);
+      setOrders((list) => list.filter((o) => o.id !== order.id));
+    } catch (err) {
+      alert((isAxiosError(err) && err.response?.data?.error) || 'No se pudo eliminar el pedido');
     }
   };
 
@@ -98,12 +110,20 @@ export default function AdminOrders() {
                       {STATUS_MAP[order.status]?.label || order.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
+                    <button
                       onClick={() => setSelectedOrder(order)}
                       className="inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400 border border-amber-500/20 rounded-lg font-medium transition-colors"
                     >
                       <Settings2 className="w-4 h-4" /> Gestionar
+                    </button>
+                    <button
+                      onClick={() => deleteOrder(order)}
+                      aria-label={`Eliminar pedido ${order.id.slice(0, 8).toUpperCase()}`}
+                      title="Eliminar pedido de prueba"
+                      className="ml-2 inline-flex items-center justify-center p-1.5 text-red-500 hover:bg-red-500/10 border border-red-500/20 rounded-lg transition-colors align-middle"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

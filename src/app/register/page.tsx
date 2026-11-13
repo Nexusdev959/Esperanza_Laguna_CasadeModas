@@ -192,7 +192,7 @@ export default function RegisterPage() {
               <div className="flex-1 h-px bg-[var(--border-color)]"></div>
             </div>
             
-            <div className="flex justify-center w-full min-h-[44px]">
+            <div className="flex justify-center w-full min-h-[44px]" style={{ colorScheme: "light" }}>
               {/* El club es obligatorio también con Google: el botón aparece cuando ya lo escribió */}
               {mounted && !pendingGoogle && (clubReady ? (
                 <GoogleOAuthProvider clientId="886916002371-9a1rl4kal3f70ddhdq5117s23b4bdejf.apps.googleusercontent.com">

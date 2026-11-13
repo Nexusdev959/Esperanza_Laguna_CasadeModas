@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Loader2, DollarSign, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
+import { isAxiosError } from "axios";
+import { Loader2, DollarSign, CheckCircle2, XCircle, Clock, ExternalLink, Trash2 } from "lucide-react";
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -52,6 +53,17 @@ export default function AdminPaymentsPage() {
       alert(data.emailSent ? `Recibo reenviado a ${data.clientEmail}` : data.clientEmail ? `No se pudo enviar el correo a ${data.clientEmail}` : 'El pedido no tiene correo registrado');
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error al reenviar el recibo');
+    }
+  };
+
+  const handleDelete = async (payment: { id: string; reference: string; status: string }) => {
+    const warning = payment.status === 'APPROVED' ? '\n\nEstá aprobado: su valor se descontará de lo abonado al pedido.' : '';
+    if (!confirm(`¿Eliminar el pago ${payment.reference}?${warning}\n\nÚsalo solo para pagos de prueba: no se puede deshacer.`)) return;
+    try {
+      await api.delete(`/payments/wompi/${payment.id}`);
+      setPayments((list) => list.filter((p) => p.id !== payment.id));
+    } catch (err) {
+      alert((isAxiosError(err) && err.response?.data?.error) || 'No se pudo eliminar el pago');
     }
   };
 
@@ -131,6 +143,9 @@ export default function AdminPaymentsPage() {
                     {payment.status === 'APPROVED' && (
                       <button onClick={() => handleResend(payment.id)} className="text-xs border border-[var(--border-color)] hover:bg-[var(--foreground)] hover:text-[var(--background)] px-2 py-1 rounded">Reenviar recibo</button>
                     )}
+                    <button onClick={() => handleDelete(payment)} title="Eliminar pago de prueba" className="mt-2 text-xs text-red-500 border border-red-500/20 hover:bg-red-500/10 px-2 py-1 rounded inline-flex items-center gap-1">
+                      <Trash2 className="w-3 h-3" /> Eliminar
+                    </button>
                   </td>
                 </tr>
               ))}

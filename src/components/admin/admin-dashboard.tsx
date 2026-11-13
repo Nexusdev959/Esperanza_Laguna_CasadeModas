@@ -2,6 +2,7 @@
 
 import {
   TrendingUp,
+  TrendingDown,
   Package,
   AlertCircle,
   Users,
@@ -21,22 +22,82 @@ import {
   BarChart,
   Bar
 } from "recharts";
+import Link from "next/link";
+import useSWR from "swr";
+import { fetcher } from "@/lib/api";
 
-const salesData = [
-  { name: "Lun", ventas: 120 },
-  { name: "Mar", ventas: 190 },
-  { name: "Mié", ventas: 150 },
-  { name: "Jue", ventas: 280 },
-  { name: "Vie", ventas: 240 },
-  { name: "Sáb", ventas: 390 },
-  { name: "Dom", ventas: 310 },
-];
+type Payment = { status: string; amountInCents: number; updatedAt: string };
+type Order = {
+  id: string; status: string; totalAmount: string | number; createdAt: string; userId?: string | null;
+  contactName?: string | null; contactPhone?: string | null; user?: { name?: string; club?: string } | null;
+  payments?: Payment[]; items?: { quantity: number; isGift?: boolean; product?: { category?: string } }[];
+};
+type Product = { stock: number; isCraftable: boolean; isPublished?: boolean };
 
-const categoryData = [
-  { name: "Damas", valor: 55 },
-  { name: "Caballeros", valor: 30 },
-  { name: "Insignias", valor: 15 },
-];
+const IN_WORKSHOP = ["IN_PREPARATION", "IN_CONFECTION", "QUALITY_CONTROL"];
+const LOW_STOCK = 3;
+const STATUS_LABEL: Record<string, string> = {
+  PENDING_ADVANCE: "Esperando abono", IN_PREPARATION: "En preparación", IN_CONFECTION: "En confección",
+  QUALITY_CONTROL: "Control de calidad", PENDING_FINAL_PAY: "Saldo pendiente", READY_TO_SHIP: "Listo para envío",
+  SHIPPED: "Enviado", DELIVERED: "Entregado", CANCELLED: "Cancelado",
+};
+
+const dayKey = (d: Date | string) => new Date(d).toLocaleDateString("en-CA"); // AAAA-MM-DD en hora local
+const cop = (n: number) => n.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+
+/** Todo sale de los pedidos y pagos reales: sin datos, el panel muestra ceros y gráficas vacías. */
+export function dashboardStats(orders: Order[], products: Product[], now = new Date()) {
+  const salesByDay = new Map<string, number>();
+  for (const o of orders) {
+    for (const p of o.payments ?? []) {
+      if (p.status !== "APPROVED") continue;
+      const k = dayKey(p.updatedAt);
+      salesByDay.set(k, (salesByDay.get(k) ?? 0) + p.amountInCents / 100);
+    }
+  }
+  const salesData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    const name = d.toLocaleDateString("es-CO", { weekday: "short" }).replace(".", "");
+    return { name: name.charAt(0).toUpperCase() + name.slice(1), ventas: salesByDay.get(dayKey(d)) ?? 0 };
+  });
+  const today = salesData[6].ventas;
+  const yesterday = salesData[5].ventas;
+  const change = yesterday > 0 ? Math.round(((today - yesterday) / yesterday) * 100) : null;
+
+  const units = new Map<string, number>();
+  for (const o of orders) {
+    if (o.status === "CANCELLED") continue;
+    for (const it of o.items ?? []) {
+      if (it.isGift) continue;
+      const c = it.product?.category || "Sin categoría";
+      units.set(c, (units.get(c) ?? 0) + it.quantity);
+    }
+  }
+  const totalUnits = [...units.values()].reduce((a, b) => a + b, 0);
+  const categoryData = [...units.entries()]
+    .map(([name, n]) => ({ name, valor: Math.round((n / totalUnits) * 100) }))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 5);
+
+  // Cliente nuevo: su primer pedido es de los últimos 7 días
+  const weekAgo = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+  const firstOrder = new Map<string, number>();
+  for (const o of orders) {
+    const who = o.userId || o.contactPhone;
+    if (!who) continue;
+    const t = new Date(o.createdAt).getTime();
+    firstOrder.set(who, Math.min(firstOrder.get(who) ?? t, t));
+  }
+
+  return {
+    today, change, salesData, categoryData,
+    inWorkshop: orders.filter((o) => IN_WORKSHOP.includes(o.status)).length,
+    newClients: [...firstOrder.values()].filter((t) => t >= weekAgo).length,
+    lowStock: products.filter((p) => !p.isCraftable && p.isPublished !== false && p.stock <= LOW_STOCK).length,
+    recent: orders.slice(0, 5),
+  };
+}
 
 // Tooltip adaptativo a light/dark mode
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -45,9 +106,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-white/95 dark:bg-[#0b1210]/95 backdrop-blur-md border border-black/5 dark:border-[#2ec4a6]/20 px-3.5 py-2 rounded-xl shadow-xl">
         <p className="text-[11px] font-sans font-medium text-black/50 dark:text-white/50 tracking-wider uppercase mb-0.5">{label}</p>
         <p className="text-sm font-sans font-semibold text-primary dark:text-[#2ec4a6] tabular-nums">
-          {typeof payload[0].value === "number" && payload[0].value > 50
-            ? `$${payload[0].value.toLocaleString("es-CO")}`
-            : `${payload[0].value}%`}
+          {payload[0].dataKey === "ventas" ? cop(payload[0].value) : `${payload[0].value}%`}
         </p>
       </div>
     );
@@ -56,6 +115,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function AdminDashboard() {
+  const orders = useSWR<Order[]>("/orders", fetcher, { refreshInterval: 60_000 });
+  const products = useSWR<Product[]>("/products", fetcher, { refreshInterval: 300_000 });
+  const s = dashboardStats(orders.data ?? [], products.data ?? []);
+  const leader = s.categoryData[0];
+
   return (
     <div className="space-y-7 animate-in fade-in duration-500 font-sans pb-10">
       {/* ================= HEADER EDITORIAL ================= */}
@@ -72,7 +136,7 @@ export function AdminDashboard() {
         {/* Badge de sincronización en vivo */}
         <div className="flex items-center gap-2 self-start sm:self-auto px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-[#111a17] border border-emerald-200 dark:border-[#2ec4a6]/20 text-[11px] text-emerald-700 dark:text-[#2ec4a6] font-medium tracking-wide">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#2ec4a6] animate-pulse" />
-          Actualizado en tiempo real
+          {orders.error ? "No se pudieron cargar los datos" : "Se actualiza cada minuto"}
         </div>
       </div>
 
@@ -90,14 +154,20 @@ export function AdminDashboard() {
           </div>
           <div className="flex flex-col">
             <span className="text-2xl sm:text-3xl font-sans font-semibold text-[var(--foreground)] tracking-tight tabular-nums">
-              $0.00
+              {cop(s.today)}
             </span>
             <div className="flex items-center gap-1.5 mt-2 sm:mt-2.5 text-[10px] sm:text-xs text-primary dark:text-[#2ec4a6] font-medium">
-              <div className="flex items-center bg-primary/10 dark:bg-[#2ec4a6]/10 px-1.5 py-0.5 rounded-md">
-                <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
-                <span className="tabular-nums">0%</span>
-              </div>
-              <span className="text-[var(--muted)] font-normal hidden sm:inline">vs ayer</span>
+              {s.change === null ? (
+                <span className="text-[var(--muted)] font-normal">Sin ventas ayer</span>
+              ) : (
+                <>
+                  <div className={`flex items-center px-1.5 py-0.5 rounded-md ${s.change < 0 ? "bg-red-500/10 text-red-500" : "bg-primary/10 dark:bg-[#2ec4a6]/10"}`}>
+                    {s.change < 0 ? <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" /> : <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />}
+                    <span className="tabular-nums">{s.change > 0 ? "+" : ""}{s.change}%</span>
+                  </div>
+                  <span className="text-[var(--muted)] font-normal hidden sm:inline">vs ayer</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -114,10 +184,10 @@ export function AdminDashboard() {
           </div>
           <div className="flex flex-col">
             <span className="text-2xl sm:text-3xl font-sans font-semibold text-[var(--foreground)] tracking-tight tabular-nums">
-              0
+              {s.inWorkshop}
             </span>
             <span className="text-[10px] sm:text-xs text-[var(--muted)] mt-2 sm:mt-2.5 font-normal truncate">
-              Sin entregas
+              En preparación o confección
             </span>
           </div>
         </div>
@@ -134,10 +204,10 @@ export function AdminDashboard() {
           </div>
           <div className="flex flex-col">
             <span className="text-2xl sm:text-3xl font-sans font-semibold text-[var(--foreground)] tracking-tight tabular-nums">
-              0
+              {s.newClients}
             </span>
             <span className="text-[10px] sm:text-xs text-[var(--muted)] mt-2 sm:mt-2.5 font-normal truncate">
-              Esta semana
+              Primer pedido esta semana
             </span>
           </div>
         </div>
@@ -154,12 +224,19 @@ export function AdminDashboard() {
           </div>
           <div className="flex flex-col">
             <span className="text-2xl sm:text-3xl font-sans font-semibold text-[var(--foreground)] tracking-tight tabular-nums">
-              0
+              {s.lowStock}
             </span>
-            <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400/90 mt-2 sm:mt-2.5 font-medium flex items-center gap-1 truncate">
-              <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-              Nivel óptimo
-            </span>
+            {s.lowStock === 0 ? (
+              <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400/90 mt-2 sm:mt-2.5 font-medium flex items-center gap-1 truncate">
+                <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                Nivel óptimo
+              </span>
+            ) : (
+              <Link href="/admin/products" className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 mt-2 sm:mt-2.5 font-medium flex items-center gap-1 truncate hover:underline">
+                <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-amber-500" />
+                Con {LOW_STOCK} o menos unidades
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -175,14 +252,14 @@ export function AdminDashboard() {
               </h3>
               <p className="text-xs text-[var(--muted)] mt-0.5">Últimos 7 días de facturación</p>
             </div>
-            <button className="text-xs text-primary dark:text-[#2ec4a6] hover:text-primary/80 dark:hover:text-[#52e5c7] flex items-center gap-1 transition-colors font-medium">
-              Ver reporte <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
+            <Link href="/admin/payments" className="text-xs text-primary dark:text-[#2ec4a6] hover:text-primary/80 dark:hover:text-[#52e5c7] flex items-center gap-1 transition-colors font-medium">
+              Ver pagos <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
 
           <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+              <AreaChart data={s.salesData}margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
                 <defs>
                   <linearGradient id="salesGradientLight" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#1B4332" stopOpacity={0.15} />
@@ -209,7 +286,8 @@ export function AdminDashboard() {
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(val) => `$${val}`}
+                  width={70}
+                  tickFormatter={(val) => (val >= 1000 ? `$${Math.round(val / 1000)}k` : `$${val}`)}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
@@ -236,8 +314,11 @@ export function AdminDashboard() {
             <p className="text-xs text-[var(--muted)] mb-4 sm:mb-6">Distribución porcentual</p>
 
             <div className="h-[230px] w-full">
+              {s.categoryData.length === 0 ? (
+                <p className="h-full flex items-center justify-center text-xs text-[var(--muted)]">Aún no hay productos vendidos.</p>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+                <BarChart data={s.categoryData}margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
                   <defs>
                     <linearGradient id="barGold" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#e2c275" />
@@ -266,12 +347,15 @@ export function AdminDashboard() {
                   <Bar dataKey="valor" fill="url(#barGold)" radius={[6, 6, 0, 0]} maxBarSize={36} />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           </div>
 
-          <div className="pt-4 border-t border-black/5 dark:border-white/[0.05] flex justify-between text-xs text-[var(--muted)]">
-            <span>Categoría líder: <strong className="text-[var(--foreground)] font-medium">Damas (55%)</strong></span>
-          </div>
+          {leader && (
+            <div className="pt-4 border-t border-black/5 dark:border-white/[0.05] flex justify-between text-xs text-[var(--muted)]">
+              <span>Categoría líder: <strong className="text-[var(--foreground)] font-medium">{leader.name} ({leader.valor}%)</strong></span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -284,9 +368,9 @@ export function AdminDashboard() {
             </h3>
             <p className="text-xs text-[var(--muted)] mt-0.5">Transacciones recientes en tienda</p>
           </div>
-          <button className="text-[10px] sm:text-xs text-primary dark:text-[#2ec4a6] hover:text-primary/80 dark:hover:text-[#52e5c7] font-medium inline-flex items-center gap-1 transition-colors">
+          <Link href="/admin/orders" className="text-[10px] sm:text-xs text-primary dark:text-[#2ec4a6] hover:text-primary/80 dark:hover:text-[#52e5c7] font-medium inline-flex items-center gap-1 transition-colors">
             Ver todo <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          </Link>
         </div>
 
         <div className="overflow-x-auto">
@@ -301,7 +385,16 @@ export function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5 dark:divide-white/[0.04] text-[var(--foreground)]">
-              {/* Estado Vacío Elegante */}
+              {s.recent.map((o) => (
+                <tr key={o.id}>
+                  <td className="px-4 sm:px-6 py-3 font-medium">{o.id.slice(0, 8).toUpperCase()}</td>
+                  <td className="px-4 sm:px-6 py-3">{o.user?.name || o.contactName || "Cliente sin cuenta"}</td>
+                  <td className="px-4 sm:px-6 py-3 text-[var(--muted)]">{new Date(o.createdAt).toLocaleDateString("es-CO")}</td>
+                  <td className="px-4 sm:px-6 py-3 text-right tabular-nums">{cop(Number(o.totalAmount))}</td>
+                  <td className="px-4 sm:px-6 py-3 text-center text-[var(--muted)]">{STATUS_LABEL[o.status] || o.status}</td>
+                </tr>
+              ))}
+              {s.recent.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 sm:px-6 py-8 sm:py-12 text-center">
                   <div className="flex flex-col items-center justify-center gap-2.5">
@@ -314,6 +407,7 @@ export function AdminDashboard() {
                   </div>
                 </td>
               </tr>
+              )}
             </tbody>
           </table>
         </div>

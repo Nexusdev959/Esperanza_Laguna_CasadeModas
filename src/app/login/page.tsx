@@ -166,7 +166,8 @@ export default function LoginPage() {
                 </p>
               )}
               {mounted && (
-                <div className="w-full flex justify-center hover:scale-[1.02] transition-transform duration-300">
+                // color-scheme light: si difiere del iframe de Google, el navegador le pinta un fondo blanco
+                <div className="w-full flex justify-center hover:scale-[1.02] transition-transform duration-300" style={{ colorScheme: "light" }}>
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={() => {
