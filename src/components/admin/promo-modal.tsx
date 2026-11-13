@@ -8,6 +8,14 @@ import { PromoSlide, type PromoProduct } from "@/components/promotions";
 
 const input = "w-full px-4 py-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none";
 
+// <input type="datetime-local"> trabaja en la hora local del navegador: ida y vuelta desde/hacia ISO
+const toLocalInput = (iso?: string | Date | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+};
+const toIso = (local: string) => (local ? new Date(local).toISOString() : "");
+
 /** Ancho/alto real de la imagen elegida: con eso la tarjeta respeta si es horizontal o vertical. */
 const measure = (src: string) => new Promise<number>((resolve) => {
   const img = new Image();
@@ -23,6 +31,8 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
   const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState(product.promoImage ?? null);
   const [ratio, setRatio] = useState(product.promoImageRatio ?? null);
+  const [startsAt, setStartsAt] = useState(toLocalInput(product.promoStartsAt));
+  const [endsAt, setEndsAt] = useState(toLocalInput(product.promoEndsAt));
   const [saving, setSaving] = useState(false);
   const { showNotification } = useNotification();
 
@@ -41,6 +51,7 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
 
   const promoPrice = Number(price);
   const invalidPrice = price !== "" && !(promoPrice > 0 && promoPrice < Number(product.price));
+  const invalidDates = !!startsAt && !!endsAt && new Date(endsAt) <= new Date(startsAt);
 
   const save = async () => {
     setSaving(true);
@@ -48,6 +59,8 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
     data.append("promoActive", String(active));
     data.append("promoPrice", price);
     data.append("promoTitle", title);
+    data.append("promoStartsAt", toIso(startsAt));
+    data.append("promoEndsAt", toIso(endsAt));
     if (file) { data.append("image", file); data.append("promoImageRatio", String(ratio ?? 1)); }
     else if (!image && product.promoImage) data.append("removeImage", "true");
     try {
@@ -61,7 +74,7 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
     }
   };
 
-  const preview: PromoProduct = { ...product, promoActive: true, promoPrice: invalidPrice || !price ? null : promoPrice, promoTitle: title || null, promoImage: image, promoImageRatio: ratio };
+  const preview: PromoProduct = { ...product, promoActive: true, promoPrice: invalidPrice || !price ? null : promoPrice, promoTitle: title || null, promoImage: image, promoImageRatio: ratio, promoStartsAt: null, promoEndsAt: toIso(endsAt) || null };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="promo-modal-title">
@@ -97,6 +110,21 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
               <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} placeholder="Ej. Temporada de investiduras" className={`${input} mt-1.5`} />
             </label>
 
+            <fieldset>
+              <legend className="text-sm font-medium text-[var(--foreground)]">Fechas (opcional)</legend>
+              <div className="mt-1.5 grid grid-cols-2 gap-3">
+                <label className="block text-xs text-[var(--muted)]">Empieza
+                  <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className={`${input} mt-1`} />
+                </label>
+                <label className="block text-xs text-[var(--muted)]">Termina
+                  <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className={`${input} mt-1 ${invalidDates ? "border-red-500" : ""}`} />
+                </label>
+              </div>
+              <span className={`block mt-1 text-xs ${invalidDates ? "text-red-500" : "text-[var(--muted)]"}`}>
+                {invalidDates ? "Debe terminar después de empezar." : "Se enciende y se apaga sola. Con fecha de fin, el póster muestra la cuenta regresiva."}
+              </span>
+            </fieldset>
+
             <div>
               <span className="text-sm font-medium text-[var(--foreground)]">Imagen de la promoción (opcional)</span>
               <p className="text-xs text-[var(--muted)] mb-2">Ideal horizontal (16:9, por ejemplo 1920×1080). Una vertical se muestra completa sobre un fondo difuminado. Sin imagen se usa la foto del producto.</p>
@@ -123,7 +151,7 @@ export function PromoModal({ product, onClose, onSaved }: { product: PromoProduc
 
         <div className="flex justify-end gap-3 p-6 border-t border-[var(--border-color)]">
           <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-[var(--border-color)] text-sm">Cancelar</button>
-          <button onClick={save} disabled={saving || invalidPrice} className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50">
+          <button onClick={save} disabled={saving || invalidPrice || invalidDates} className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50">
             {saving ? "Guardando…" : "Guardar promoción"}
           </button>
         </div>

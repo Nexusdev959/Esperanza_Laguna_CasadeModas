@@ -1,7 +1,7 @@
 "use client";
 
 import { salePrice } from "@/lib/price";
-import { ShoppingBag, Plus, Minus, ArrowLeft, Star, Loader2, Check, Clock, Users, MessageCircle } from "lucide-react";
+import { ShoppingBag, Plus, Minus, ArrowLeft, Star, Loader2, Check, Clock, Users, MessageCircle, TrendingDown, Gift } from "lucide-react";
 import { whatsappLink } from "@/components/whatsapp-button";
 import { useState, useEffect, useRef } from "react";
 import { track } from "@/components/analytics";
@@ -283,6 +283,34 @@ export default function ProductDetail() {
                 {basePrice < Number(product.price) && <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#d4af37]/15 text-[#a8862a] dark:text-[#e9cf7a]">{product.promoTitle || "Promoción"}</span>}
               </div>
               {isUniform && <p className="text-xs text-[var(--muted)] mt-1">{insignias === "NINGUNA" ? "Precio sin insignias" : "Incluye insignias en banda y camisa"}</p>}
+              {Number(product.compareAtPrice) > basePrice && (
+                <p className="mt-2 text-sm text-[var(--foreground)]">
+                  <span className="text-[var(--muted)] line-through mr-2">{money(Number(product.compareAtPrice))} por separado</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">Ahorras {money(Number(product.compareAtPrice) - basePrice)}</span>
+                </p>
+              )}
+              {Array.isArray(product.bulkTiers) && product.bulkTiers.length > 0 && (
+                <div className="mt-4 p-4 rounded-2xl border border-[#d4af37]/40 bg-[#d4af37]/5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[#a8862a] dark:text-[#e9cf7a] mb-2">Beneficios por cantidad</p>
+                  <ul className="space-y-1.5">
+                    {[...product.bulkTiers].sort((a: { min: number }, b: { min: number }) => a.min - b.min).map((t: { min: number; type: "PRICE" | "GIFT"; price?: number; giftProductId?: string; giftQty?: number; every?: number }) => (
+                      <li key={`${t.type}-${t.min}`} className="flex items-start gap-2 text-sm text-[var(--foreground)]">
+                        {t.type === "PRICE" ? <TrendingDown className="w-4 h-4 mt-0.5 text-primary shrink-0" /> : <Gift className="w-4 h-4 mt-0.5 text-[#b8912b] shrink-0" />}
+                        <span>
+                          Desde <strong>{t.min}</strong> unidades:{" "}
+                          {t.type === "PRICE"
+                            ? <><strong>{money(t.price!)}</strong> c/u</>
+                            : <>te regalamos {t.giftQty} {(allProducts ?? []).find((p: { id: string; name: string }) => p.id === t.giftProductId)?.name?.trim() ?? "producto"} por cada {t.every}</>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-[var(--muted)]">Se aplica solo en el carrito. Si hay promoción, pagas el precio más bajo.</p>
+                </div>
+              )}
+              {isUniform && (
+                <p className="mt-3 text-xs text-[var(--muted)]">Con 10 o más uniformes en tu pedido, el envío nacional por tierra es gratis.</p>
+              )}
             </div>
             
             {sizes.length > 0 && !lotMode && (
@@ -567,7 +595,7 @@ export default function ProductDetail() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Rating Summary */}
             <div className="lg:col-span-1 space-y-6">
-              <h2 className="text-xl font-serif text-[var(--foreground)]">Calificaciones y reseñas</h2>
+              <h2 id="resenas" className="scroll-mt-28 text-xl font-serif text-[var(--foreground)]">Calificaciones y reseñas</h2>
               
               <div className="flex items-center gap-6">
                 <div className="text-center">

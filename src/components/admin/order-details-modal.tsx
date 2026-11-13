@@ -139,6 +139,7 @@ export function OrderDetailsModal({
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Teléfono:</span> {order.contactPhone || order.user?.phone || 'No registrado'}</p>
                     {(order.contactEmail || order.user?.email) && <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Correo:</span> {order.contactEmail || order.user?.email}</p>}
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Entrega:</span> {DELIVERY_LABELS[order.deliveryMethod] || 'No indicada'}</p>
+                    {order.freeShipping && <p className="text-sm font-semibold text-emerald-600">Flete a cargo de la tienda: enviar por tierra (10+ uniformes)</p>}
                     {order.shippingAddress && <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Dirección:</span> {order.shippingAddress}</p>}
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Club:</span> {order.clubName || order.user?.club || 'Sin club'}</p>
                     <p className="text-sm text-[var(--foreground)]"><span className="font-semibold">Fecha:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
@@ -165,7 +166,7 @@ export function OrderDetailsModal({
                       <div key={item.id} className="bg-[var(--background)] p-3 rounded-xl border border-[var(--border-color)]">
                         <div className="flex justify-between items-start gap-3">
                           <div className="flex flex-col gap-0.5 min-w-0">
-                            <span className="text-sm font-medium text-[var(--foreground)]">{item.product?.name || 'Producto'}</span>
+                            <span className="text-sm font-medium text-[var(--foreground)]">{item.product?.name || 'Producto'}{item.isGift && <span className="ml-2 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-xs">Regalo por cantidad</span>}</span>
                             {item.option && <span className="text-xs text-[var(--muted)]">{item.product?.optionLabel || 'Opción'}: <span className="text-[var(--foreground)] font-medium">{item.option}</span></span>}
                             {item.size && <span className="text-xs text-[var(--muted)]">Talla: <span className="text-[var(--foreground)]">{item.size}</span></span>}
                             {item.insignias && <span className="text-xs text-[var(--muted)]">Insignias: <span className={`font-medium ${item.insignias === 'COMPLETAS' ? 'text-[var(--foreground)]' : 'text-amber-600 dark:text-amber-400'}`}>{INSIGNIA_LABELS[item.insignias] ?? item.insignias}</span></span>}
@@ -307,7 +308,7 @@ export function OrderDetailsModal({
                   <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-3">Resumen Financiero</h3>
                   <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)] space-y-2">
                     <div className="flex justify-between">
-                      <p className="text-sm text-[var(--muted)]">Total de la Orden</p>
+                      <p className="text-sm text-[var(--muted)]">Total de la Orden{Number(order.discountAmount) > 0 && <span className="block text-xs text-emerald-600">Cupón {order.couponCode}: -{Number(order.discountAmount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</span>}</p>
                       <p className="text-sm font-bold text-[var(--foreground)]">{Number(order.totalAmount).toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}</p>
                     </div>
                     <div className="flex justify-between">

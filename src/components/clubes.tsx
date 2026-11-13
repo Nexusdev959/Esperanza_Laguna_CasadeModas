@@ -18,7 +18,7 @@ const STEPS = [
 const FAQ = [
   { q: "¿Desde cuántos uniformes es un pedido de club?", a: `Desde ${LOT_MIN_UNIFORMS} uniformes el pedido se confecciona en lote, todos juntos.` },
   { q: "¿Cuánto tarda la confección?", a: `Alrededor de ${LEAD_DAYS.lot} días hábiles en lote y ${LEAD_DAYS.unit} por unidad, contados desde el pago del anticipo. El tiempo de la transportadora se suma aparte.` },
-  { q: "¿Cuánto cuesta el envío?", a: "El flete no está incluido: lo cobra la transportadora según destino y peso. Recoger en tienda no tiene costo." },
+  { q: "¿Cuánto cuesta el envío?", a: "Con 10 o más uniformes en el pedido, el envío nacional por tierra es gratis: lo asume la tienda. En pedidos más pequeños el flete lo cobra la transportadora según destino y peso. Recoger en tienda no tiene costo." },
   { q: "¿Puedo pedir insignias y cintas con nombre?", a: "Sí. Las cintas de nombre se bordan con el nombre y el RH de cada integrante; las insignias y parches se agregan al mismo pedido." },
 ];
 

@@ -66,7 +66,12 @@ export default function QuoteGenerator() {
             id: Date.now() + idx,
             description: [item.name, itemDetails(item)].filter(Boolean).join(" - "),
             quantity: item.quantity,
-            unitPrice: item.price
+            unitPrice: item.price,
+            // Para convertir la cotización en pedido (sin nombres ni RH: el número de cotización no es secreto)
+            cartItem: item.isGift || !item.productId ? undefined : {
+              productId: item.productId, quantity: item.quantity, size: item.size || undefined, option: item.option || undefined,
+              insignias: item.insignias || undefined, union: item.union || undefined, association: item.association || undefined,
+            },
           })));
         }
         localStorage.removeItem('pilypage_quote_items');

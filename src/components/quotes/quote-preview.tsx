@@ -126,7 +126,13 @@ export function QuotePreview({
                   Esta cotización tiene una validez de 15 días calendario a partir de su emisión. 
                   Para iniciar la confección de los uniformes se requiere un anticipo del 50%. 
                   Los tiempos de entrega están sujetos a disponibilidad de agenda.
+                  Con 10 o más uniformes el envío nacional por tierra es gratis.
                 </p>
+                {quoteDetails.quoteNumber && (
+                  <p className="text-[10px] text-[#57534e] max-w-md leading-relaxed pt-1">
+                    <span className="font-semibold">¿Listos para pedir?</span> Abre esperanzalaguna.com/quotes/{quoteDetails.quoteNumber} y conviértela en pedido con un clic.
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-xs font-serif italic text-[#a8a29e]">Gracias por preferir la calidad de nuestra tierra.</p>

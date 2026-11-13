@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Clock, Pause, Play } from "lucide-react";
 import { fetcher } from "@/lib/api";
 import { cldImage } from "@/lib/cloudinary";
 import { salePrice, formatCOP } from "@/lib/price";
@@ -13,7 +13,29 @@ export type PromoProduct = {
   id: string; name: string; price: number; images?: string[];
   promoActive?: boolean; promoPrice?: number | null; promoTitle?: string | null;
   promoImage?: string | null; promoImageRatio?: number | null;
+  promoStartsAt?: string | null; promoEndsAt?: string | null;
 };
+
+/** "Termina en 2 d 05 h 12 min": solo si la promoción tiene fecha de fin. Se actualiza cada minuto. */
+function Countdown({ endsAt }: { endsAt: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const left = new Date(endsAt).getTime() - now;
+  if (!(left > 0)) return null;
+  const d = Math.floor(left / 86_400_000);
+  const h = Math.floor((left % 86_400_000) / 3_600_000);
+  const m = Math.floor((left % 3_600_000) / 60_000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    <p className="mt-3 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[11px] sm:text-xs font-medium text-white/90 backdrop-blur-md">
+      <Clock className="h-3.5 w-3.5 text-[#e9cf7a]" aria-hidden="true" />
+      Termina en {d > 0 && `${d} d `}{pad(h)} h {pad(m)} min
+    </p>
+  );
+}
 
 const SLIDE_SECONDS = 6;
 
@@ -59,6 +81,7 @@ export function PromoSlide({ product, preview = false }: { product: PromoProduct
           <span className="text-xl sm:text-2xl md:text-3xl font-semibold text-[#f5dc8c]">{formatCOP(price)}</span>
           {off > 0 && <span className="ml-3 text-sm sm:text-base text-white/55 line-through">{formatCOP(product.price)}</span>}
         </p>
+        {product.promoEndsAt && <Countdown endsAt={product.promoEndsAt} />}
         {preview ? (
           <span className="mt-4 sm:mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-[#d4af37] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-[#0b1410]">
             Ver producto <ArrowUpRight className="h-4 w-4" aria-hidden="true" />

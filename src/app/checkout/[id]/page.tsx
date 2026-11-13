@@ -190,18 +190,24 @@ export default function CheckoutPage() {
                         <img src={cldImage(item.product?.images?.[0] || 'https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=100&q=80', 200)} className="w-full h-full object-cover" alt="Producto"/>
                       </div>
                       <div>
-                        <p className="font-medium text-[var(--foreground)] text-sm">{item.product?.name || 'Producto'}</p>
+                        <p className="font-medium text-[var(--foreground)] text-sm">{item.product?.name || 'Producto'}{item.isGift && <span className="ml-2 text-xs font-semibold text-emerald-600">Regalo</span>}</p>
                         <p className="text-[var(--muted)] text-xs">Cant: {item.quantity}</p>
                       </div>
                     </div>
                     <p className="font-medium text-[var(--foreground)] text-sm">
-                      {(item.price * item.quantity).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}
+                      {item.isGift ? 'Gratis' : (item.price * item.quantity).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}
                     </p>
                   </div>
                 ))}
               </div>
 
               <div className="space-y-3 text-sm">
+                {Number(order.discountAmount) > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Cupón {order.couponCode} (ya descontado)</span>
+                    <span>- {Number(order.discountAmount).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-[var(--muted)]">
                   <span>Subtotal de productos</span>
                   <span>{totalAmount.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</span>
@@ -232,7 +238,11 @@ export default function CheckoutPage() {
                 <p className="text-sm text-[var(--muted)]">Domicilio en Medellín: corre por tu cuenta. Lo cobra la plataforma de domicilios al momento de la entrega y no está incluido en este total.</p>
               )}
               {order.deliveryMethod === 'NATIONAL_SHIPPING' && (
-                <p className="text-sm text-[var(--muted)]">Envío por transportadora: corre por tu cuenta. El flete no está incluido en este total; te enviaremos la guía cuando despachemos.</p>
+                <p className="text-sm text-[var(--muted)]">
+                  {order.freeShipping
+                    ? <><span className="font-semibold text-emerald-600">Envío gratis por tierra:</span> con 10 o más uniformes el flete lo asume la tienda. Te enviaremos la guía cuando despachemos.</>
+                    : 'Envío por transportadora: corre por tu cuenta. El flete no está incluido en este total; te enviaremos la guía cuando despachemos.'}
+                </p>
               )}
               {order.leadBusinessDays && (
                 <p className="text-sm text-[var(--foreground)]">

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ProductForm } from "@/components/admin/product-form";
 import { ProductTable } from "@/components/admin/product-table";
 import { PromoModal } from "@/components/admin/promo-modal";
+import { BulkModal } from "@/components/admin/bulk-modal";
 import { useNotification } from "@/components/ui/notification-provider";
 import { api } from "@/lib/api";
 
@@ -14,7 +15,7 @@ export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -22,7 +23,7 @@ export default function AdminProducts() {
     categories: ['Conquistadores'] as string[],
     options: [] as string[],
     optionLabel: '',
-    audience: ['Unisex'], 
+    audience: ['Unisex'],
     price: '',
     saleMode: 'unidad',
     isPublished: true,
@@ -33,17 +34,18 @@ export default function AdminProducts() {
     isUniform: false,
     noInsigniaDiscount: '' as string | number,
     images: [] as File[],
-    sizes: { 
-      XS: { active: false, qty: '' }, 
-      S: { active: false, qty: '' }, 
-      M: { active: false, qty: '' }, 
-      L: { active: false, qty: '' }, 
-      XL: { active: false, qty: '' }, 
-      Única: { active: false, qty: '' } 
+    sizes: {
+      XS: { active: false, qty: '' },
+      S: { active: false, qty: '' },
+      M: { active: false, qty: '' },
+      L: { active: false, qty: '' },
+      XL: { active: false, qty: '' },
+      Única: { active: false, qty: '' }
     }
   });
 
   const [promoProduct, setPromoProduct] = useState<any>(null);
+  const [bulkProduct, setBulkProduct] = useState<any>(null);
 
   const loadProducts = async () => {
     try {
@@ -61,7 +63,7 @@ export default function AdminProducts() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const data = new FormData();
       data.append('name', formData.name);
@@ -83,18 +85,18 @@ export default function AdminProducts() {
       data.append('requiresUnion', String(formData.requiresUnion));
       data.append('isUniform', String(formData.isUniform));
       data.append('noInsigniaDiscount', String(formData.isUniform ? Number(formData.noInsigniaDiscount) || 0 : 0));
-      
+
       // Enviar audience como array JSON
       data.append('audience', JSON.stringify(formData.audience));
-      
+
       // Enviar sizes completos
       data.append('sizes', JSON.stringify(formData.sizes));
-      
+
       // Adjuntar imagenes
       formData.images.forEach(img => {
         data.append('images', img);
       });
-      
+
       // Aquí se enviaría a la API real
       if (editingId) {
         await api.put(`/products/${editingId}`, data, {
@@ -107,18 +109,18 @@ export default function AdminProducts() {
         });
         showNotification("Producto publicado correctamente", "success");
       }
-      
+
       setIsAdding(false);
       setEditingId(null);
-      
+
       // Limpiar form
       setFormData({
         name: '', description: '', category: 'Conquistadores', categories: ['Conquistadores'], options: [], optionLabel: '', audience: ['Unisex'], price: '', saleMode: 'unidad',
         isPublished: true, productionType: 'stock', estimatedDays: '7', requiresPersonalization: false, requiresUnion: false, isUniform: false, noInsigniaDiscount: '',
         images: [],
-        sizes: { 
-          XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' }, 
-          L: { active: false, qty: '' }, XL: { active: false, qty: '' }, Única: { active: false, qty: '' } 
+        sizes: {
+          XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' },
+          L: { active: false, qty: '' }, XL: { active: false, qty: '' }, Única: { active: false, qty: '' }
         }
       });
       loadProducts();
@@ -135,8 +137,8 @@ export default function AdminProducts() {
           <h1 className="text-2xl font-sans font-semibold tracking-tight text-[var(--foreground)]">Catálogo e Inventario</h1>
           <p className="text-sm text-[var(--muted)]">Gestiona tallas, productos por encargo y combos de uniformes.</p>
         </div>
-        <button 
-          onClick={() => setIsAdding(!isAdding)} 
+        <button
+          onClick={() => setIsAdding(!isAdding)}
           className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-transform active:scale-95 shadow-sm"
         >
           {isAdding ? <span className="rotate-45 transition-transform"><Plus className="w-5 h-5" /></span> : <Plus className="w-5 h-5" />}
@@ -146,20 +148,20 @@ export default function AdminProducts() {
 
       <AnimatePresence>
         {isAdding && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <ProductForm 
-              formData={formData} 
-              setFormData={setFormData} 
-              handleCreate={handleCreate} 
+            <ProductForm
+              formData={formData}
+              setFormData={setFormData}
+              handleCreate={handleCreate}
               onCancel={() => {
                 setIsAdding(false);
                 setEditingId(null);
-              }} 
+              }}
             />
           </motion.div>
         )}
@@ -169,9 +171,14 @@ export default function AdminProducts() {
         <PromoModal product={promoProduct} onClose={() => setPromoProduct(null)} onSaved={() => { setPromoProduct(null); loadProducts(); }} />
       )}
 
-      <ProductTable 
-        products={products} 
+      {bulkProduct && (
+        <BulkModal product={bulkProduct} products={products} onClose={() => setBulkProduct(null)} onSaved={() => { setBulkProduct(null); loadProducts(); }} />
+      )}
+
+      <ProductTable
+        products={products}
         onPromo={setPromoProduct}
+        onBulk={setBulkProduct}
         onEdit={(product) => {
           setEditingId(product.id);
           setFormData({
@@ -190,9 +197,9 @@ export default function AdminProducts() {
             isUniform: product.isUniform,
             noInsigniaDiscount: product.noInsigniaDiscount || '',
             productionType: product.isCraftable ? 'encargo' : 'stock',
-            sizes: product.sizes || { 
-              XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' }, 
-              L: { active: false, qty: '' }, XL: { active: false, qty: '' }, Única: { active: false, qty: '' } 
+            sizes: product.sizes || {
+              XS: { active: false, qty: '' }, S: { active: false, qty: '' }, M: { active: false, qty: '' },
+              L: { active: false, qty: '' }, XL: { active: false, qty: '' }, Única: { active: false, qty: '' }
             },
           });
           setIsAdding(true);

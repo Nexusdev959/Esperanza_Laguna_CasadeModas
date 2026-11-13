@@ -67,7 +67,8 @@ export const toCardProduct = (p: any): Product => ({
   id: p.id,
   name: p.name,
   price: salePrice(p),
-  regularPrice: salePrice(p) < Number(p.price) ? Number(p.price) : undefined,
+  // Promoción: el precio normal tachado. Kit: lo que costarían las piezas por separado
+  regularPrice: salePrice(p) < Number(p.price) ? Number(p.price) : Number(p.compareAtPrice) > salePrice(p) ? Number(p.compareAtPrice) : undefined,
   image: p.image || p.images?.[0] || FALLBACK_IMAGE,
   category: p.category,
   categories: p.categories?.length ? p.categories : p.category ? [p.category] : [],
