@@ -30,7 +30,7 @@ function AccountPanel() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadingOrder, setUploadingOrder] = useState<string | null>(null);
-  const { showNotification } = useNotification();
+  const { showNotification, confirm } = useNotification();
 
   useEffect(() => {
     Promise.all([api.get('/orders/me'), api.get('/auth/addresses'), api.get('/pqrs/my')])
@@ -478,7 +478,7 @@ function AccountPanel() {
                         <p className="text-sm text-[var(--muted)]">{addr.street}</p>
                         <p className="text-sm text-[var(--muted)]">{addr.city}, {addr.state} {addr.zip}</p>
                         <button onClick={async () => {
-                          if (confirm('¿Eliminar esta dirección?')) {
+                          if (await confirm({ title: '¿Eliminar esta dirección?', confirmText: 'Eliminar', danger: true })) {
                             try {
                               await api.delete(`/auth/addresses/${addr.id}`);
                               setAddresses(addresses.filter(a => a.id !== addr.id));

@@ -5,6 +5,8 @@ import { Search, Filter, Settings2, Trash2 } from "lucide-react";
 import { OrderDetailsModal } from "@/components/admin/order-details-modal";
 import { api } from "@/lib/api";
 import { isAxiosError } from "axios";
+import { useNotification } from "@/components/ui/notification-provider";
+import { customerContact, customerName } from "@/lib/customer";
 
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
   PENDING_UPLOAD: { label: "Esperando Comprobante", color: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-500 dark:border-gray-900" },
@@ -21,6 +23,7 @@ export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showNotification, confirm } = useNotification();
 
   useEffect(() => {
     fetchOrders();
@@ -40,12 +43,13 @@ export default function AdminOrders() {
 
   const deleteOrder = async (order: { id: string }) => {
     const code = order.id.slice(0, 8).toUpperCase();
-    if (!confirm(`¿Eliminar el pedido ${code} con sus pagos y tareas de taller?\n\nÚsalo solo para pedidos de prueba: no se puede deshacer.`)) return;
+    if (!(await confirm({ title: `¿Eliminar el pedido ${code}?`, message: 'Se borran también sus pagos y tareas de taller. Úsalo solo para pedidos de prueba: no se puede deshacer.', confirmText: 'Eliminar', danger: true }))) return;
     try {
       await api.delete(`/orders/${order.id}`);
       setOrders((list) => list.filter((o) => o.id !== order.id));
+      showNotification(`Pedido ${code} eliminado`, 'success');
     } catch (err) {
-      alert((isAxiosError(err) && err.response?.data?.error) || 'No se pudo eliminar el pedido');
+      showNotification((isAxiosError(err) && err.response?.data?.error) || 'No se pudo eliminar el pedido', 'error');
     }
   };
 
@@ -98,8 +102,8 @@ export default function AdminOrders() {
                 <tr key={order.id} className="hover:bg-[var(--background)]/50 transition-colors">
                   <td className="px-6 py-4 font-medium">{order.id.slice(0, 8).toUpperCase()}</td>
                   <td className="px-6 py-4">
-                    <p className="font-medium">{order.user?.name || order.contactName || 'Cliente sin cuenta'}</p>
-                    <p className="text-xs text-[var(--muted)]">{order.userId ? (order.user?.club || 'Sin club') : 'Sin cuenta'}</p>
+                    <p className="font-medium">{customerName(order)}</p>
+                    <p className="text-xs text-[var(--muted)]">{order.userId ? (order.user?.club || 'Sin club') : ['Sin cuenta', customerContact(order)].filter(Boolean).join(' · ')}</p>
                   </td>
                   <td className="px-6 py-4 text-[var(--muted)]">{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="px-6 py-4 font-medium">${parseFloat(order.totalAmount).toFixed(2)}</td>

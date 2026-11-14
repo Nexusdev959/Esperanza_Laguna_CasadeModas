@@ -4,10 +4,15 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { isAxiosError } from "axios";
 import { Loader2, DollarSign, CheckCircle2, XCircle, Clock, ExternalLink, Trash2 } from "lucide-react";
+import { useNotification } from "@/components/ui/notification-provider";
+import { customerContact, customerName } from "@/lib/customer";
+
+const errorOf = (err: unknown, fallback: string): string => (isAxiosError(err) && err.response?.data?.error) || fallback;
 
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { showNotification, confirm, ask } = useNotification();
 
   const fetchPayments = async () => {
     try {
@@ -25,45 +30,49 @@ export default function AdminPaymentsPage() {
   }, []);
 
   const handleApprove = async (id: string) => {
-    if (!confirm('¿Estás seguro de aprobar este comprobante manual? Esto actualizará el pedido y le enviará un correo al cliente.')) return;
+    if (!(await confirm({ title: '¿Aprobar este comprobante?', message: 'Se acreditará el pago al pedido y se le enviará el recibo al cliente.', confirmText: 'Aprobar' }))) return;
     try {
       await api.put(`/payments/wompi/proof/${id}/approve`);
+      showNotification('Comprobante aprobado', 'success');
       fetchPayments();
     } catch (err) {
       console.error(err);
-      alert('Error al aprobar el comprobante');
+      showNotification(errorOf(err, 'No se pudo aprobar el comprobante'), 'error');
     }
   };
 
   const handleReject = async (id: string) => {
-    const reason = prompt('Razón del rechazo:');
+    const reason = await ask({ title: 'Rechazar comprobante', message: 'El cliente verá esta razón.', placeholder: 'Ej.: el valor no coincide con el pedido', confirmText: 'Rechazar', danger: true, required: true });
     if (!reason) return;
     try {
       await api.put(`/payments/wompi/proof/${id}/reject`, { reason });
+      showNotification('Comprobante rechazado', 'success');
       fetchPayments();
     } catch (err) {
       console.error(err);
-      alert('Error al rechazar el comprobante');
+      showNotification(errorOf(err, 'No se pudo rechazar el comprobante'), 'error');
     }
   };
 
   const handleResend = async (id: string) => {
     try {
       const { data } = await api.post(`/payments/wompi/${id}/resend-receipt`);
-      alert(data.emailSent ? `Recibo reenviado a ${data.clientEmail}` : data.clientEmail ? `No se pudo enviar el correo a ${data.clientEmail}` : 'El pedido no tiene correo registrado');
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Error al reenviar el recibo');
+      if (data.emailSent) showNotification(`Recibo reenviado a ${data.clientEmail}`, 'success');
+      else showNotification(data.clientEmail ? `No se pudo enviar el correo a ${data.clientEmail}` : 'El pedido no tiene correo registrado', 'warning');
+    } catch (err) {
+      showNotification(errorOf(err, 'No se pudo reenviar el recibo'), 'error');
     }
   };
 
   const handleDelete = async (payment: { id: string; reference: string; status: string }) => {
-    const warning = payment.status === 'APPROVED' ? '\n\nEstá aprobado: su valor se descontará de lo abonado al pedido.' : '';
-    if (!confirm(`¿Eliminar el pago ${payment.reference}?${warning}\n\nÚsalo solo para pagos de prueba: no se puede deshacer.`)) return;
+    const warning = payment.status === 'APPROVED' ? 'Está aprobado: su valor se descontará de lo abonado al pedido.\n\n' : '';
+    if (!(await confirm({ title: `¿Eliminar el pago ${payment.reference}?`, message: `${warning}Úsalo solo para pagos de prueba: no se puede deshacer.`, confirmText: 'Eliminar', danger: true }))) return;
     try {
       await api.delete(`/payments/wompi/${payment.id}`);
       setPayments((list) => list.filter((p) => p.id !== payment.id));
+      showNotification('Pago eliminado', 'success');
     } catch (err) {
-      alert((isAxiosError(err) && err.response?.data?.error) || 'No se pudo eliminar el pago');
+      showNotification(errorOf(err, 'No se pudo eliminar el pago'), 'error');
     }
   };
 
@@ -113,7 +122,8 @@ export default function AdminPaymentsPage() {
                     <div className="text-xs text-[var(--muted)] mt-0.5">{payment.transactionId || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium">{payment.order?.user?.name || 'Cliente Anónimo'}</div>
+                    <div className="font-medium">{customerName(payment.order)}</div>
+                    {customerContact(payment.order) && <div className="text-xs text-[var(--muted)]">{customerContact(payment.order)}</div>}
                     <a href={`/admin/orders`} className="text-xs text-primary hover:underline flex items-center gap-1 mt-0.5" title="Ir a la bandeja de pedidos">
                       Pedido #{payment.order?.id?.slice(0,8).toUpperCase()} <ExternalLink className="w-3 h-3" />
                     </a>

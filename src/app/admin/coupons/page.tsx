@@ -22,7 +22,7 @@ export default function CouponsPage() {
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
   const [now] = useState(() => Date.now());
-  const { showNotification } = useNotification();
+  const { showNotification, confirm } = useNotification();
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +50,7 @@ export default function CouponsPage() {
   };
 
   const remove = async (c: Coupon) => {
-    if (!confirm(`¿Borrar el cupón ${c.code}?`)) return;
+    if (!(await confirm({ title: `¿Borrar el cupón ${c.code}?`, message: 'Ya no se podrá usar en nuevos pedidos.', confirmText: 'Borrar', danger: true }))) return;
     try { await api.delete(`/coupons/${c.id}`); mutate(); }
     catch (err) { showNotification(errorOf(err, "No se pudo borrar"), "error"); }
   };

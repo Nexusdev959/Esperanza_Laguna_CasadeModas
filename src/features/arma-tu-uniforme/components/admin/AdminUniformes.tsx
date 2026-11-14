@@ -3,6 +3,7 @@
 import { ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useNotification } from "@/components/ui/notification-provider";
 import { PROGRAMAS, UNIFORMES } from "../../data";
 import { useAdminPiezas } from "../../hooks/useAdminPiezas";
 import { claveUniforme, type PiezaGuardada } from "../../lib/contenido";
@@ -47,6 +48,7 @@ export function AdminUniformes() {
 
 function PiezasDelUniforme({ uniforme }: { uniforme: Uniforme }) {
   const { piezas, isLoading, guardar, borrar, mover, importarEjemplo } = useAdminPiezas(uniforme);
+  const { confirm } = useNotification();
   const [editando, setEditando] = useState<PiezaGuardada | "nueva" | null>(null);
   const enlace = `/arma-tu-uniforme${escribirEstado({ programa: uniforme.programa, variante: uniforme.variante, pieza: null, vista: "frente" })}`;
 
@@ -75,7 +77,7 @@ function PiezasDelUniforme({ uniforme }: { uniforme: Uniforme }) {
           piezas={piezas}
           onEditar={setEditando}
           onMover={mover}
-          onBorrar={(p) => confirm(`¿Eliminar «${p.nombre}» del visor?`) && borrar(p)}
+          onBorrar={async (p) => { if (await confirm({ title: `¿Eliminar «${p.nombre}» del visor?`, confirmText: 'Eliminar', danger: true })) borrar(p); }}
         />
       )}
     </div>

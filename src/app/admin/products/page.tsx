@@ -11,7 +11,7 @@ import { useNotification } from "@/components/ui/notification-provider";
 import { api } from "@/lib/api";
 
 export default function AdminProducts() {
-  const { showNotification } = useNotification();
+  const { showNotification, confirm } = useNotification();
   const [products, setProducts] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -205,7 +205,7 @@ export default function AdminProducts() {
           setIsAdding(true);
         }}
         onDelete={async (id) => {
-          if (confirm("¿Estás seguro de eliminar este producto?")) {
+          if (await confirm({ title: "¿Eliminar este producto?", message: "Si ya tiene pedidos, se retira del catálogo pero se conserva en su historial.", confirmText: "Eliminar", danger: true })) {
             try {
               const res = await api.delete(`/products/${id}`);
               showNotification(
