@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import { MessagesSquare, Search, Send, Bot, BotOff, ArrowLeft, FileText, Check, CheckCheck, AlertCircle, User } from "lucide-react";
+import { MessagesSquare, Search, Send, Bot, BotOff, ArrowLeft, FileText, Check, CheckCheck, AlertCircle, User, Copy, Zap, ClipboardPlus, Fingerprint } from "lucide-react";
 import { isAxiosError } from "axios";
 import { api, fetcher } from "@/lib/api";
 import { getSocket } from "@/lib/socket";
@@ -30,13 +30,15 @@ type Chat = {
   botPausedUntil?: string | null;
   lastInboundAt?: string | null;
   notes?: string | null;
+  interactionId?: string | null; // INT-AAMMDD-XXXXXX: cambia cada vez que el chat se cierra y el cliente vuelve a escribir
+  interactionStartedAt?: string | null;
   user?: { id: string; name: string; email: string } | null;
   lastMessage?: Message | null;
 };
 type ChatDetail = {
   contact: Chat;
   messages: Message[];
-  orders: { id: string; status: string; totalAmount: number; paidAmount: number; createdAt: string }[];
+  orders: { id: string; status: string; totalAmount: number; paidAmount: number; createdAt: string; staffNotes?: string | null }[];
 };
 
 const STATUS_FILTERS = [
@@ -56,6 +58,16 @@ const ORDER_STATUS: Record<string, string> = {
   DELIVERED: "Entregado",
   CANCELLED: "Cancelado",
 };
+
+// Respuestas rápidas de la asesora (modo manual). {nombre}, {asesora} y {pedido} se llenan solos; el texto se puede editar antes de enviar
+const QUICK_REPLIES = [
+  { label: "Saludo", text: "Hola {nombre}, soy {asesora} de Casa de Modas Esperanza Laguna. ¿En qué te puedo ayudar?" },
+  { label: "Un momento", text: "Dame un momento, por favor: estoy revisando tu solicitud." },
+  { label: "Datos de envío", text: "Para coordinar la entrega, compárteme por favor tu nombre completo, dirección, ciudad y un teléfono de contacto." },
+  { label: "Comprobante", text: "Cuando realices el pago, envíame por aquí la foto o el PDF del comprobante para validarlo." },
+  { label: "Pedido registrado", text: "Tu pedido #{pedido} quedó registrado. Te avisaré por aquí cualquier novedad." },
+  { label: "Cierre", text: "¿Hay algo más en lo que te pueda ayudar? Si no, que tengas un excelente día 💛" },
+];
 
 const DAY = 24 * 3600_000;
 // Meta solo permite texto libre hasta 24 h después del último mensaje del cliente; después, plantilla
@@ -98,6 +110,7 @@ export default function AdminChatsPage() {
     onError: (e) => console.error("[Chats] No se pudo cargar el chat", selected, e),
   });
   const templates = useSWR<{ name: string; label: string }[]>("/whatsapp/templates", fetcher);
+  const profile = useSWR<{ name?: string }>("/auth/profile", fetcher);
   const contact = detail.data?.contact;
   const { mutate: refreshChats } = chats;
   const { mutate: refreshDetail } = detail;
@@ -147,6 +160,33 @@ export default function AdminChatsPage() {
       if (isAxiosError(e) && e.response?.status === 409) detail.mutate();
     } finally {
       setSending(false);
+    }
+  };
+
+  const quickReply = (template: string) => {
+    const firstName = (contact?.user?.name || contact?.name || "").split(" ")[0];
+    const order = detail.data?.orders[0];
+    const filled = template
+      .replace("{nombre}", firstName)
+      .replace("{asesora}", profile.data?.name?.split(" ")[0] || "tu asesora")
+      .replace("{pedido}", order ? order.id.slice(0, 8).toUpperCase() : "")
+      .replace(/\s+([,.])/g, "$1")
+      .replace("Hola ,", "Hola,");
+    setText(filled);
+  };
+
+  const notesToOrder = async (orderId: string) => {
+    try {
+      // Notas sin guardar (el campo aún tiene el foco): se guardan primero para no pasar una versión vieja
+      if (notesDraft !== null && notesDraft !== (contact?.notes ?? "")) {
+        await api.patch(chatUrl(selected!), { notes: notesDraft });
+        setNotesDraft(null);
+      }
+      await api.post(chatUrl(selected!, `/orders/${orderId}/notes`));
+      showNotification(`Notas agregadas al pedido #${orderId.slice(0, 8).toUpperCase()}`, "success");
+      detail.mutate();
+    } catch (e) {
+      showNotification(apiError(e, "No se pudieron agregar las notas al pedido"), "error");
     }
   };
 
@@ -315,6 +355,22 @@ export default function AdminChatsPage() {
                 {sendError && (
                   <p role="alert" className="mb-2 flex items-start gap-1.5 text-xs text-red-600"><AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {sendError}</p>
                 )}
+                {windowOpen(contact) && botPaused(contact) && (
+                  <div className="mb-2 flex flex-wrap gap-1.5" aria-label="Respuestas rápidas">
+                    <span className="flex items-center gap-1 text-[11px] text-[var(--muted)] mr-1"><Zap className="w-3 h-3" /> Respuestas rápidas:</span>
+                    {QUICK_REPLIES.filter((q) => !q.text.includes("{pedido}") || detail.data?.orders.length).map((q) => (
+                      <button
+                        key={q.label}
+                        type="button"
+                        onClick={() => quickReply(q.text)}
+                        title={q.text}
+                        className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--border-color)] text-[var(--foreground)] hover:border-primary hover:text-primary transition-colors"
+                      >
+                        {q.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {windowOpen(contact) ? (
                   <div className="flex gap-2 items-end">
                     <textarea
@@ -360,6 +416,31 @@ export default function AdminChatsPage() {
         {contact && (
           <div className="hidden xl:flex bg-[var(--surface)] rounded-2xl border border-[var(--border-color)] shadow-sm flex-col overflow-y-auto p-5 space-y-6">
             <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] mb-2 flex items-center gap-1.5"><Fingerprint className="w-3.5 h-3.5" /> Interacción</h3>
+              {contact.interactionId ? (
+                <div className="text-sm space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <code className="font-mono font-semibold text-[var(--foreground)]">{contact.interactionId}</code>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(contact.interactionId!).then(() => showNotification("ID de interacción copiado", "success"), () => showNotification("No se pudo copiar", "error"))}
+                      aria-label="Copiar ID de interacción"
+                      className="p-1 rounded text-[var(--muted)] hover:text-primary"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {contact.interactionStartedAt && (
+                    <p className="text-xs text-[var(--muted)]">Inició {new Date(contact.interactionStartedAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}</p>
+                  )}
+                  <p className="text-xs text-[var(--muted)]">{botPaused(contact) ? "Atención manual (asesora)" : "Atiende el bot"}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-[var(--muted)]">Se asigna con el próximo mensaje del cliente.</p>
+              )}
+            </div>
+
+            <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--muted)] mb-2 flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> Cliente</h3>
               {contact.user ? (
                 <div className="text-sm">
@@ -385,6 +466,16 @@ export default function AdminChatsPage() {
                       </div>
                       <p className="text-[var(--muted)]">{ORDER_STATUS[o.status] ?? o.status}</p>
                       <p className="text-[var(--foreground)]">{formatCOP(Number(o.paidAmount))} de {formatCOP(Number(o.totalAmount))}</p>
+                      {o.staffNotes && <p className="text-[var(--muted)] italic">Tiene notas internas</p>}
+                      {(notesDraft ?? contact.notes ?? "").trim() && (
+                        <button
+                          type="button"
+                          onClick={() => notesToOrder(o.id)}
+                          className="mt-1 flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <ClipboardPlus className="w-3.5 h-3.5" /> Pasar notas a este pedido
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -401,6 +492,7 @@ export default function AdminChatsPage() {
                 aria-label="Notas internas"
                 className="w-full h-28 p-3 bg-[var(--background)] border border-[var(--border-color)] rounded-xl text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none"
               />
+              <p className="mt-1 text-[11px] text-[var(--muted)]">Si el cliente hace un pedido por el catálogo de WhatsApp, estas notas pasan solas a ese pedido con el ID de la interacción.</p>
             </div>
           </div>
         )}

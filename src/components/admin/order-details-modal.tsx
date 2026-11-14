@@ -207,6 +207,12 @@ export function OrderDetailsModal({
                       <p className="text-sm text-[var(--foreground)] whitespace-pre-line">{order.notes}</p>
                     </div>
                   )}
+                  {order.staffNotes && (
+                    <div className="mt-3 p-3 rounded-xl border border-primary/30 bg-primary/5">
+                      <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Notas internas del equipo</p>
+                      <p className="text-sm text-[var(--foreground)] whitespace-pre-line">{order.staffNotes}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-[var(--background)] p-4 rounded-xl border border-[var(--border-color)]">
